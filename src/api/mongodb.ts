@@ -19,6 +19,12 @@ export const COLLECTIONS = {
 // This implementation will work for demonstration purposes,
 // but in a real app you would use API routes to communicate with MongoDB
 
+// MongoDB operator types
+interface MongoOperators {
+  $in?: any[];
+  // Add other MongoDB operators as needed
+}
+
 // Mock MongoDB ObjectId generator
 export function toObjectId(id: string) {
   return id;
@@ -72,7 +78,7 @@ export async function connectToDatabase() {
         insertMany: (docs: any[]) => insertMany(COLLECTIONS.POSTS, docs),
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.POSTS, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.POSTS, query),
-        countDocuments: (query: any = {}) => countDocuments(COLLECTIONS.POSTS, query)
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.POSTS, query)
       },
       categories: {
         find: () => createFindCursor(COLLECTIONS.CATEGORIES),
@@ -81,7 +87,7 @@ export async function connectToDatabase() {
         insertMany: (docs: any[]) => insertMany(COLLECTIONS.CATEGORIES, docs),
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.CATEGORIES, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.CATEGORIES, query),
-        countDocuments: (query: any = {}) => countDocuments(COLLECTIONS.CATEGORIES, query),
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.CATEGORIES, query),
         createIndex: () => Promise.resolve({ result: true })
       },
       topics: {
@@ -91,7 +97,7 @@ export async function connectToDatabase() {
         insertMany: (docs: any[]) => insertMany(COLLECTIONS.TOPICS, docs),
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.TOPICS, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.TOPICS, query),
-        countDocuments: (query: any = {}) => countDocuments(COLLECTIONS.TOPICS, query),
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.TOPICS, query),
         createIndex: () => Promise.resolve({ result: true })
       },
       comments: {
@@ -101,7 +107,7 @@ export async function connectToDatabase() {
         insertMany: (docs: any[]) => insertMany(COLLECTIONS.COMMENTS, docs),
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.COMMENTS, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.COMMENTS, query),
-        countDocuments: (query: any = {}) => countDocuments(COLLECTIONS.COMMENTS, query)
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.COMMENTS, query)
       }
     }
   };
@@ -201,10 +207,10 @@ function queryMatches(doc: any, query: any): boolean {
       // Handle MongoDB operators
       if (key === '$in') {
         return false; // Not implemented for simplicity
-      } else if (value.$in) {
+      } else if ((value as MongoOperators).$in) {
         // Handle {topics: {$in: [tag]}}
         const targetArray = doc[key];
-        const valuesToFind = value.$in as any[];
+        const valuesToFind = (value as MongoOperators).$in as any[];
         if (!targetArray || !Array.isArray(targetArray)) return false;
         
         // Check if any value in valuesToFind exists in targetArray
@@ -317,7 +323,7 @@ export const db = {
     insertMany: (docs: any[]) => insertMany(name, docs),
     updateOne: (query: any, update: any) => updateOne(name, query, update),
     deleteOne: (query: any) => deleteOne(name, query),
-    countDocuments: (query: any = {}) => countDocuments(name, query),
+    countDocuments: (query?: any) => countDocuments(name, query),
     createIndex: () => Promise.resolve({ result: true })
   })
 };
