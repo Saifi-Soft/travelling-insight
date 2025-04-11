@@ -1,14 +1,23 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Search, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import SearchModal from './SearchModal';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const openSearch = () => {
+    setIsSearchOpen(true);
+  };
+
+  const closeSearch = () => {
+    setIsSearchOpen(false);
   };
 
   return (
@@ -41,7 +50,7 @@ const Navbar = () => {
 
           {/* Search and User Icons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={openSearch}>
               <Search className="h-5 w-5" />
             </Button>
             <Button variant="ghost" size="icon">
@@ -54,6 +63,14 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={openSearch}
+              className="mr-2"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
             <button
               onClick={toggleMenu}
               className="p-2 rounded-md text-gray-600 hover:text-primary"
@@ -107,7 +124,7 @@ const Navbar = () => {
                 About
               </Link>
               <div className="flex items-center justify-between pt-4">
-                <Button variant="outline" size="sm" className="w-1/2 mr-2">
+                <Button variant="outline" size="sm" className="w-1/2 mr-2" onClick={openSearch}>
                   <Search className="h-4 w-4 mr-2" />
                   Search
                 </Button>
@@ -119,6 +136,9 @@ const Navbar = () => {
           </div>
         )}
       </div>
+      
+      {/* Search Modal */}
+      <SearchModal isOpen={isSearchOpen} onClose={closeSearch} />
     </nav>
   );
 };
