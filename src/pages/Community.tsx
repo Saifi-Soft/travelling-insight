@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Globe, MapPin, Calendar, MessageSquare, UserPlus, Users, 
   Search, Clock, ThumbsUp, Check, Award, Compass, MapPinned,
-  Heart, User, Briefcase, Flag, Camera, Plus
+  Heart, User, Briefcase, Flag, Camera, Plus, Lock
 } from 'lucide-react';
 import { 
   communityUsersApi, 
@@ -786,4 +786,4 @@ const Community = () => {
                   <Card className="h-full flex flex-col border-dashed hover:border-primary/30 hover:bg-muted/50 transition-colors">
                     <div className="flex items-center justify-center flex-grow p-6">
                       <div className="text-center">
-                        <div className="mx-auto h-20 w-20 rounded-
+                        <div className="mx-auto h-20 w-20
