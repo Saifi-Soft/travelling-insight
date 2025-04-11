@@ -427,6 +427,43 @@ export const travelMatchesApi = {
     }
   },
   
+  findPotentialMatches: async (userId: string, preferences: any): Promise<any[]> => {
+    try {
+      const { collections } = await connectToDatabase();
+      
+      // Find other active travel matches with similar destinations
+      const potentialMatches = await collections.travel_matches
+        .find({
+          userId: { $ne: userId }, // Exclude the current user
+          status: "active",
+          "preferences.destinations": { $in: preferences.destinations }
+        })
+        .toArray();
+      
+      // Get user details for each potential match
+      const matchesWithDetails = await Promise.all(
+        potentialMatches.map(async (match) => {
+          const userDetails = await collections.community_users.findOne({ _id: match.userId });
+          return {
+            matchId: match._id.toString(),
+            userId: match.userId,
+            name: userDetails?.name || 'Anonymous Traveler',
+            avatar: userDetails?.avatar,
+            destinations: match.preferences.destinations,
+            travelStyles: match.preferences.travelStyles,
+            interests: match.preferences.interests,
+            dateRange: match.preferences.dateRange
+          };
+        })
+      );
+      
+      return formatMongoData(matchesWithDetails);
+    } catch (error) {
+      console.error('Error finding potential matches:', error);
+      throw error;
+    }
+  },
+  
   create: async (match: Omit<TravelMatch, 'id'>): Promise<TravelMatch> => {
     try {
       const { collections } = await connectToDatabase();
@@ -498,6 +535,59 @@ export const travelMatchesApi = {
       return formatMongoData(updatedMatch);
     } catch (error) {
       console.error(`Error updating match status ${id}:`, error);
+      throw error;
+    }
+  }
+};
+
+// New API for payment and subscription management
+export const communityPaymentApi = {
+  checkSubscriptionStatus: async (userId: string): Promise<boolean> => {
+    try {
+      const { collections } = await connectToDatabase();
+      
+      // Check if user has an active subscription
+      const subscription = await collections.user_subscriptions.findOne({
+        userId,
+        status: 'active',
+        expiresAt: { $gt: new Date() }
+      });
+      
+      return !!subscription;
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      return false;
+    }
+  },
+  
+  createSubscription: async (userId: string, plan: string, paymentDetails: any): Promise<any> => {
+    try {
+      const { collections } = await connectToDatabase();
+      
+      // In a real implementation, this would connect to a payment processor
+      // For now, we'll simulate a successful subscription
+      
+      const expirationDate = new Date();
+      expirationDate.setMonth(expirationDate.getMonth() + 1); // 1 month subscription
+      
+      const subscription = {
+        userId,
+        plan,
+        status: 'active',
+        startedAt: new Date(),
+        expiresAt: expirationDate,
+        paymentMethod: paymentDetails.method,
+        lastFour: paymentDetails.cardLastFour || '1234',
+        createdAt: new Date()
+      };
+      
+      const result = await collections.user_subscriptions.insertOne(subscription);
+      return { 
+        ...subscription, 
+        id: result.insertedId.toString() 
+      };
+    } catch (error) {
+      console.error('Error creating subscription:', error);
       throw error;
     }
   }

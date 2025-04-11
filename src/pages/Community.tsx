@@ -21,18 +21,23 @@ import {
   communityUsersApi, 
   travelGroupsApi, 
   communityEventsApi,
-  travelMatchesApi
+  travelMatchesApi,
+  communityPaymentApi
 } from '@/api/communityApiService';
 import { format } from 'date-fns';
 import { addItemToArray } from '@/utils/arrayUtils';
+import SubscriptionModal from '@/components/community/SubscriptionModal';
+import IntelligentMatching from '@/components/community/IntelligentMatching';
 
 const Community = () => {
   // State for active tab
   const [activeTab, setActiveTab] = useState('home');
   
-  // States for dialogs
+  // States for dialogs and subscription
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   
   // Profile and match states
   const [profile, setProfile] = useState({
@@ -50,9 +55,33 @@ const Community = () => {
     interests: [] as string[]
   });
   
+  const [userId, setUserId] = useState<string | null>(null);
   const [currentDestination, setCurrentDestination] = useState('');
   const [currentTravelStyle, setCurrentTravelStyle] = useState('');
   const [currentInterest, setCurrentInterest] = useState('');
+  
+  // Simulate checking if user is logged in & subscribed
+  useEffect(() => {
+    // This is where you would check if the user is logged in from your auth system
+    const mockUserCheck = async () => {
+      // In your real implementation, check if the user is authenticated
+      const isLoggedIn = localStorage.getItem('community_user_id');
+      
+      if (isLoggedIn) {
+        setUserId(isLoggedIn);
+        
+        // Check if user has an active subscription
+        try {
+          const hasSubscription = await communityPaymentApi.checkSubscriptionStatus(isLoggedIn);
+          setIsSubscribed(hasSubscription);
+        } catch (error) {
+          console.error('Error checking subscription:', error);
+        }
+      }
+    };
+    
+    mockUserCheck();
+  }, []);
   
   // Fetch community data
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
@@ -79,6 +108,26 @@ const Community = () => {
     .filter(event => event.status === 'upcoming')
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
+  
+  // Function to handle protected features
+  const handleProtectedAction = (actionCallback: () => void, featureName: string = '') => {
+    if (!userId) {
+      toast.error('Please log in to continue', {
+        description: 'Create an account or log in to access this feature'
+      });
+      return;
+    }
+    
+    if (!isSubscribed) {
+      toast.error('Premium feature', {
+        description: `Subscribe to access ${featureName || 'all community features'}`
+      });
+      setIsSubscriptionModalOpen(true);
+      return;
+    }
+    
+    actionCallback();
+  };
   
   // Function to handle button clicks that aren't fully implemented
   const handleFeatureNotAvailable = (featureName: string) => {
@@ -109,10 +158,26 @@ const Community = () => {
         reputation: 0
       };
       
-      await communityUsersApi.create(newUser);
+      const createdUser = await communityUsersApi.create(newUser);
+      
+      // Save user ID to localStorage to simulate login
+      localStorage.setItem('community_user_id', createdUser.id);
+      setUserId(createdUser.id);
       
       toast.success('Your profile has been created and is pending approval!');
       setIsProfileDialogOpen(false);
+      
+      // Prompt for subscription if not subscribed
+      if (!isSubscribed) {
+        setTimeout(() => {
+          toast.info('Subscribe to unlock all community features', {
+            action: {
+              label: 'Subscribe',
+              onClick: () => setIsSubscriptionModalOpen(true)
+            }
+          });
+        }, 1500);
+      }
     } catch (error) {
       toast.error('Failed to create profile. Please try again.');
       console.error(error);
@@ -128,11 +193,11 @@ const Community = () => {
       }
       
       // In a real app, we would use the actual user ID here
-      const mockUserId = 'mock-user-' + Math.random().toString(36).substr(2, 9);
+      const matchUserId = userId || ('mock-user-' + Math.random().toString(36).substr(2, 9));
       
       // Create the travel match preferences
       const newMatch = {
-        userId: mockUserId,
+        userId: matchUserId,
         preferences: {
           destinations: matchPreferences.destinations,
           travelStyles: matchPreferences.travelStyles,
@@ -148,7 +213,9 @@ const Community = () => {
         updatedAt: new Date()
       };
       
-      // In a real app, we would save this to the database
+      // Save to database
+      await travelMatchesApi.create(newMatch);
+      
       toast.success('Your travel match preferences have been saved!');
       toast('We\'ll notify you when we find compatible travel buddies.');
       setIsMatchDialogOpen(false);
@@ -157,8 +224,16 @@ const Community = () => {
       console.error(error);
     }
   };
-
-  // Format date for display
+  
+  // Handle successful subscription
+  const handleSuccessfulSubscription = () => {
+    setIsSubscribed(true);
+    toast.success('Welcome to our premium community!', {
+      description: 'You now have access to all community features'
+    });
+  };
+  
+  // Format date and time functions
   const formatDate = (dateString: string | Date) => {
     try {
       return format(new Date(dateString), 'MMM dd, yyyy');
@@ -167,7 +242,6 @@ const Community = () => {
     }
   };
   
-  // Format time for display
   const formatTime = (dateString: string | Date) => {
     try {
       return format(new Date(dateString), 'h:mm a');
@@ -188,7 +262,7 @@ const Community = () => {
           <div className="container-custom relative z-10">
             <div className="max-w-3xl mx-auto text-center">
               <Badge variant="outline" className="mb-4 px-3 py-1 border-primary text-primary">
-                Connect
+                Premium Community
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
                 Join Our Travel Community
@@ -200,19 +274,36 @@ const Community = () => {
                 <Button 
                   size="lg" 
                   className="bg-primary hover:bg-primary/90"
-                  onClick={() => setIsProfileDialogOpen(true)}
+                  onClick={() => {
+                    if (userId) {
+                      handleProtectedAction(() => setActiveTab('members'));
+                    } else {
+                      setIsProfileDialogOpen(true);
+                    }
+                  }}
                 >
-                  <UserPlus className="mr-2 h-5 w-5" /> Join Community
+                  <UserPlus className="mr-2 h-5 w-5" /> 
+                  {userId ? 'Explore Community' : 'Join Community'}
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   className="border-primary text-primary hover:bg-primary/10"
-                  onClick={() => setIsMatchDialogOpen(true)}
+                  onClick={() => {
+                    handleProtectedAction(() => setIsMatchDialogOpen(true), 'Travel Buddy Matching');
+                  }}
                 >
                   <Compass className="mr-2 h-5 w-5" /> Find Travel Buddy
                 </Button>
               </div>
+              
+              {!isSubscribed && (
+                <div className="mt-8">
+                  <span className="text-sm px-3 py-1 bg-primary/10 text-primary rounded-full">
+                    Subscribe for unlimited access to all features
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -226,15 +317,47 @@ const Community = () => {
                   <TabsTrigger value="home" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                     <Globe className="h-4 w-4 mr-2" /> Community Home
                   </TabsTrigger>
-                  <TabsTrigger value="members" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger 
+                    value="members" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                    onClick={(e) => {
+                      if (!isSubscribed) {
+                        e.preventDefault();
+                        handleProtectedAction(() => setActiveTab('members'), 'Members Directory');
+                      }
+                    }}
+                  >
                     <Users className="h-4 w-4 mr-2" /> Members
                   </TabsTrigger>
-                  <TabsTrigger value="groups" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger 
+                    value="groups" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                    onClick={(e) => {
+                      if (!isSubscribed) {
+                        e.preventDefault();
+                        handleProtectedAction(() => setActiveTab('groups'), 'Travel Groups');
+                      }
+                    }}
+                  >
                     <Users className="h-4 w-4 mr-2" /> Travel Groups
                   </TabsTrigger>
-                  <TabsTrigger value="events" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger 
+                    value="events" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                    onClick={(e) => {
+                      if (!isSubscribed) {
+                        e.preventDefault();
+                        handleProtectedAction(() => setActiveTab('events'), 'Community Events');
+                      }
+                    }}
+                  >
                     <Calendar className="h-4 w-4 mr-2" /> Events
                   </TabsTrigger>
+                  {isSubscribed && (
+                    <TabsTrigger value="matches" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                      <Heart className="h-4 w-4 mr-2" /> My Matches
+                    </TabsTrigger>
+                  )}
                 </TabsList>
               </div>
               
@@ -275,7 +398,7 @@ const Community = () => {
                       <Button 
                         variant="ghost" 
                         className="w-full text-primary"
-                        onClick={() => setActiveTab('members')}
+                        onClick={() => handleProtectedAction(() => setActiveTab('members'), 'Members Directory')}
                       >
                         View All Members
                       </Button>
@@ -296,7 +419,11 @@ const Community = () => {
                         <div className="text-center py-4">No upcoming events</div>
                       ) : (
                         upcomingEvents.map((event, idx) => (
-                          <div key={idx} className="p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                          <div 
+                            key={idx} 
+                            className="p-3 border border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
+                            onClick={() => handleProtectedAction(() => handleFeatureNotAvailable(`View ${event.title} details`), 'Community Events')}
+                          >
                             <div className="flex items-center justify-between mb-2">
                               <Badge variant="secondary">{event.type}</Badge>
                               <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
@@ -320,7 +447,7 @@ const Community = () => {
                       <Button 
                         variant="ghost" 
                         className="w-full text-primary"
-                        onClick={() => setActiveTab('events')}
+                        onClick={() => handleProtectedAction(() => setActiveTab('events'), 'Community Events')}
                       >
                         View All Events
                       </Button>
@@ -345,7 +472,7 @@ const Community = () => {
                             key={idx} 
                             className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors"
                             role="button"
-                            onClick={() => handleFeatureNotAvailable(`View ${group.name} group`)}
+                            onClick={() => handleProtectedAction(() => handleFeatureNotAvailable(`View ${group.name} group`), 'Travel Groups')}
                           >
                             <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10 text-primary">
                               <Users className="h-5 w-5" />
@@ -366,7 +493,7 @@ const Community = () => {
                       <Button 
                         variant="ghost" 
                         className="w-full text-primary"
-                        onClick={() => setActiveTab('groups')}
+                        onClick={() => handleProtectedAction(() => setActiveTab('groups'), 'Travel Groups')}
                       >
                         View All Groups
                       </Button>
@@ -379,10 +506,10 @@ const Community = () => {
                   <div className="rounded-xl overflow-hidden border border-border bg-card">
                     <div className="grid grid-cols-1 md:grid-cols-2">
                       <div className="p-8 md:p-12 flex flex-col justify-center">
-                        <Badge className="w-fit mb-4">Travel Buddies</Badge>
+                        <Badge className="w-fit mb-4">Premium Feature</Badge>
                         <h2 className="text-2xl md:text-3xl font-bold mb-4">Find Your Perfect Travel Companion</h2>
                         <p className="text-muted-foreground mb-6">
-                          Our matching algorithm connects you with like-minded travelers heading to your dream destinations. 
+                          Our intelligent matching algorithm connects you with like-minded travelers heading to your dream destinations. 
                           Share experiences, split costs, and make memories together!
                         </p>
                         <div className="space-y-4 mb-6">
@@ -416,7 +543,7 @@ const Community = () => {
                         </div>
                         <Button 
                           className="w-full sm:w-auto bg-primary hover:bg-primary/90"
-                          onClick={() => setIsMatchDialogOpen(true)}
+                          onClick={() => handleProtectedAction(() => setIsMatchDialogOpen(true), 'Travel Buddy Matching')}
                         >
                           <Compass className="mr-2 h-4 w-4" /> Find a Travel Buddy
                         </Button>
@@ -432,6 +559,68 @@ const Community = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Subscription CTA */}
+                {!isSubscribed && (
+                  <div className="mt-12 text-center">
+                    <h3 className="text-2xl font-bold mb-4">Unlock Premium Features</h3>
+                    <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
+                      Subscribe to access all community features including travel buddy matching, special interest groups, and exclusive events
+                    </p>
+                    <Button 
+                      size="lg" 
+                      className="bg-primary hover:bg-primary/90"
+                      onClick={() => setIsSubscriptionModalOpen(true)}
+                    >
+                      Subscribe Now
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+              
+              {/* Matches Tab (Premium only) */}
+              <TabsContent value="matches" className="mt-0">
+                {isSubscribed ? (
+                  <div>
+                    <div className="flex flex-col items-center text-center mb-12">
+                      <h2 className="text-3xl font-bold mb-4">Travel Buddy Matches</h2>
+                      <p className="text-muted-foreground max-w-2xl">
+                        Our intelligent algorithm finds compatible travel companions based on your preferences
+                      </p>
+                    </div>
+                    
+                    <div className="mb-12 mx-auto max-w-4xl">
+                      <IntelligentMatching 
+                        userPreferences={matchPreferences}
+                        userId={userId || 'guest-user'}
+                      />
+                    </div>
+                    
+                    <div className="text-center">
+                      <Button
+                        onClick={() => setIsMatchDialogOpen(true)}
+                      >
+                        Update My Matching Preferences
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="mx-auto rounded-full bg-primary/10 p-4 w-16 h-16 flex items-center justify-center mb-4">
+                      <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">Premium Feature</h3>
+                    <p className="text-muted-foreground max-w-lg mx-auto mb-6">
+                      Subscribe to unlock travel buddy matching and connect with compatible travel companions
+                    </p>
+                    <Button 
+                      size="lg" 
+                      onClick={() => setIsSubscriptionModalOpen(true)}
+                    >
+                      Subscribe Now
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
               
               {/* Members Tab */}
@@ -597,453 +786,4 @@ const Community = () => {
                   <Card className="h-full flex flex-col border-dashed hover:border-primary/30 hover:bg-muted/50 transition-colors">
                     <div className="flex items-center justify-center flex-grow p-6">
                       <div className="text-center">
-                        <div className="mx-auto h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                          <Users className="h-10 w-10 text-primary" />
-                        </div>
-                        <h3 className="text-xl font-bold mb-2">Create a New Group</h3>
-                        <p className="text-sm text-muted-foreground mb-6">
-                          Start your own community for travelers with shared interests
-                        </p>
-                        <Button 
-                          className="bg-primary hover:bg-primary/90"
-                          onClick={() => handleFeatureNotAvailable("Create new travel group")}
-                        >
-                          <Plus className="mr-2 h-4 w-4" /> Create Group
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-                
-                {/* Group Categories */}
-                <div className="mt-16">
-                  <h3 className="text-2xl font-bold mb-6 text-center">Explore Group Categories</h3>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                      { name: "Solo Female Travelers", icon: <User /> },
-                      { name: "Family Travel", icon: <Users /> },
-                      { name: "Digital Nomads", icon: <Briefcase /> },
-                      { name: "Adventure Seekers", icon: <Compass /> },
-                      { name: "Budget Travelers", icon: <Heart /> },
-                      { name: "Photography Enthusiasts", icon: <Camera /> },
-                      { name: "Sustainable Tourism", icon: <Globe /> },
-                      { name: "Country Collectors", icon: <Flag /> }
-                    ].map((category, idx) => (
-                      <Card 
-                        key={idx}
-                        className="text-center p-6 cursor-pointer hover:border-primary/50 transition-colors"
-                        onClick={() => handleFeatureNotAvailable(`Browse ${category.name} groups`)}
-                      >
-                        <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                          {React.cloneElement(category.icon as React.ReactElement, { className: "h-6 w-6 text-primary" })}
-                        </div>
-                        <h4 className="font-medium">{category.name}</h4>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-              
-              {/* Events Tab */}
-              <TabsContent value="events" className="mt-0">
-                <div className="flex flex-col items-center text-center mb-8">
-                  <h2 className="text-3xl font-bold mb-4">Community Events</h2>
-                  <p className="text-muted-foreground max-w-2xl">
-                    Join virtual and in-person events to connect with fellow travelers
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {isLoadingEvents ? (
-                    <div className="col-span-full text-center py-12">Loading events...</div>
-                  ) : events.length === 0 ? (
-                    <div className="col-span-full text-center py-12">No events to display</div>
-                  ) : (
-                    events.map((event, idx) => (
-                      <Card key={event.id} className="overflow-hidden hover:border-primary/30 transition-colors">
-                        <div className={`p-1 ${
-                          event.status === 'upcoming' ? 'bg-blue-500' :
-                          event.status === 'ongoing' ? 'bg-green-500' :
-                          event.status === 'completed' ? 'bg-gray-500' : 'bg-red-500'
-                        }`}></div>
-                        
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <Badge variant="outline">{event.type}</Badge>
-                            <Badge variant={
-                              event.status === 'upcoming' ? 'default' :
-                              event.status === 'ongoing' ? 'secondary' :
-                              event.status === 'completed' ? 'outline' : 'destructive'
-                            }>
-                              {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                            </Badge>
-                          </div>
-                          
-                          <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                          
-                          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                            {event.description}
-                          </p>
-                          
-                          <div className="space-y-3 mb-4">
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                              <span className="text-sm">{formatDate(event.date)}, {formatTime(event.date)}</span>
-                            </div>
-                            
-                            <div className="flex items-center">
-                              <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
-                              <span className="text-sm">{event.location.type === 'online' ? 'Online Event' : event.location.details}</span>
-                            </div>
-                            
-                            <div className="flex items-center">
-                              <Users className="h-4 w-4 text-muted-foreground mr-2" />
-                              <span className="text-sm">{event.attendees.length} attending</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                        
-                        <CardFooter className="bg-muted/30 p-4">
-                          {event.status === 'upcoming' ? (
-                            <Button 
-                              className="w-full bg-primary hover:bg-primary/90"
-                              onClick={() => handleFeatureNotAvailable(`Register for ${event.title}`)}
-                            >
-                              Register
-                            </Button>
-                          ) : event.status === 'ongoing' ? (
-                            <Button 
-                              className="w-full"
-                              onClick={() => handleFeatureNotAvailable(`Join ${event.title} now`)}
-                            >
-                              Join Now
-                            </Button>
-                          ) : (
-                            <Button 
-                              variant="outline"
-                              className="w-full"
-                              onClick={() => handleFeatureNotAvailable(`View details for ${event.title}`)}
-                            >
-                              View Details
-                            </Button>
-                          )}
-                        </CardFooter>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </section>
-      </main>
-      
-      {/* Join Community Dialog */}
-      <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Join Our Travel Community</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">Your Name</label>
-              <Input 
-                id="name" 
-                value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                placeholder="Full Name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">Email Address</label>
-              <Input 
-                id="email" 
-                type="email"
-                value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                placeholder="your.email@example.com"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="bio" className="text-sm font-medium">About You</label>
-              <Textarea 
-                id="bio" 
-                value={profile.bio}
-                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                placeholder="Share a bit about yourself and your travel interests"
-                className="min-h-[100px]"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="experience" className="text-sm font-medium">Travel Experience Level</label>
-              <Select 
-                value={profile.experienceLevel} 
-                onValueChange={(value) => setProfile({ ...profile, experienceLevel: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your experience level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Newbie">Newbie (0-2 countries)</SelectItem>
-                  <SelectItem value="Casual">Casual (3-5 countries)</SelectItem>
-                  <SelectItem value="Regular">Regular (6-10 countries)</SelectItem>
-                  <SelectItem value="Experienced">Experienced (11-20 countries)</SelectItem>
-                  <SelectItem value="Globetrotter">Globetrotter (20+ countries)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Travel Styles</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {profile.travelStyles.map((style, idx) => (
-                  <Badge key={idx} variant="secondary" className="px-3 py-1">
-                    {style}
-                    <button 
-                      className="ml-2 text-muted-foreground hover:text-foreground"
-                      onClick={() => setProfile({
-                        ...profile,
-                        travelStyles: profile.travelStyles.filter((_, i) => i !== idx)
-                      })}
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input 
-                  value={currentTravelStyle}
-                  onChange={(e) => setCurrentTravelStyle(e.target.value)}
-                  placeholder="e.g. Budget, Luxury, Adventure..."
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => {
-                    if (addItemToArray(
-                      currentTravelStyle, 
-                      profile.travelStyles, 
-                      setProfile
-                    )) {
-                      setCurrentTravelStyle('');
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Interests</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {profile.interests.map((interest, idx) => (
-                  <Badge key={idx} variant="outline" className="px-3 py-1 border-primary/30 text-primary">
-                    {interest}
-                    <button 
-                      className="ml-2 text-primary/70 hover:text-primary"
-                      onClick={() => setProfile({
-                        ...profile,
-                        interests: profile.interests.filter((_, i) => i !== idx)
-                      })}
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input 
-                  value={currentInterest}
-                  onChange={(e) => setCurrentInterest(e.target.value)}
-                  placeholder="e.g. Photography, Hiking, Food..."
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => {
-                    if (addItemToArray(
-                      currentInterest, 
-                      profile.interests, 
-                      setProfile
-                    )) {
-                      setCurrentInterest('');
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsProfileDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateProfile} className="bg-primary hover:bg-primary/90">
-              Create Profile
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Travel Match Dialog */}
-      <Dialog open={isMatchDialogOpen} onOpenChange={setIsMatchDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Find a Travel Buddy</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Destinations You Want to Visit</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {matchPreferences.destinations.map((destination, idx) => (
-                  <Badge key={idx} className="px-3 py-1">
-                    {destination}
-                    <button 
-                      className="ml-2 text-muted-foreground hover:text-foreground"
-                      onClick={() => setMatchPreferences({
-                        ...matchPreferences,
-                        destinations: matchPreferences.destinations.filter((_, i) => i !== idx)
-                      })}
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input 
-                  value={currentDestination}
-                  onChange={(e) => setCurrentDestination(e.target.value)}
-                  placeholder="e.g. Japan, Italy, Thailand..."
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => {
-                    if (addItemToArray(
-                      currentDestination, 
-                      matchPreferences.destinations, 
-                      setMatchPreferences
-                    )) {
-                      setCurrentDestination('');
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Your Travel Style</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {matchPreferences.travelStyles.map((style, idx) => (
-                  <Badge key={idx} variant="secondary" className="px-3 py-1">
-                    {style}
-                    <button 
-                      className="ml-2 text-muted-foreground hover:text-foreground"
-                      onClick={() => setMatchPreferences({
-                        ...matchPreferences,
-                        travelStyles: matchPreferences.travelStyles.filter((_, i) => i !== idx)
-                      })}
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input 
-                  value={currentTravelStyle}
-                  onChange={(e) => setCurrentTravelStyle(e.target.value)}
-                  placeholder="e.g. Budget, Luxury, Adventure..."
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => {
-                    if (addItemToArray(
-                      currentTravelStyle, 
-                      matchPreferences.travelStyles, 
-                      setMatchPreferences
-                    )) {
-                      setCurrentTravelStyle('');
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Your Interests</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {matchPreferences.interests.map((interest, idx) => (
-                  <Badge key={idx} variant="outline" className="px-3 py-1 border-primary/30 text-primary">
-                    {interest}
-                    <button 
-                      className="ml-2 text-primary/70 hover:text-primary"
-                      onClick={() => setMatchPreferences({
-                        ...matchPreferences,
-                        interests: matchPreferences.interests.filter((_, i) => i !== idx)
-                      })}
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input 
-                  value={currentInterest}
-                  onChange={(e) => setCurrentInterest(e.target.value)}
-                  placeholder="e.g. Photography, Hiking, Food..."
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => {
-                    if (addItemToArray(
-                      currentInterest, 
-                      matchPreferences.interests, 
-                      setMatchPreferences
-                    )) {
-                      setCurrentInterest('');
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsMatchDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateMatch} className="bg-primary hover:bg-primary/90">
-              Find Matches
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <Footer />
-    </div>
-  );
-};
-
-export default Community;
+                        <div className="mx-auto h-20 w-20 rounded-
