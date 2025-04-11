@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,9 +51,9 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
   });
 
   const [activeTab, setActiveTab] = useState('content');
+  const [mediaItems, setMediaItems] = useState<Array<{ type: string; url: string }>>([]);
   const { toast } = useToast();
 
-  // Generate slug from title
   useEffect(() => {
     if (!post && title) {
       setSlug(title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
@@ -72,7 +71,6 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
   };
 
   const handleSave = () => {
-    // Validate required fields
     if (!title || !excerpt || !category || !coverImage) {
       toast({
         title: "Missing required fields",
@@ -109,14 +107,16 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
     });
   };
 
-  // Function to handle content changes from RichTextEditor
   const handleContentChange = (newContent: string) => {
     setContent(newContent);
   };
 
-  // Function to handle image selection from MediaUploader
   const handleImageSelected = (url: string) => {
     setCoverImage(url);
+  };
+
+  const handleAddMedia = (media: { type: string, url: string }) => {
+    setMediaItems(prev => [...prev, media]);
   };
 
   return (
@@ -223,7 +223,11 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
               
               <div>
                 <label htmlFor="content" className="block text-sm font-medium mb-1">Content</label>
-                <RichTextEditor onChange={handleContentChange} />
+                <RichTextEditor 
+                  initialValue={content} 
+                  onChange={handleContentChange} 
+                  onAddMedia={handleAddMedia} 
+                />
               </div>
             </div>
           </TabsContent>
