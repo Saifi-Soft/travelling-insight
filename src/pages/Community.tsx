@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Globe, MapPin, Calendar, MessageSquare, UserPlus, Users, 
   Search, Clock, ThumbsUp, Check, Award, Compass, MapPinned,
-  Heart, User, Briefcase, Flag, Camera
+  Heart, User, Briefcase, Flag, Camera, Plus
 } from 'lucide-react';
 import { 
   communityUsersApi, 
@@ -101,10 +101,10 @@ const Community = () => {
         email: profile.email,
         name: profile.name,
         bio: profile.bio,
-        experienceLevel: profile.experienceLevel as any,
+        experienceLevel: profile.experienceLevel as 'Newbie' | 'Casual' | 'Regular' | 'Experienced' | 'Globetrotter',
         travelStyles: profile.travelStyles,
         interests: profile.interests,
-        status: 'pending',
+        status: 'pending' as 'pending' | 'active' | 'blocked',
         joinDate: new Date(),
         reputation: 0
       };
@@ -142,7 +142,7 @@ const Community = () => {
             end: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days from now
           }
         },
-        status: 'active',
+        status: 'active' as 'active' | 'paused' | 'closed',
         potentialMatches: [],
         createdAt: new Date(),
         updatedAt: new Date()
