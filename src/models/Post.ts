@@ -1,34 +1,35 @@
 
+import mongoose from 'mongoose';
 import { Post } from '@/types/common';
 
 // Post schema definition
 const PostSchema = {
-  title: String,
-  slug: String,
-  excerpt: String,
+  title: { type: String, required: true },
+  slug: { type: String, required: true },
+  excerpt: { type: String, required: true },
   author: {
-    name: String,
-    avatar: String,
-    bio: String,
+    name: { type: String, required: true },
+    avatar: { type: String },
+    bio: { type: String },
     social: {
-      twitter: String,
-      instagram: String,
-      facebook: String
+      twitter: { type: String },
+      instagram: { type: String },
+      facebook: { type: String }
     }
   },
-  category: String,
-  coverImage: String,
-  date: String,
-  readTime: String,
-  likes: Number,
-  comments: Number,
-  content: String,
-  topics: [String],
+  category: { type: String, required: true },
+  coverImage: { type: String, required: true },
+  date: { type: String, required: true },
+  readTime: { type: String, required: true },
+  likes: { type: Number, default: 0 },
+  comments: { type: Number, default: 0 },
+  content: { type: String },
+  topics: [{ type: String }],
   seo: {
-    metaTitle: String,
-    metaDescription: String,
-    keywords: String,
-    ogImage: String
+    metaTitle: { type: String },
+    metaDescription: { type: String },
+    keywords: { type: String },
+    ogImage: { type: String }
   }
 };
 

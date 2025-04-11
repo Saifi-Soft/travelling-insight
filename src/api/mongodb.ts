@@ -72,7 +72,7 @@ export async function connectToDatabase() {
         insertMany: (docs: any[]) => insertMany(COLLECTIONS.POSTS, docs),
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.POSTS, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.POSTS, query),
-        countDocuments: (query = {}) => countDocuments(COLLECTIONS.POSTS, query)
+        countDocuments: (query: any = {}) => countDocuments(COLLECTIONS.POSTS, query)
       },
       categories: {
         find: () => createFindCursor(COLLECTIONS.CATEGORIES),
@@ -81,7 +81,7 @@ export async function connectToDatabase() {
         insertMany: (docs: any[]) => insertMany(COLLECTIONS.CATEGORIES, docs),
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.CATEGORIES, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.CATEGORIES, query),
-        countDocuments: (query = {}) => countDocuments(COLLECTIONS.CATEGORIES, query),
+        countDocuments: (query: any = {}) => countDocuments(COLLECTIONS.CATEGORIES, query),
         createIndex: () => Promise.resolve({ result: true })
       },
       topics: {
@@ -91,7 +91,7 @@ export async function connectToDatabase() {
         insertMany: (docs: any[]) => insertMany(COLLECTIONS.TOPICS, docs),
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.TOPICS, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.TOPICS, query),
-        countDocuments: (query = {}) => countDocuments(COLLECTIONS.TOPICS, query),
+        countDocuments: (query: any = {}) => countDocuments(COLLECTIONS.TOPICS, query),
         createIndex: () => Promise.resolve({ result: true })
       },
       comments: {
@@ -101,7 +101,7 @@ export async function connectToDatabase() {
         insertMany: (docs: any[]) => insertMany(COLLECTIONS.COMMENTS, docs),
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.COMMENTS, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.COMMENTS, query),
-        countDocuments: (query = {}) => countDocuments(COLLECTIONS.COMMENTS, query)
+        countDocuments: (query: any = {}) => countDocuments(COLLECTIONS.COMMENTS, query)
       }
     }
   };
@@ -190,25 +190,21 @@ function createFindCursor(collection: string) {
   };
 }
 
+// Improved query matching with proper type handling for MongoDB operators
 function queryMatches(doc: any, query: any): boolean {
   for (const [key, value] of Object.entries(query)) {
     if (key === '_id') {
       if (doc.id !== value && doc._id !== value) {
         return false;
       }
-    } else if (key === '$in') {
-      return false; // Not implemented for simplicity
     } else if (typeof value === 'object' && value !== null) {
+      // Handle MongoDB operators
       if (key === '$in') {
-        // Simple $in operator implementation
-        const inClause = value as any[];
-        if (!inClause.includes(doc[key])) {
-          return false;
-        }
-      } else if (value.$in) {
+        return false; // Not implemented for simplicity
+      } else if ('$in' in value) {
         // Handle {topics: {$in: [tag]}}
         const targetArray = doc[key];
-        const valuesToFind = value.$in;
+        const valuesToFind = value.$in as any[];
         if (!targetArray || !Array.isArray(targetArray)) return false;
         
         // Check if any value in valuesToFind exists in targetArray
@@ -321,7 +317,7 @@ export const db = {
     insertMany: (docs: any[]) => insertMany(name, docs),
     updateOne: (query: any, update: any) => updateOne(name, query, update),
     deleteOne: (query: any) => deleteOne(name, query),
-    countDocuments: (query = {}) => countDocuments(name, query),
+    countDocuments: (query: any = {}) => countDocuments(name, query),
     createIndex: () => Promise.resolve({ result: true })
   })
 };

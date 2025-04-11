@@ -14,7 +14,7 @@ export async function initializeCollectionsWithSampleData(
     const { collections } = await connectToDatabase();
     
     // Initialize posts if empty
-    const postsCount = await collections.posts.countDocuments();
+    const postsCount = await collections.posts.countDocuments({});
     if (postsCount === 0 && samplePosts?.length) {
       const postsWithoutId = samplePosts.map(({ id, ...post }) => post);
       await collections.posts.insertMany(postsWithoutId);
@@ -22,7 +22,7 @@ export async function initializeCollectionsWithSampleData(
     }
     
     // Initialize categories if empty
-    const categoriesCount = await collections.categories.countDocuments();
+    const categoriesCount = await collections.categories.countDocuments({});
     if (categoriesCount === 0 && sampleCategories?.length) {
       const categoriesWithoutId = sampleCategories.map(({ id, ...category }) => category);
       await collections.categories.insertMany(categoriesWithoutId);
@@ -30,7 +30,7 @@ export async function initializeCollectionsWithSampleData(
     }
     
     // Initialize topics if empty
-    const topicsCount = await collections.topics.countDocuments();
+    const topicsCount = await collections.topics.countDocuments({});
     if (topicsCount === 0 && sampleTopics?.length) {
       const topicsWithoutId = sampleTopics.map(({ id, ...topic }) => topic);
       await collections.topics.insertMany(topicsWithoutId);
