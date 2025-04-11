@@ -1,21 +1,17 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Search, User, Sun, Moon, Plane } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SearchModal from './SearchModal';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === 'dark';
   const location = useLocation();
-
-  // Toggle dark mode (just UI, no actual implementation yet)
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
 
   // Handle scroll effect
   useEffect(() => {
@@ -116,7 +112,7 @@ const Navbar = () => {
             <Button variant="ghost" size="icon" onClick={openSearch} className="hover:bg-primary/10">
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="hover:bg-primary/10">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hover:bg-primary/10">
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <Button variant="ghost" size="icon" className="hover:bg-primary/10">
@@ -205,7 +201,7 @@ const Navbar = () => {
                   Sign In
                 </Button>
               </div>
-              <Button variant="ghost" size="sm" className="mt-2 w-full justify-center" onClick={toggleDarkMode}>
+              <Button variant="ghost" size="sm" className="mt-2 w-full justify-center" onClick={toggleTheme}>
                 {isDarkMode ? (
                   <>
                     <Sun className="h-4 w-4 mr-2" />

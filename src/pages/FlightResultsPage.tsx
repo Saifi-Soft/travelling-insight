@@ -21,7 +21,7 @@ const FlightResultsPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
       <main className="flex-grow">
         <div className="container-custom py-10">
