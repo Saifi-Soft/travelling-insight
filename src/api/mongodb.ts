@@ -2,7 +2,7 @@
 import { MongoClient, ObjectId } from 'mongodb';
 
 // MongoDB connection string (will come from environment variables)
-const MONGODB_URI = process.env.MONGODB_URI || '';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://yourusername:yourpassword@cluster0.mongodb.net/travel_blog';
 const DB_NAME = 'travel_blog';
 
 // Cached connection

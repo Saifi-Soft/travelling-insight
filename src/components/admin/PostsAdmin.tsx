@@ -1,23 +1,37 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { postsApi } from '@/api/apiService';
+import { postsApi, categoriesApi, topicsApi } from '@/api/mongoApiService';
 import { Post } from '@/types/common';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus } from 'lucide-react';
+import { Plus, Search, Loader2 } from 'lucide-react';
 import PostsList from './PostsList';
-import PostDialog from './PostDialog';
+import PostEditor from './PostEditor';
+import { Input } from "@/components/ui/input";
 
 const PostsAdmin = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentPost, setCurrentPost] = useState<Post | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Fetch all posts
-  const { data: posts, isLoading, error } = useQuery({
+  const { data: posts = [], isLoading, error } = useQuery({
     queryKey: ['posts'],
     queryFn: postsApi.getAll,
+  });
+  
+  // Fetch categories and topics for the editor
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoriesApi.getAll,
+  });
+  
+  const { data: topics = [] } = useQuery({
+    queryKey: ['topics'],
+    queryFn: topicsApi.getAll,
   });
   
   // Create post mutation
@@ -29,12 +43,12 @@ const PostsAdmin = () => {
         title: "Success",
         description: "Post created successfully",
       });
-      setIsDialogOpen(false);
+      setIsEditorOpen(false);
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to create post: ${error.message}`,
+        description: `Failed to create post: ${(error as Error).message}`,
         variant: "destructive",
       });
     },
@@ -49,12 +63,12 @@ const PostsAdmin = () => {
         title: "Success",
         description: "Post updated successfully",
       });
-      setIsDialogOpen(false);
+      setIsEditorOpen(false);
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to update post: ${error.message}`,
+        description: `Failed to update post: ${(error as Error).message}`,
         variant: "destructive",
       });
     },
@@ -73,7 +87,7 @@ const PostsAdmin = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to delete post: ${error.message}`,
+        description: `Failed to delete post: ${(error as Error).message}`,
         variant: "destructive",
       });
     },
@@ -82,12 +96,12 @@ const PostsAdmin = () => {
   // Handlers
   const handleAddNew = () => {
     setCurrentPost(null);
-    setIsDialogOpen(true);
+    setIsEditorOpen(true);
   };
   
   const handleEdit = (post: Post) => {
     setCurrentPost(post);
-    setIsDialogOpen(true);
+    setIsEditorOpen(true);
   };
   
   const handleDelete = (id: string) => {
@@ -96,7 +110,7 @@ const PostsAdmin = () => {
     }
   };
   
-  const handleSubmit = (formData: Omit<Post, 'id'>) => {
+  const handleSave = (formData: any) => {
     if (currentPost) {
       updateMutation.mutate({ id: currentPost.id, post: formData });
     } else {
@@ -104,8 +118,20 @@ const PostsAdmin = () => {
     }
   };
   
-  if (error) {
-    return <div className="text-red-500">Error loading posts: {(error as Error).message}</div>;
+  // Filter posts based on search query
+  const filteredPosts = posts.filter(post =>
+    post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    post.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  if (isEditorOpen) {
+    return (
+      <PostEditor
+        post={currentPost}
+        onSave={handleSave}
+        onCancel={() => setIsEditorOpen(false)}
+      />
+    );
   }
   
   return (
@@ -113,24 +139,38 @@ const PostsAdmin = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Posts Management</h2>
         <Button onClick={handleAddNew}>
-          <Plus className="mr-2 h-4 w-4" /> Add New Post
+          <Plus className="mr-2 h-4 w-4" /> Create New Post
         </Button>
       </div>
       
-      <PostsList 
-        posts={posts} 
-        isLoading={isLoading} 
-        onEdit={handleEdit} 
-        onDelete={handleDelete} 
-      />
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search posts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
       
-      <PostDialog 
-        isOpen={isDialogOpen} 
-        onOpenChange={setIsDialogOpen}
-        currentPost={currentPost}
-        onSubmit={handleSubmit}
-        isLoading={createMutation.isPending || updateMutation.isPending}
-      />
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : error ? (
+        <div className="text-red-500 mt-4">
+          Error loading posts: {(error as Error).message}
+        </div>
+      ) : (
+        <PostsList 
+          posts={filteredPosts} 
+          isLoading={isLoading} 
+          onEdit={handleEdit} 
+          onDelete={handleDelete} 
+        />
+      )}
     </div>
   );
 };
