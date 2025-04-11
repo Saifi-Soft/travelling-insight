@@ -1,39 +1,69 @@
-export type Topic = {
-  id: string;
-  name: string;
-  icon?: string;
-  count: number;
-  slug: string;
-};
 
-export type Category = {
-  id: string;
-  name: string;
-  icon: string;
-  slug: string;
-  count: number;
-  image: string;
-};
+// Define core types for the blog application
 
-export type Author = {
-  id: string;
+export interface Author {
   name: string;
   avatar: string;
   bio?: string;
-};
+  social?: {
+    twitter?: string;
+    instagram?: string;
+    facebook?: string;
+  };
+}
 
-export type Post = {
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  image?: string;
+  count?: number;
+}
+
+export interface Topic {
+  id: string;
+  name: string;
+  slug: string;
+  count?: number;
+}
+
+export interface Comment {
+  id: string;
+  author: Author;
+  content: string;
+  date: string;
+  likes: number;
+  replies?: Comment[];
+}
+
+export interface Post {
   id: string;
   title: string;
+  slug?: string;
   excerpt: string;
-  author: {
-    name: string;
-    avatar: string;
-  };
+  author: Author;
   category: string;
   coverImage: string;
   date: string;
   readTime: string;
   likes: number;
   comments: number;
-};
+  content?: string;
+  topics?: string[];
+  seo?: SeoData;
+}
+
+export interface SeoData {
+  metaTitle: string;
+  metaDescription: string;
+  keywords: string;
+  ogImage: string;
+}
+
+export interface MediaItem {
+  id?: string;
+  type: 'image' | 'youtube' | 'twitter' | 'pinterest';
+  url: string;
+  caption?: string;
+}
