@@ -8,10 +8,9 @@ import {
 
 // Community users API
 export const communityUsersApi = {
-  getAll: async (filter?: any): Promise<CommunityUser[]> => {
+  getAll: async (): Promise<CommunityUser[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const query = filter || {};
       const users = await collections.community_users.find().toArray();
       return formatMongoData(users);
     } catch (error) {
@@ -35,10 +34,8 @@ export const communityUsersApi = {
   getByStatus: async (status: string): Promise<CommunityUser[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const users = await collections.community_users
-        .find({ status })
-        .toArray();
-      return formatMongoData(users);
+      const users = await collections.community_users.find().toArray();
+      return formatMongoData(users.filter(user => user.status === status));
     } catch (error) {
       console.error(`Error fetching users with status ${status}:`, error);
       throw error;
@@ -181,10 +178,8 @@ export const travelGroupsApi = {
   getByCategory: async (category: string): Promise<TravelGroup[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const groups = await collections.travel_groups
-        .find({ category })
-        .toArray();
-      return formatMongoData(groups);
+      const groups = await collections.travel_groups.find().toArray();
+      return formatMongoData(groups.filter(group => group.category === category));
     } catch (error) {
       console.error(`Error fetching groups for category ${category}:`, error);
       throw error;
@@ -312,10 +307,8 @@ export const communityEventsApi = {
   getByStatus: async (status: string): Promise<CommunityEvent[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const events = await collections.community_events
-        .find({ status })
-        .toArray();
-      return formatMongoData(events);
+      const events = await collections.community_events.find().toArray();
+      return formatMongoData(events.filter(event => event.status === status));
     } catch (error) {
       console.error(`Error fetching events with status ${status}:`, error);
       throw error;
@@ -431,14 +424,15 @@ export const travelMatchesApi = {
     try {
       const { collections } = await connectToDatabase();
       
-      // Find other active travel matches with similar destinations
-      const potentialMatches = await collections.travel_matches
-        .find({
-          userId: { $ne: userId }, // Exclude the current user
-          status: "active",
-          "preferences.destinations": { $in: preferences.destinations }
-        })
-        .toArray();
+      // Find other active travel matches
+      const matches = await collections.travel_matches.find().toArray();
+      const potentialMatches = matches.filter(match => 
+        match.userId !== userId && 
+        match.status === "active" && 
+        match.preferences.destinations.some((d: string) => 
+          preferences.destinations.includes(d)
+        )
+      );
       
       // Get user details for each potential match
       const matchesWithDetails = await Promise.all(
@@ -547,11 +541,12 @@ export const communityPaymentApi = {
       const { collections } = await connectToDatabase();
       
       // Check if user has an active subscription
-      const subscription = await collections.user_subscriptions.findOne({
-        userId,
-        status: 'active',
-        expiresAt: { $gt: new Date() }
-      });
+      const subscriptions = await collections.user_subscriptions.find().toArray();
+      const subscription = subscriptions.find(sub => 
+        sub.userId === userId && 
+        sub.status === 'active' && 
+        new Date(sub.expiresAt) > new Date()
+      );
       
       return !!subscription;
     } catch (error) {

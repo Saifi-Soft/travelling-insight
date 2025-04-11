@@ -376,7 +376,9 @@ export const categoriesApi = {
       }
       
       // Check if any posts are using this category
-      const postsUsingCategory = await collections.posts.countDocuments({ category: category.name });
+      const posts = await collections.posts.find().toArray();
+      const postsUsingCategory = posts.filter(post => post.category === category.name).length;
+      
       if (postsUsingCategory > 0) {
         throw new Error(`Cannot delete: ${postsUsingCategory} posts are using this category`);
       }
@@ -504,7 +506,11 @@ export const topicsApi = {
       }
       
       // Check if any posts are using this topic
-      const postsUsingTopic = await collections.posts.countDocuments({ topics: { $in: [topic.name] } });
+      const posts = await collections.posts.find().toArray();
+      const postsUsingTopic = posts.filter(
+        post => post.topics && post.topics.includes(topic.name)
+      ).length;
+      
       if (postsUsingTopic > 0) {
         throw new Error(`Cannot delete: ${postsUsingTopic} posts are using this topic`);
       }
@@ -530,10 +536,10 @@ export const commentsApi = {
     try {
       const { collections } = await connectToDatabase();
       const comments = await collections.comments
-        .find({ postId })
-        .sort({ date: -1 })
+        .find()
         .toArray();
-      return formatMongoData(comments);
+      const filteredComments = comments.filter(comment => comment.postId === postId);
+      return formatMongoData(filteredComments);
     } catch (error) {
       console.error(`Error fetching comments for post ${postId}:`, error);
       throw error;

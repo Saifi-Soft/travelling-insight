@@ -1,4 +1,3 @@
-
 // MongoDB API implementation for browser environments
 import { Post, Category, Topic, Comment, MongoOperators } from '@/types/common';
 import { PostSchema } from '@/models/Post';
@@ -20,7 +19,9 @@ export const COLLECTIONS = {
   COMMUNITY_USERS: 'community_users',
   TRAVEL_GROUPS: 'travel_groups',
   COMMUNITY_EVENTS: 'community_events',
-  TRAVEL_MATCHES: 'travel_matches'
+  TRAVEL_MATCHES: 'travel_matches',
+  USER_SUBSCRIPTIONS: 'user_subscriptions',
+  USER_THEME_PREFERENCES: 'user_theme_preferences'
 };
 
 // For browser compatibility, we'll use a serverless approach
@@ -79,6 +80,12 @@ export async function connectToDatabase() {
   }
   if (!localStorage.getItem(COLLECTIONS.TRAVEL_MATCHES)) {
     localStorage.setItem(COLLECTIONS.TRAVEL_MATCHES, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(COLLECTIONS.USER_SUBSCRIPTIONS)) {
+    localStorage.setItem(COLLECTIONS.USER_SUBSCRIPTIONS, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(COLLECTIONS.USER_THEME_PREFERENCES)) {
+    localStorage.setItem(COLLECTIONS.USER_THEME_PREFERENCES, JSON.stringify([]));
   }
 
   return {
@@ -158,21 +165,40 @@ export async function connectToDatabase() {
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.TRAVEL_MATCHES, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.TRAVEL_MATCHES, query),
         countDocuments: (query?: any) => countDocuments(COLLECTIONS.TRAVEL_MATCHES, query)
+      },
+      user_subscriptions: {
+        find: () => createFindCursor(COLLECTIONS.USER_SUBSCRIPTIONS),
+        findOne: (query: any) => findOne(COLLECTIONS.USER_SUBSCRIPTIONS, query),
+        insertOne: (doc: any) => insertOne(COLLECTIONS.USER_SUBSCRIPTIONS, doc),
+        insertMany: (docs: any[]) => insertMany(COLLECTIONS.USER_SUBSCRIPTIONS, docs),
+        updateOne: (query: any, update: any) => updateOne(COLLECTIONS.USER_SUBSCRIPTIONS, query, update),
+        deleteOne: (query: any) => deleteOne(COLLECTIONS.USER_SUBSCRIPTIONS, query),
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.USER_SUBSCRIPTIONS, query)
+      },
+      user_theme_preferences: {
+        find: () => createFindCursor(COLLECTIONS.USER_THEME_PREFERENCES),
+        findOne: (query: any) => findOne(COLLECTIONS.USER_THEME_PREFERENCES, query),
+        insertOne: (doc: any) => insertOne(COLLECTIONS.USER_THEME_PREFERENCES, doc),
+        insertMany: (docs: any[]) => insertMany(COLLECTIONS.USER_THEME_PREFERENCES, docs),
+        updateOne: (query: any, update: any) => updateOne(COLLECTIONS.USER_THEME_PREFERENCES, query, update),
+        deleteOne: (query: any) => deleteOne(COLLECTIONS.USER_THEME_PREFERENCES, query),
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.USER_THEME_PREFERENCES, query)
+      },
+      listCollections: () => ({
+        toArray: async () => {
+          return Object.keys(COLLECTIONS).map(key => ({
+            name: COLLECTIONS[key as keyof typeof COLLECTIONS]
+          }));
+        }
+      }),
+      createCollection: (name: string) => {
+        if (!localStorage.getItem(name)) {
+          localStorage.setItem(name, JSON.stringify([]));
+        }
+        return Promise.resolve(true);
       }
     }
   };
-}
-
-// Initialize database with indexes and validations
-export async function initializeDatabase() {
-  try {
-    console.log('Initializing database');
-    // Nothing to do for localStorage implementation
-    return true;
-  } catch (error) {
-    console.error('Error initializing database:', error);
-    return false;
-  }
 }
 
 // Helper functions to simulate MongoDB operations
@@ -377,3 +403,21 @@ export const db = {
     createIndex: () => Promise.resolve({ result: true })
   })
 };
+
+// Add a function to get the database instance
+export async function getDB() {
+  const { collections } = await connectToDatabase();
+  return collections;
+}
+
+// Initialize database with indexes and validations
+export async function initializeDatabase() {
+  try {
+    console.log('Initializing database');
+    // Nothing to do for localStorage implementation
+    return true;
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    return false;
+  }
+}
