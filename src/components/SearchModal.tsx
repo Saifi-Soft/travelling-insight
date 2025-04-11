@@ -87,11 +87,13 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
     onClose();
   };
   
-  // Handle item click - navigate to the correct page and close the modal
+  // Handle item click - navigate to the correct page based on the item's ID
   const handleItemClick = (type: string, id: string) => {
     if (type === 'post') {
+      console.log(`Navigating to blog post with ID: ${id}`);
       navigate(`/blog/${id}`);
     } else if (type === 'destination') {
+      console.log(`Navigating to destination with ID: ${id}`);
       navigate(`/destinations/${id}`);
     }
     handleClose();
