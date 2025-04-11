@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Post } from '@/types/common';
 
 // Sample search data (this would come from an API in a real application)
@@ -48,6 +49,7 @@ interface SearchModalProps {
 const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult>({ posts: [], destinations: [] });
+  const navigate = useNavigate();
 
   // Handle search query changes
   useEffect(() => {
@@ -85,9 +87,19 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
     onClose();
   };
   
+  // Handle item click - navigate to the correct page and close the modal
+  const handleItemClick = (type: string, id: string) => {
+    if (type === 'post') {
+      navigate(`/blog/${id}`);
+    } else if (type === 'destination') {
+      navigate(`/destinations/${id}`);
+    }
+    handleClose();
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md md:max-w-xl p-0">
+      <DialogContent className="sm:max-w-md md:max-w-xl p-0 overflow-hidden">
         <div className="flex items-center border-b p-4">
           <Search className="h-5 w-5 text-muted-foreground mr-2" />
           <Input 
@@ -125,18 +137,17 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                   <h3 className="text-lg font-semibold mb-3">Blog Posts</h3>
                   <div className="space-y-3">
                     {results.posts.map(post => (
-                      <Link 
-                        to={`/blog/${post.id}`} 
+                      <div
                         key={post.id}
-                        onClick={handleClose}
-                        className="block p-3 rounded-md hover:bg-muted transition-colors"
+                        onClick={() => handleItemClick('post', post.id)}
+                        className="p-3 rounded-md hover:bg-muted transition-colors cursor-pointer"
                       >
                         <h4 className="font-medium">{post.title}</h4>
                         <p className="text-sm text-muted-foreground">{post.excerpt}</p>
                         <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
                           {post.category}
                         </span>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -148,17 +159,16 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                   <h3 className="text-lg font-semibold mb-3">Destinations</h3>
                   <div className="space-y-3">
                     {results.destinations.map(destination => (
-                      <Link 
-                        to={`/destinations`} 
+                      <div 
                         key={destination.id}
-                        onClick={handleClose}
-                        className="block p-3 rounded-md hover:bg-muted transition-colors"
+                        onClick={() => handleItemClick('destination', destination.id)}
+                        className="p-3 rounded-md hover:bg-muted transition-colors cursor-pointer"
                       >
                         <h4 className="font-medium">{destination.name}</h4>
                         <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
                           {destination.type}
                         </span>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
