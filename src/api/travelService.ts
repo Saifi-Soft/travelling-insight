@@ -1,4 +1,3 @@
-
 // This file handles all API calls to travel partners and affiliate networks
 
 // API configurations - in a real app, these should be environment variables
@@ -7,7 +6,7 @@ const BOOKING_PARTNER_ID = 'booking-test-partner';
 const TRIPADVISOR_AFFILIATE_ID = 'tripadvisor-test-affiliate';
 
 // Hotel API integration with Booking.com or similar
-export const hotelApi = {
+const hotelApi = {
   searchHotels: async (params: {
     destination: string,
     checkIn: string,
@@ -94,7 +93,7 @@ export const hotelApi = {
 };
 
 // Flight API integration with Skyscanner or similar
-export const flightApi = {
+const flightApi = {
   searchFlights: async (params: {
     departure: string,
     destination: string,
@@ -204,7 +203,7 @@ export const flightApi = {
 };
 
 // Tour Guide API integration with TripAdvisor or similar
-export const guideApi = {
+const guideApi = {
   searchGuides: async (params: {
     destination: string,
     date: string,
@@ -297,3 +296,127 @@ export const guideApi = {
     }
   }
 };
+
+// Create a booking management API
+const bookingApi = {
+  getAllBookings: async () => {
+    try {
+      console.log('Fetching all bookings');
+      
+      // Mock data for development
+      const bookings = [
+        {
+          id: "booking-1",
+          type: "flight",
+          customerName: "John Smith",
+          customerEmail: "john.smith@example.com",
+          bookingDate: "2025-04-01",
+          startDate: "2025-05-15",
+          endDate: null,
+          amount: 350,
+          status: "confirmed",
+          reference: "FL-123456",
+          details: {
+            flightNumber: "AA123",
+            origin: "New York",
+            destination: "Los Angeles",
+            departureTime: "08:45",
+            arrivalTime: "13:15",
+            passengers: 1,
+            airline: "American Airlines"
+          }
+        },
+        {
+          id: "booking-2",
+          type: "hotel",
+          customerName: "Sarah Johnson",
+          customerEmail: "sarah.j@example.com",
+          bookingDate: "2025-04-02",
+          startDate: "2025-06-20",
+          endDate: "2025-06-27",
+          amount: 1199,
+          status: "pending",
+          reference: "HT-789012",
+          details: {
+            hotelName: "Grand Plaza Hotel",
+            roomType: "Deluxe King",
+            guests: 2,
+            checkIn: "2025-06-20",
+            checkOut: "2025-06-27"
+          }
+        },
+        {
+          id: "booking-3",
+          type: "guide",
+          customerName: "Michael Chen",
+          customerEmail: "m.chen@example.com",
+          bookingDate: "2025-04-03",
+          startDate: "2025-05-10",
+          endDate: null,
+          amount: 75,
+          status: "confirmed",
+          reference: "GD-345678",
+          details: {
+            guideName: "Elena Martinez",
+            tourType: "City Architecture",
+            groupSize: 4,
+            date: "2025-05-10",
+            duration: "3 hours"
+          }
+        },
+        {
+          id: "booking-4",
+          type: "flight",
+          customerName: "Emily Wilson",
+          customerEmail: "emily.w@example.com",
+          bookingDate: "2025-04-05",
+          startDate: "2025-07-12",
+          endDate: null,
+          amount: 425,
+          status: "cancelled",
+          reference: "FL-456789",
+          details: {
+            flightNumber: "DL456",
+            origin: "Chicago",
+            destination: "Miami",
+            departureTime: "10:20",
+            arrivalTime: "14:55",
+            passengers: 1,
+            airline: "Delta"
+          }
+        }
+      ];
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return bookings;
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      throw new Error('Failed to fetch bookings. Please try again.');
+    }
+  },
+  
+  updateBookingStatus: async (id: string, status: string) => {
+    try {
+      console.log('Updating booking status:', id, status);
+      
+      // In a real app, this would call an API to update the status
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return { success: true, message: `Booking ${id} status updated to ${status}` };
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      throw new Error('Failed to update booking status. Please try again.');
+    }
+  }
+};
+
+// Export all APIs as travelService
+export const travelService = {
+  ...hotelApi,
+  ...flightApi,
+  ...guideApi,
+  ...bookingApi
+};
+
+export { hotelApi, flightApi, guideApi };

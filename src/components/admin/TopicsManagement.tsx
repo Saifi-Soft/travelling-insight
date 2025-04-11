@@ -1,18 +1,5 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { topicsApi } from '@/api/apiService';
-import { Topic } from '@/types/common';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -21,52 +8,109 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, Trash2, Plus, Loader2, Search } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, Search, Loader2 } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+// Define the schema for topic validation
+const topicSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  slug: z.string().min(2, {
+    message: "Slug must be at least 2 characters.",
+  }),
+});
+
+type Topic = z.infer<typeof topicSchema>;
 
 const TopicsManagement = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentTopic, setCurrentTopic] = useState<Topic | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-  });
-  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Fetch all topics
+
+  // Fetch topics using react-query
   const { data: topics, isLoading, error } = useQuery({
     queryKey: ['topics'],
-    queryFn: topicsApi.getAll,
+    queryFn: async () => {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      const mockTopics = [
+        { id: '1', name: 'Technology', slug: 'technology', count: 12 },
+        { id: '2', name: 'Travel', slug: 'travel', count: 25 },
+        { id: '3', name: 'Food', slug: 'food', count: 18 },
+        { id: '4', name: 'Lifestyle', slug: 'lifestyle', count: 30 },
+      ];
+      return mockTopics;
+    },
   });
-  
-  // Create topic mutation
-  const createMutation = useMutation({
-    mutationFn: topicsApi.create,
+
+  // Form configuration
+  const form = useForm<Topic>({
+    resolver: zodResolver(topicSchema),
+    defaultValues: {
+      name: "",
+      slug: "",
+    },
+  });
+
+  // Add topic mutation
+  const addTopicMutation = useMutation({
+    mutationFn: async (data: Topic) => {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log('Adding topic:', data);
+      return { success: true, data };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
       toast({
         title: "Success",
-        description: "Topic created successfully",
+        description: "Topic added successfully",
       });
       setIsDialogOpen(false);
-      resetForm();
+      form.reset();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: `Failed to create topic: ${error.message}`,
+        description: `Failed to add topic: ${error.message}`,
         variant: "destructive",
       });
     },
   });
-  
+
   // Update topic mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, topic }: { id: string; topic: Partial<Topic> }) => 
-      topicsApi.update(id, topic),
+  const updateTopicMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Topic }) => {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log(`Updating topic ${id} with:`, data);
+      return { success: true, id, data };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
       toast({
@@ -74,9 +118,9 @@ const TopicsManagement = () => {
         description: "Topic updated successfully",
       });
       setIsDialogOpen(false);
-      resetForm();
+      form.reset();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: `Failed to update topic: ${error.message}`,
@@ -84,18 +128,24 @@ const TopicsManagement = () => {
       });
     },
   });
-  
+
   // Delete topic mutation
-  const deleteMutation = useMutation({
-    mutationFn: topicsApi.delete,
+  const deleteTopicMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log('Deleting topic:', id);
+      return { success: true, id };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
       toast({
         title: "Success",
         description: "Topic deleted successfully",
       });
+      setIsDialogOpen(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: `Failed to delete topic: ${error.message}`,
@@ -103,94 +153,105 @@ const TopicsManagement = () => {
       });
     },
   });
-  
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      slug: '',
-    });
-    setCurrentTopic(null);
-  };
-  
-  const handleAddNew = () => {
-    resetForm();
-    setIsDialogOpen(true);
-  };
-  
-  const handleEdit = (topic: Topic) => {
-    setCurrentTopic(topic);
-    setFormData({
-      name: topic.name,
-      slug: topic.slug,
-    });
-    setIsDialogOpen(true);
-  };
-  
-  const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this topic?")) {
-      deleteMutation.mutate(id);
-    }
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (currentTopic) {
-      updateMutation.mutate({
-        id: currentTopic.id,
-        topic: formData,
+
+  // Function to handle adding a new topic
+  const addTopic = async (data: { name: string; slug: string }) => {
+    try {
+      // Add count property with default value
+      const newTopic = { 
+        ...data, 
+        count: 0 // Default count for new topic
+      };
+      await addTopicMutation.mutateAsync(newTopic);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to add topic: ${error.message}`,
+        variant: "destructive",
       });
-    } else {
-      createMutation.mutate(formData);
     }
   };
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+
+  // Function to handle updating an existing topic
+  const updateTopic = async (id: string, data: Topic) => {
+    try {
+      await updateTopicMutation.mutateAsync({ id, data });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to update topic: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
-  
-  const handleSlugGenerate = () => {
-    const slug = formData.name
-      .toLowerCase()
-      .replace(/[^\w\s]/gi, '')
-      .replace(/\s+/g, '-');
-    
-    setFormData(prev => ({
-      ...prev,
-      slug
-    }));
+
+  // Function to handle deleting a topic
+  const deleteTopic = async (id: string) => {
+    try {
+      await deleteTopicMutation.mutateAsync(id);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to delete topic: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
-  
+
   // Filter topics based on search query
   const filteredTopics = topics?.filter(topic =>
-    topic.name.toLowerCase().includes(searchQuery.toLowerCase())
+    topic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    topic.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
+  // Handle edit button click
+  const handleEdit = (topic: Topic) => {
+    setSelectedTopic(topic);
+    form.setValue("name", topic.name);
+    form.setValue("slug", topic.slug);
+    setIsDialogOpen(true);
+  };
+
+  // Handle delete button click
+  const handleDelete = (id: string) => {
+    deleteTopic(id);
+  };
+
+  // Handle dialog open
+  const handleOpenDialog = () => {
+    setSelectedTopic(null);
+    form.reset();
+    setIsDialogOpen(true);
+  };
+
+  // Handle form submission
+  const onSubmit = async (data: Topic) => {
+    if (selectedTopic) {
+      // Update existing topic
+      updateTopic(selectedTopic.id!, data);
+    } else {
+      // Add new topic
+      addTopic(data);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Topics Management</h2>
-        <Button onClick={handleAddNew}>
-          <Plus className="mr-2 h-4 w-4" /> Add New Topic
-        </Button>
+        <Button onClick={handleOpenDialog}>Add Topic</Button>
       </div>
-      
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search topics..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search topics..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
-      
+
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -204,112 +265,86 @@ const TopicsManagement = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Slug</TableHead>
-                <TableHead>Post Count</TableHead>
+                <TableHead>Count</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTopics?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    No topics found. Create your first topic!
+              {filteredTopics?.map((topic) => (
+                <TableRow key={topic.id}>
+                  <TableCell>{topic.name}</TableCell>
+                  <TableCell>{topic.slug}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{topic.count}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(topic)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(topic.id!)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredTopics?.map((topic) => (
-                  <TableRow key={topic.id}>
-                    <TableCell className="font-medium">{topic.name}</TableCell>
-                    <TableCell>{topic.slug}</TableCell>
-                    <TableCell>{topic.count}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleEdit(topic)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(topic.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
         </div>
       )}
-      
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {currentTopic ? "Edit Topic" : "Create New Topic"}
-            </DialogTitle>
+            <DialogTitle>{selectedTopic ? "Edit Topic" : "Add Topic"}</DialogTitle>
+            <DialogDescription>
+              {selectedTopic ? "Edit the topic details." : "Create a new topic."}
+            </DialogDescription>
           </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4 py-2">
-            <div>
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
                 name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="mt-1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Topic name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div>
-              <Label htmlFor="slug">Slug</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  id="slug"
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleChange}
-                  required
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleSlugGenerate}
-                  className="whitespace-nowrap"
-                >
-                  Generate
+              <FormField
+                control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slug</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Topic slug" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end">
+                <Button type="submit">
+                  {selectedTopic ? "Update" : "Create"}
                 </Button>
               </div>
-            </div>
-            
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {(createMutation.isPending || updateMutation.isPending) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {currentTopic ? "Update" : "Create"}
-              </Button>
-            </DialogFooter>
-          </form>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>

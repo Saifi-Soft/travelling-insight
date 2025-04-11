@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { topicsApi } from '@/api/apiService'; // We'll use the topics API for hashtags
@@ -181,6 +180,23 @@ const HashtagsManagement = () => {
   const filteredHashtags = hashtags?.filter(hashtag =>
     hashtag.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const addHashtag = async (data: { name: string; slug: string }) => {
+    try {
+      // Add count property with default value
+      const newHashtag = { 
+        ...data, 
+        count: 0 // Default count for new hashtag
+      };
+      createMutation.mutate(newHashtag);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to add hashtag: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  };
   
   return (
     <div>

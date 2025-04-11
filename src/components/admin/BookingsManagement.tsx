@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { travelService } from '@/api/travelService'; // Assuming this service exists
+import { travelService } from '@/api/travelService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -32,24 +31,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-
-// Type for bookings
-type BookingType = 'flight' | 'hotel' | 'guide';
-type BookingStatus = 'confirmed' | 'pending' | 'cancelled';
-
-interface Booking {
-  id: string;
-  type: BookingType;
-  customerName: string;
-  customerEmail: string;
-  bookingDate: string;
-  startDate: string;
-  endDate?: string;
-  amount: number;
-  status: BookingStatus;
-  reference: string;
-  details: any; // Specific details based on booking type
-}
+import { Booking, BookingStatus, BookingType } from '@/types/admin';
 
 const BookingsManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,13 +43,11 @@ const BookingsManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch all bookings
-  const { data: bookings, isLoading, error } = useQuery({
+  const { data: bookings = [], isLoading, error } = useQuery({
     queryKey: ['bookings'],
     queryFn: travelService.getAllBookings,
   });
   
-  // Update booking status mutation
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: BookingStatus }) => 
       travelService.updateBookingStatus(id, status),
@@ -87,8 +67,7 @@ const BookingsManagement = () => {
     },
   });
   
-  // Filter bookings based on search query and filters
-  const filteredBookings = bookings?.filter(booking => {
+  const filteredBookings = bookings.filter((booking: Booking) => {
     const matchesSearch = 
       booking.customerName.toLowerCase().includes(searchQuery.toLowerCase()) || 
       booking.reference.toLowerCase().includes(searchQuery.toLowerCase());

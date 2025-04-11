@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { categoriesApi } from '@/api/apiService';
@@ -172,6 +171,23 @@ const CategoriesManagement = () => {
   const filteredCategories = categories?.filter(category =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const addCategory = async (data: { name: string; slug: string; icon: string }) => {
+    try {
+      const newCategory = { 
+        ...data, 
+        image: "https://source.unsplash.com/random/300x200?nature",
+        count: 0
+      };
+      createMutation.mutate(newCategory);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to add category: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  };
   
   return (
     <div>

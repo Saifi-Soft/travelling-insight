@@ -19,6 +19,8 @@ export interface PostWithSeo extends Post {
   seo?: SeoData;
   mediaItems?: MediaItem[];
   topics?: string[];
+  content?: string;
+  slug?: string;
 }
 
 export interface AnalyticsData {
@@ -91,4 +93,21 @@ export interface GuideBookingDetails {
   groupSize: number;
   date: string;
   duration: string;
+}
+
+// Create extended Category and Topic interfaces for admin use
+export interface AdminCategory extends Omit<Category, "id"> {
+  id?: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  image?: string;
+  count?: number;
+}
+
+export interface AdminTopic extends Omit<Topic, "id"> {
+  id?: string;
+  name: string;
+  slug: string;
+  count?: number;
 }
