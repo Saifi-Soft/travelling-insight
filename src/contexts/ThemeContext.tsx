@@ -15,9 +15,11 @@ interface ThemeColors {
 interface ThemeContextType {
   theme: Theme;
   themeColors: ThemeColors;
+  lightThemeColors: ThemeColors;
+  darkThemeColors: ThemeColors;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
-  updateThemeColor: (colorType: keyof ThemeColors, value: string) => void;
+  updateThemeColor: (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => void;
 }
 
 const defaultLightColors: ThemeColors = {
@@ -41,29 +43,45 @@ const defaultDarkColors: ThemeColors = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  // Get initial theme and colors from localStorage or use defaults
+  // Initialize state for both light and dark theme colors
   const [theme, setTheme] = useState<Theme>('light');
+  const [lightThemeColors, setLightThemeColors] = useState<ThemeColors>(defaultLightColors);
+  const [darkThemeColors, setDarkThemeColors] = useState<ThemeColors>(defaultDarkColors);
   const [themeColors, setThemeColors] = useState<ThemeColors>(defaultLightColors);
 
-  // Initialize theme after component mounts (when window is available)
+  // Initialize theme after component mounts
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
+    
+    // Load saved theme colors from localStorage
+    const savedLightColors = localStorage.getItem('lightThemeColors');
+    const savedDarkColors = localStorage.getItem('darkThemeColors');
+    
+    // Set light theme colors
+    if (savedLightColors) {
+      setLightThemeColors(JSON.parse(savedLightColors));
+    }
+    
+    // Set dark theme colors
+    if (savedDarkColors) {
+      setDarkThemeColors(JSON.parse(savedDarkColors));
+    }
+    
+    // Set theme
     if (savedTheme === 'dark' || savedTheme === 'light' || savedTheme === 'system') {
       setTheme(savedTheme);
       
-      // Set initial colors based on theme
+      // Set the active theme colors based on saved theme
       if (savedTheme === 'dark') {
-        const savedColors = localStorage.getItem('darkThemeColors');
-        setThemeColors(savedColors ? JSON.parse(savedColors) : defaultDarkColors);
+        setThemeColors(savedDarkColors ? JSON.parse(savedDarkColors) : defaultDarkColors);
       } else {
-        const savedColors = localStorage.getItem('lightThemeColors');
-        setThemeColors(savedColors ? JSON.parse(savedColors) : defaultLightColors);
+        setThemeColors(savedLightColors ? JSON.parse(savedLightColors) : defaultLightColors);
       }
     } else {
-      // Check system preference
+      // Check system preference if no saved theme
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setTheme(prefersDark ? 'dark' : 'light');
-      setThemeColors(prefersDark ? defaultDarkColors : defaultLightColors);
+      setThemeColors(prefersDark ? darkThemeColors : lightThemeColors);
     }
   }, []);
 
@@ -71,17 +89,22 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('theme', theme);
     
-    // Apply theme class to document
-    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    // Save both theme color sets
+    localStorage.setItem('lightThemeColors', JSON.stringify(lightThemeColors));
+    localStorage.setItem('darkThemeColors', JSON.stringify(darkThemeColors));
+    
+    // Determine if dark mode should be applied
+    const isDark = 
+      theme === 'dark' || 
+      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    // Apply theme class
+    if (isDark) {
       document.documentElement.classList.add('dark');
-      
-      // Save colors for dark theme
-      localStorage.setItem('darkThemeColors', JSON.stringify(themeColors));
+      setThemeColors(darkThemeColors);
     } else {
       document.documentElement.classList.remove('dark');
-      
-      // Save colors for light theme
-      localStorage.setItem('lightThemeColors', JSON.stringify(themeColors));
+      setThemeColors(lightThemeColors);
     }
     
     // Apply CSS variables for theme colors
@@ -91,25 +114,22 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     document.documentElement.style.setProperty('--color-footer', themeColors.footer);
     document.documentElement.style.setProperty('--color-header', themeColors.header);
     document.documentElement.style.setProperty('--color-card', themeColors.card);
-  }, [theme, themeColors]);
+  }, [theme, lightThemeColors, darkThemeColors, themeColors]);
 
   // Listen for system preference changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
       if (theme === 'system') {
-        if (e.matches) {
-          setThemeColors(defaultDarkColors);
-        } else {
-          setThemeColors(defaultLightColors);
-        }
+        setThemeColors(e.matches ? darkThemeColors : lightThemeColors);
       }
     };
     
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, [theme, darkThemeColors, lightThemeColors]);
 
+  // Toggle through themes: light -> dark -> system -> light
   const toggleTheme = () => {
     setTheme(prevTheme => {
       if (prevTheme === 'light') return 'dark';
@@ -118,17 +138,43 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  const updateThemeColor = (colorType: keyof ThemeColors, value: string) => {
-    setThemeColors(prev => ({
-      ...prev,
-      [colorType]: value
-    }));
+  // Update theme color for specific mode (light/dark)
+  const updateThemeColor = (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => {
+    if (mode === 'light') {
+      setLightThemeColors(prev => ({
+        ...prev,
+        [colorType]: value
+      }));
+      
+      // If currently in light mode, update active colors immediately
+      if (theme === 'light' || (theme === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setThemeColors(prev => ({
+          ...prev,
+          [colorType]: value
+        }));
+      }
+    } else {
+      setDarkThemeColors(prev => ({
+        ...prev,
+        [colorType]: value
+      }));
+      
+      // If currently in dark mode, update active colors immediately
+      if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setThemeColors(prev => ({
+          ...prev,
+          [colorType]: value
+        }));
+      }
+    }
   };
 
   return (
     <ThemeContext.Provider value={{ 
       theme, 
       themeColors, 
+      lightThemeColors,
+      darkThemeColors,
       toggleTheme, 
       setTheme, 
       updateThemeColor 

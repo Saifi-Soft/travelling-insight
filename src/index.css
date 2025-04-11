@@ -35,7 +35,7 @@
  
     --radius: 0.75rem;
 
-    /* Custom theme variables */
+    /* Custom theme variables for light mode */
     --color-background: #ffffff;
     --color-foreground: #222222;
     --color-primary: #3b82f6;
@@ -92,6 +92,7 @@
     font-family: 'Inter', sans-serif;
     background-color: var(--color-background);
     color: var(--color-foreground);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   /* Add smooth scrolling to the page */
@@ -144,21 +145,40 @@
     @apply backdrop-blur-md bg-white/70 dark:bg-black/40 border border-white/20 dark:border-white/10;
   }
 
-  /* Custom theme classes */
+  /* Custom theme classes - these will update based on theme color variables */
   .bg-theme-primary {
     background-color: var(--color-primary);
+    transition: background-color 0.3s ease;
   }
   
   .text-theme-primary {
     color: var(--color-primary);
+    transition: color 0.3s ease;
   }
 
   .bg-theme-footer {
     background-color: var(--color-footer);
+    transition: background-color 0.3s ease;
   }
 
   .bg-theme-header {
     background-color: var(--color-header);
+    transition: background-color 0.3s ease;
+  }
+
+  .bg-theme-card {
+    background-color: var(--color-card);
+    transition: background-color 0.3s ease;
+  }
+
+  .bg-theme-background {
+    background-color: var(--color-background);
+    transition: background-color 0.3s ease;
+  }
+
+  .text-theme-foreground {
+    color: var(--color-foreground);
+    transition: color 0.3s ease;
   }
 }
 

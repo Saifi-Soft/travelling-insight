@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 
 const Footer = () => {
   return (
-    <footer className="bg-theme-footer text-primary-foreground">
+    <footer className="bg-theme-footer text-white">
       <div className="container-custom py-12">
         {/* Newsletter Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between py-8 border-b border-white/20 mb-8 gap-6">
@@ -28,7 +28,7 @@ const Footer = () => {
               placeholder="Your email address" 
               className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
             />
-            <Button className="bg-white text-primary hover:bg-white/90">
+            <Button className="bg-white text-theme-primary hover:bg-white/90">
               Subscribe
             </Button>
           </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -19,7 +20,7 @@ import {
 
 const AdminSettings = () => {
   const { toast } = useToast();
-  const { theme, themeColors, setTheme, updateThemeColor } = useTheme();
+  const { theme, lightThemeColors, darkThemeColors, setTheme, updateThemeColor } = useTheme();
   
   // General settings
   const [generalSettings, setGeneralSettings] = useState({
@@ -50,13 +51,21 @@ const AdminSettings = () => {
     mailchimpConnected: false
   });
   
-  // Theme preview colors
-  const [previewColors, setPreviewColors] = useState({...themeColors});
+  // Theme preview colors and current mode selection
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
+  const [lightModeColors, setLightModeColors] = useState({...lightThemeColors});
+  const [darkModeColors, setDarkModeColors] = useState({...darkThemeColors});
   
   // Update preview colors when actual theme changes
   useEffect(() => {
-    setPreviewColors({...themeColors});
-  }, [themeColors]);
+    setLightModeColors({...lightThemeColors});
+    setDarkModeColors({...darkThemeColors});
+  }, [lightThemeColors, darkThemeColors]);
+  
+  // Get current preview colors based on selected theme mode
+  const getCurrentPreviewColors = () => {
+    return themeMode === 'light' ? lightModeColors : darkModeColors;
+  };
   
   const handleGeneralSettingsSave = () => {
     // In a real app, you would save to an API
@@ -74,9 +83,13 @@ const AdminSettings = () => {
   };
   
   const handleThemeSettingsSave = () => {
-    // Apply all theme color changes at once
-    Object.entries(previewColors).forEach(([key, value]) => {
-      updateThemeColor(key as keyof typeof themeColors, value);
+    // Apply all theme color changes for both light and dark modes
+    Object.entries(lightModeColors).forEach(([key, value]) => {
+      updateThemeColor(key as keyof typeof lightThemeColors, value, 'light');
+    });
+    
+    Object.entries(darkModeColors).forEach(([key, value]) => {
+      updateThemeColor(key as keyof typeof darkThemeColors, value, 'dark');
     });
     
     toast({
@@ -112,15 +125,22 @@ const AdminSettings = () => {
     });
   };
 
-  const handlePreviewColorChange = (colorType: keyof typeof previewColors, value: string) => {
-    setPreviewColors(prev => ({
-      ...prev,
-      [colorType]: value
-    }));
+  const handlePreviewColorChange = (colorType: keyof typeof lightModeColors, value: string) => {
+    if (themeMode === 'light') {
+      setLightModeColors(prev => ({
+        ...prev,
+        [colorType]: value
+      }));
+    } else {
+      setDarkModeColors(prev => ({
+        ...prev,
+        [colorType]: value
+      }));
+    }
   };
 
   // Color palettes for quick selection
-  const colorPalettes = [
+  const lightColorPalettes = [
     {
       name: 'Blue',
       primary: '#3b82f6',
@@ -159,15 +179,70 @@ const AdminSettings = () => {
     }
   ];
 
-  const applyColorPalette = (palette: typeof colorPalettes[0]) => {
-    setPreviewColors({
-      primary: palette.primary,
-      background: palette.background,
-      foreground: palette.foreground,
-      footer: palette.footer,
-      header: palette.header,
-      card: palette.card,
-    });
+  const darkColorPalettes = [
+    {
+      name: 'Dark Blue',
+      primary: '#60a5fa',
+      background: '#111827',
+      foreground: '#f3f4f6',
+      footer: '#1e3a8a',
+      header: '#0f172a',
+      card: '#1e293b',
+    },
+    {
+      name: 'Dark Green',
+      primary: '#34d399',
+      background: '#0f172a',
+      foreground: '#f8fafc',
+      footer: '#065f46',
+      header: '#0f3a38',
+      card: '#134e4a',
+    },
+    {
+      name: 'Dark Purple',
+      primary: '#a78bfa',
+      background: '#1e1b4b',
+      foreground: '#f5f3ff',
+      footer: '#4c1d95',
+      header: '#2e1065',
+      card: '#4c1d95',
+    },
+    {
+      name: 'Dark Red',
+      primary: '#f87171',
+      background: '#18181b',
+      foreground: '#fef2f2',
+      footer: '#7f1d1d',
+      header: '#1c1917',
+      card: '#292524',
+    }
+  ];
+
+  const applyColorPalette = (palette: typeof lightColorPalettes[0]) => {
+    if (themeMode === 'light') {
+      setLightModeColors({
+        primary: palette.primary,
+        background: palette.background,
+        foreground: palette.foreground,
+        footer: palette.footer,
+        header: palette.header,
+        card: palette.card,
+      });
+    } else {
+      setDarkModeColors({
+        primary: palette.primary,
+        background: palette.background,
+        foreground: palette.foreground,
+        footer: palette.footer,
+        header: palette.header,
+        card: palette.card,
+      });
+    }
+  };
+
+  // Get the relevant color palettes based on the selected theme mode
+  const getCurrentPalettes = () => {
+    return themeMode === 'light' ? lightColorPalettes : darkColorPalettes;
   };
 
   return (
@@ -322,13 +397,35 @@ const AdminSettings = () => {
                       </div>
                       
                       <div className="space-y-3 pt-4 border-t">
-                        <h3 className="text-lg font-medium">Color Settings</h3>
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-medium">Color Settings</h3>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant={themeMode === 'light' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setThemeMode('light')}
+                              className={themeMode === 'light' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                            >
+                              <Sun className="h-4 w-4 mr-1" />
+                              Light Mode
+                            </Button>
+                            <Button 
+                              variant={themeMode === 'dark' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setThemeMode('dark')}
+                              className={themeMode === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                            >
+                              <Moon className="h-4 w-4 mr-1" />
+                              Dark Mode
+                            </Button>
+                          </div>
+                        </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Theme Presets</label>
                             <div className="grid grid-cols-2 gap-2">
-                              {colorPalettes.map((palette) => (
+                              {getCurrentPalettes().map((palette) => (
                                 <Button
                                   key={palette.name}
                                   variant="outline"
@@ -347,18 +444,36 @@ const AdminSettings = () => {
                             </div>
                           </div>
                           
-                          <div className="p-4 border rounded-md" style={{backgroundColor: previewColors.background, color: previewColors.foreground}}>
-                            <h4 className="font-bold mb-2">Preview</h4>
-                            <div className="p-2 rounded mb-2" style={{backgroundColor: previewColors.header}}>
+                          <div 
+                            className="p-4 border rounded-md" 
+                            style={{
+                              backgroundColor: getCurrentPreviewColors().background, 
+                              color: getCurrentPreviewColors().foreground
+                            }}
+                          >
+                            <h4 className="font-bold mb-2">Preview {themeMode === 'dark' ? '(Dark Mode)' : '(Light Mode)'}</h4>
+                            <div 
+                              className="p-2 rounded mb-2" 
+                              style={{backgroundColor: getCurrentPreviewColors().header}}
+                            >
                               Header
                             </div>
-                            <div className="p-2 rounded mb-2" style={{backgroundColor: previewColors.card}}>
+                            <div 
+                              className="p-2 rounded mb-2" 
+                              style={{backgroundColor: getCurrentPreviewColors().card}}
+                            >
                               Card
                             </div>
                             <div className="mb-2">
-                              <span style={{color: previewColors.primary}}>Primary Text</span>
+                              <span style={{color: getCurrentPreviewColors().primary}}>Primary Text</span>
                             </div>
-                            <div className="p-2 rounded" style={{backgroundColor: previewColors.footer, color: '#ffffff'}}>
+                            <div 
+                              className="p-2 rounded" 
+                              style={{
+                                backgroundColor: getCurrentPreviewColors().footer, 
+                                color: '#ffffff'
+                              }}
+                            >
                               Footer
                             </div>
                           </div>
@@ -371,17 +486,17 @@ const AdminSettings = () => {
                               <div className="flex items-center gap-2">
                                 <div 
                                   className="w-6 h-6 rounded-full border"
-                                  style={{backgroundColor: previewColors.primary}}
+                                  style={{backgroundColor: getCurrentPreviewColors().primary}}
                                 />
                                 <Input
                                   type="color"
-                                  value={previewColors.primary}
+                                  value={getCurrentPreviewColors().primary}
                                   onChange={(e) => handlePreviewColorChange('primary', e.target.value)}
                                   className="w-16 p-0 h-8"
                                 />
                                 <Input
                                   type="text"
-                                  value={previewColors.primary}
+                                  value={getCurrentPreviewColors().primary}
                                   onChange={(e) => handlePreviewColorChange('primary', e.target.value)}
                                   className="flex-grow"
                                 />
@@ -393,17 +508,17 @@ const AdminSettings = () => {
                               <div className="flex items-center gap-2">
                                 <div 
                                   className="w-6 h-6 rounded-full border"
-                                  style={{backgroundColor: previewColors.background}}
+                                  style={{backgroundColor: getCurrentPreviewColors().background}}
                                 />
                                 <Input
                                   type="color"
-                                  value={previewColors.background}
+                                  value={getCurrentPreviewColors().background}
                                   onChange={(e) => handlePreviewColorChange('background', e.target.value)}
                                   className="w-16 p-0 h-8"
                                 />
                                 <Input
                                   type="text"
-                                  value={previewColors.background}
+                                  value={getCurrentPreviewColors().background}
                                   onChange={(e) => handlePreviewColorChange('background', e.target.value)}
                                   className="flex-grow"
                                 />
@@ -415,17 +530,17 @@ const AdminSettings = () => {
                               <div className="flex items-center gap-2">
                                 <div 
                                   className="w-6 h-6 rounded-full border"
-                                  style={{backgroundColor: previewColors.foreground}}
+                                  style={{backgroundColor: getCurrentPreviewColors().foreground}}
                                 />
                                 <Input
                                   type="color"
-                                  value={previewColors.foreground}
+                                  value={getCurrentPreviewColors().foreground}
                                   onChange={(e) => handlePreviewColorChange('foreground', e.target.value)}
                                   className="w-16 p-0 h-8"
                                 />
                                 <Input
                                   type="text"
-                                  value={previewColors.foreground}
+                                  value={getCurrentPreviewColors().foreground}
                                   onChange={(e) => handlePreviewColorChange('foreground', e.target.value)}
                                   className="flex-grow"
                                 />
@@ -437,17 +552,17 @@ const AdminSettings = () => {
                               <div className="flex items-center gap-2">
                                 <div 
                                   className="w-6 h-6 rounded-full border"
-                                  style={{backgroundColor: previewColors.header}}
+                                  style={{backgroundColor: getCurrentPreviewColors().header}}
                                 />
                                 <Input
                                   type="color"
-                                  value={previewColors.header}
+                                  value={getCurrentPreviewColors().header}
                                   onChange={(e) => handlePreviewColorChange('header', e.target.value)}
                                   className="w-16 p-0 h-8"
                                 />
                                 <Input
                                   type="text"
-                                  value={previewColors.header}
+                                  value={getCurrentPreviewColors().header}
                                   onChange={(e) => handlePreviewColorChange('header', e.target.value)}
                                   className="flex-grow"
                                 />
@@ -459,17 +574,17 @@ const AdminSettings = () => {
                               <div className="flex items-center gap-2">
                                 <div 
                                   className="w-6 h-6 rounded-full border"
-                                  style={{backgroundColor: previewColors.footer}}
+                                  style={{backgroundColor: getCurrentPreviewColors().footer}}
                                 />
                                 <Input
                                   type="color"
-                                  value={previewColors.footer}
+                                  value={getCurrentPreviewColors().footer}
                                   onChange={(e) => handlePreviewColorChange('footer', e.target.value)}
                                   className="w-16 p-0 h-8"
                                 />
                                 <Input
                                   type="text"
-                                  value={previewColors.footer}
+                                  value={getCurrentPreviewColors().footer}
                                   onChange={(e) => handlePreviewColorChange('footer', e.target.value)}
                                   className="flex-grow"
                                 />
@@ -481,17 +596,17 @@ const AdminSettings = () => {
                               <div className="flex items-center gap-2">
                                 <div 
                                   className="w-6 h-6 rounded-full border"
-                                  style={{backgroundColor: previewColors.card}}
+                                  style={{backgroundColor: getCurrentPreviewColors().card}}
                                 />
                                 <Input
                                   type="color"
-                                  value={previewColors.card}
+                                  value={getCurrentPreviewColors().card}
                                   onChange={(e) => handlePreviewColorChange('card', e.target.value)}
                                   className="w-16 p-0 h-8"
                                 />
                                 <Input
                                   type="text"
-                                  value={previewColors.card}
+                                  value={getCurrentPreviewColors().card}
                                   onChange={(e) => handlePreviewColorChange('card', e.target.value)}
                                   className="flex-grow"
                                 />
@@ -506,7 +621,7 @@ const AdminSettings = () => {
                         className="bg-blue-600 hover:bg-blue-700 mt-4"
                       >
                         <Brush className="mr-2 h-4 w-4" />
-                        Apply Theme Settings
+                        Save {themeMode === 'dark' ? 'Dark' : 'Light'} Mode Settings
                       </Button>
                     </div>
                   </div>
