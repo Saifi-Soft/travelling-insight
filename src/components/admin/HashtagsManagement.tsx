@@ -1,7 +1,9 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { topicsApi } from '@/api/apiService'; // We'll use the topics API for hashtags
 import { Topic } from '@/types/common';
+import { AdminTopic } from '@/types/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -25,11 +27,12 @@ import { Label } from '@/components/ui/label';
 
 const HashtagsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentHashtag, setCurrentHashtag] = useState<Topic | null>(null);
+  const [currentHashtag, setCurrentHashtag] = useState<AdminTopic | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
+    count: 0, // Add count with a default value
   });
   
   const { toast } = useToast();
@@ -107,6 +110,7 @@ const HashtagsManagement = () => {
     setFormData({
       name: '',
       slug: '',
+      count: 0,
     });
     setCurrentHashtag(null);
   };
@@ -116,11 +120,12 @@ const HashtagsManagement = () => {
     setIsDialogOpen(true);
   };
   
-  const handleEdit = (hashtag: Topic) => {
+  const handleEdit = (hashtag: AdminTopic) => {
     setCurrentHashtag(hashtag);
     setFormData({
       name: hashtag.name,
       slug: hashtag.slug,
+      count: hashtag.count || 0,
     });
     setIsDialogOpen(true);
   };
@@ -134,7 +139,7 @@ const HashtagsManagement = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (currentHashtag) {
+    if (currentHashtag?.id) {
       updateMutation.mutate({
         id: currentHashtag.id,
         topic: formData,

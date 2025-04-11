@@ -24,51 +24,53 @@ import TourGuideResultsPage from "./pages/TourGuideResultsPage";
 import BookingPage from "./pages/BookingPage";
 import BookingConfirmationPage from "./pages/BookingConfirmationPage";
 
-// Create a query client with appropriate settings for auto-refresh
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-      refetchOnReconnect: true,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+const App = () => {
+  // Move the query client creation inside the component function
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: true,
+        refetchOnMount: true,
+        refetchOnReconnect: true,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+      },
     },
-  },
-});
+  });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:id" element={<BlogPost />} />
-            <Route path="/destinations" element={<Destinations />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            
-            {/* Travel Feature Routes */}
-            <Route path="/travel" element={<Travel />} />
-            <Route path="/travel/planner" element={<TravelPlanner />} />
-            <Route path="/travel/hotels" element={<HotelResultsPage />} />
-            <Route path="/travel/flights" element={<FlightResultsPage />} />
-            <Route path="/travel/guides" element={<TourGuideResultsPage />} />
-            <Route path="/travel/booking/:type/:id" element={<BookingPage />} />
-            <Route path="/travel/confirmation/:type/:id" element={<BookingConfirmationPage />} />
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:id" element={<BlogPost />} />
+              <Route path="/destinations" element={<Destinations />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              
+              {/* Travel Feature Routes */}
+              <Route path="/travel" element={<Travel />} />
+              <Route path="/travel/planner" element={<TravelPlanner />} />
+              <Route path="/travel/hotels" element={<HotelResultsPage />} />
+              <Route path="/travel/flights" element={<FlightResultsPage />} />
+              <Route path="/travel/guides" element={<TourGuideResultsPage />} />
+              <Route path="/travel/booking/:type/:id" element={<BookingPage />} />
+              <Route path="/travel/confirmation/:type/:id" element={<BookingConfirmationPage />} />
+              
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

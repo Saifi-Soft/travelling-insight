@@ -95,8 +95,8 @@ export interface GuideBookingDetails {
   duration: string;
 }
 
-// Create extended Category and Topic interfaces for admin use
-export interface AdminCategory extends Omit<Category, "id"> {
+// Create extended Category and Topic interfaces for admin use that make properties optional where needed
+export interface AdminCategory {
   id?: string;
   name: string;
   slug: string;
@@ -105,7 +105,7 @@ export interface AdminCategory extends Omit<Category, "id"> {
   count?: number;
 }
 
-export interface AdminTopic extends Omit<Topic, "id"> {
+export interface AdminTopic {
   id?: string;
   name: string;
   slug: string;

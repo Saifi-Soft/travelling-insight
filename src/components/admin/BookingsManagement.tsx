@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { travelService } from '@/api/travelService';
@@ -67,7 +68,10 @@ const BookingsManagement = () => {
     },
   });
   
-  const filteredBookings = bookings.filter((booking: Booking) => {
+  // Type assertion for the bookings data
+  const typedBookings = bookings as Booking[];
+  
+  const filteredBookings = typedBookings.filter((booking) => {
     const matchesSearch = 
       booking.customerName.toLowerCase().includes(searchQuery.toLowerCase()) || 
       booking.reference.toLowerCase().includes(searchQuery.toLowerCase());
@@ -138,7 +142,10 @@ const BookingsManagement = () => {
           />
         </div>
         
-        <Select value={filterType} onValueChange={(value) => setFilterType(value as any)}>
+        <Select 
+          value={filterType} 
+          onValueChange={(value) => setFilterType(value as BookingType | 'all')}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
@@ -150,7 +157,10 @@ const BookingsManagement = () => {
           </SelectContent>
         </Select>
         
-        <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)}>
+        <Select 
+          value={filterStatus} 
+          onValueChange={(value) => setFilterStatus(value as BookingStatus | 'all')}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>

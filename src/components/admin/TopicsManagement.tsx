@@ -31,6 +31,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { AdminTopic } from '@/types/admin';
 
 // Define the schema for topic validation
 const topicSchema = z.object({
@@ -42,12 +43,12 @@ const topicSchema = z.object({
   }),
 });
 
-type Topic = z.infer<typeof topicSchema>;
+type TopicFormData = z.infer<typeof topicSchema>;
 
 const TopicsManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<AdminTopic | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,7 +59,7 @@ const TopicsManagement = () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 500));
       
-      const mockTopics = [
+      const mockTopics: AdminTopic[] = [
         { id: '1', name: 'Technology', slug: 'technology', count: 12 },
         { id: '2', name: 'Travel', slug: 'travel', count: 25 },
         { id: '3', name: 'Food', slug: 'food', count: 18 },
@@ -69,7 +70,7 @@ const TopicsManagement = () => {
   });
 
   // Form configuration
-  const form = useForm<Topic>({
+  const form = useForm<TopicFormData>({
     resolver: zodResolver(topicSchema),
     defaultValues: {
       name: "",
@@ -79,11 +80,16 @@ const TopicsManagement = () => {
 
   // Add topic mutation
   const addTopicMutation = useMutation({
-    mutationFn: async (data: Topic) => {
+    mutationFn: async (data: TopicFormData) => {
+      // Add count property with default value
+      const newTopic = { 
+        ...data, 
+        count: 0 // Default count for new topic
+      };
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log('Adding topic:', data);
-      return { success: true, data };
+      console.log('Adding topic:', newTopic);
+      return { success: true, data: newTopic };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
@@ -105,7 +111,7 @@ const TopicsManagement = () => {
 
   // Update topic mutation
   const updateTopicMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Topic }) => {
+    mutationFn: async ({ id, data }: { id: string; data: TopicFormData }) => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 500));
       console.log(`Updating topic ${id} with:`, data);
@@ -154,58 +160,8 @@ const TopicsManagement = () => {
     },
   });
 
-  // Function to handle adding a new topic
-  const addTopic = async (data: { name: string; slug: string }) => {
-    try {
-      // Add count property with default value
-      const newTopic = { 
-        ...data, 
-        count: 0 // Default count for new topic
-      };
-      await addTopicMutation.mutateAsync(newTopic);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: `Failed to add topic: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Function to handle updating an existing topic
-  const updateTopic = async (id: string, data: Topic) => {
-    try {
-      await updateTopicMutation.mutateAsync({ id, data });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: `Failed to update topic: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Function to handle deleting a topic
-  const deleteTopic = async (id: string) => {
-    try {
-      await deleteTopicMutation.mutateAsync(id);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: `Failed to delete topic: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Filter topics based on search query
-  const filteredTopics = topics?.filter(topic =>
-    topic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    topic.slug.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   // Handle edit button click
-  const handleEdit = (topic: Topic) => {
+  const handleEdit = (topic: AdminTopic) => {
     setSelectedTopic(topic);
     form.setValue("name", topic.name);
     form.setValue("slug", topic.slug);
@@ -214,7 +170,7 @@ const TopicsManagement = () => {
 
   // Handle delete button click
   const handleDelete = (id: string) => {
-    deleteTopic(id);
+    deleteTopicMutation.mutate(id);
   };
 
   // Handle dialog open
@@ -225,15 +181,21 @@ const TopicsManagement = () => {
   };
 
   // Handle form submission
-  const onSubmit = async (data: Topic) => {
-    if (selectedTopic) {
+  const onSubmit = async (data: TopicFormData) => {
+    if (selectedTopic?.id) {
       // Update existing topic
-      updateTopic(selectedTopic.id!, data);
+      updateTopicMutation.mutate({ id: selectedTopic.id, data });
     } else {
       // Add new topic
-      addTopic(data);
+      addTopicMutation.mutate(data);
     }
   };
+
+  // Filter topics based on search query
+  const filteredTopics = topics?.filter(topic =>
+    topic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    topic.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div>
