@@ -40,11 +40,10 @@ export const themeService = {
     try {
       const db = await getDB();
       
-      // Use upsert to create if it doesn't exist or update if it does
+      // Fix: Remove the third argument from updateOne since it only expects query and update
       await db.user_theme_preferences.updateOne(
         { userId: themePreference.userId },
-        { $set: themePreference },
-        { upsert: true }
+        { $set: themePreference }
       );
       
       return true;
