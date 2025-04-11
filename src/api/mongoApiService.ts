@@ -69,7 +69,7 @@ export const postsApi = {
     try {
       const { db } = await connectToDatabase();
       const posts = await db.collection(COLLECTIONS.POSTS)
-        .find({ category: { $regex: new RegExp(category, 'i') } })
+        .find({ category: category })
         .toArray();
       return formatMongoData(posts);
     } catch (error) {
@@ -144,7 +144,8 @@ export const postsApi = {
       const count = await db.collection(COLLECTIONS.POSTS).countDocuments();
       
       if (count === 0) {
-        await db.collection(COLLECTIONS.POSTS).insertMany(samplePosts);
+        const postsWithoutId = samplePosts.map(({ id, ...rest }) => rest);
+        await db.collection(COLLECTIONS.POSTS).insertMany(postsWithoutId);
         console.log('Posts collection initialized with sample data');
       }
     } catch (error) {
@@ -234,7 +235,8 @@ export const categoriesApi = {
       const count = await db.collection(COLLECTIONS.CATEGORIES).countDocuments();
       
       if (count === 0) {
-        await db.collection(COLLECTIONS.CATEGORIES).insertMany(sampleCategories);
+        const categoriesWithoutId = sampleCategories.map(({ id, ...rest }) => rest);
+        await db.collection(COLLECTIONS.CATEGORIES).insertMany(categoriesWithoutId);
         console.log('Categories collection initialized with sample data');
       }
     } catch (error) {
@@ -327,7 +329,8 @@ export const topicsApi = {
       const count = await db.collection(COLLECTIONS.TOPICS).countDocuments();
       
       if (count === 0) {
-        await db.collection(COLLECTIONS.TOPICS).insertMany(sampleTopics);
+        const topicsWithoutId = sampleTopics.map(({ id, ...rest }) => rest);
+        await db.collection(COLLECTIONS.TOPICS).insertMany(topicsWithoutId);
         console.log('Topics collection initialized with sample data');
       }
     } catch (error) {

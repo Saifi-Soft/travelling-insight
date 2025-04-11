@@ -30,10 +30,6 @@ import AdminComments from './pages/AdminComments';
 import AdminCommunity from './pages/AdminCommunity';
 import AdminSettings from './pages/AdminSettings';
 
-// Initialize data
-import { postsApi, categoriesApi, topicsApi } from './api/mongoApiService';
-import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './api/sampleData';
-
 // Create a QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,23 +42,6 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  useEffect(() => {
-    // Initialize localStorage collections with sample data if they don't exist
-    const initializeData = async () => {
-      try {
-        console.log('Initializing mock data in localStorage');
-        await postsApi.initializeCollection(MOCK_POSTS);
-        await categoriesApi.initializeCollection(MOCK_CATEGORIES);
-        await topicsApi.initializeCollection(MOCK_TOPICS);
-        console.log('Data initialization complete');
-      } catch (error) {
-        console.error('Error initializing data:', error);
-      }
-    };
-    
-    initializeData();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
