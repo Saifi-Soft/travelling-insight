@@ -1,5 +1,4 @@
 
-import { Schema, model, models } from 'mongodb';
 import { Topic } from '@/types/common';
 
 // Topic schema definition

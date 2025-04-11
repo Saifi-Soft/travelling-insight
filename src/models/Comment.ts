@@ -1,5 +1,4 @@
 
-import { Schema, model, models } from 'mongodb';
 import { Comment } from '@/types/common';
 
 // Comment schema definition

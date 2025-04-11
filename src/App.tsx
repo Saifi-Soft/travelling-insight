@@ -56,12 +56,12 @@ const App = () => {
           MOCK_CATEGORIES,
           MOCK_TOPICS
         );
-        console.log('MongoDB initialized successfully');
+        console.log('MongoDB initialized successfully (browser compatible version)');
       } catch (error) {
         console.error('Error initializing MongoDB:', error);
         toast({
           title: "Database Error",
-          description: "Failed to connect to MongoDB. Please check your connection settings.",
+          description: "Failed to initialize database. Please check your connection.",
           variant: "destructive"
         });
       }

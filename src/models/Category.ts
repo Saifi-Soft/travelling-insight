@@ -1,5 +1,4 @@
 
-import { Schema, model, models } from 'mongodb';
 import { Category } from '@/types/common';
 
 // Category schema definition

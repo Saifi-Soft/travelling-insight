@@ -1,5 +1,4 @@
 
-import { Schema, model, models } from 'mongodb';
 import { Post } from '@/types/common';
 
 // Post schema definition

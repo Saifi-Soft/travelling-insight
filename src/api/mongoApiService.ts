@@ -11,29 +11,29 @@ export async function initializeCollectionsWithSampleData(
   try {
     await initializeDatabase();
     
-    const { db } = await connectToDatabase();
+    const { collections } = await connectToDatabase();
     
     // Initialize posts if empty
-    const postsCount = await db.collection(COLLECTIONS.POSTS).countDocuments();
+    const postsCount = await collections.posts.countDocuments();
     if (postsCount === 0 && samplePosts?.length) {
       const postsWithoutId = samplePosts.map(({ id, ...post }) => post);
-      await db.collection(COLLECTIONS.POSTS).insertMany(postsWithoutId);
+      await collections.posts.insertMany(postsWithoutId);
       console.log('Posts collection initialized with sample data');
     }
     
     // Initialize categories if empty
-    const categoriesCount = await db.collection(COLLECTIONS.CATEGORIES).countDocuments();
+    const categoriesCount = await collections.categories.countDocuments();
     if (categoriesCount === 0 && sampleCategories?.length) {
       const categoriesWithoutId = sampleCategories.map(({ id, ...category }) => category);
-      await db.collection(COLLECTIONS.CATEGORIES).insertMany(categoriesWithoutId);
+      await collections.categories.insertMany(categoriesWithoutId);
       console.log('Categories collection initialized with sample data');
     }
     
     // Initialize topics if empty
-    const topicsCount = await db.collection(COLLECTIONS.TOPICS).countDocuments();
+    const topicsCount = await collections.topics.countDocuments();
     if (topicsCount === 0 && sampleTopics?.length) {
       const topicsWithoutId = sampleTopics.map(({ id, ...topic }) => topic);
-      await db.collection(COLLECTIONS.TOPICS).insertMany(topicsWithoutId);
+      await collections.topics.insertMany(topicsWithoutId);
       console.log('Topics collection initialized with sample data');
     }
     
@@ -44,13 +44,13 @@ export async function initializeCollectionsWithSampleData(
   }
 }
 
-// Posts API with MongoDB
+// Posts API
 export const postsApi = {
   // Get all posts
   getAll: async (): Promise<Post[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const posts = await db.collection(COLLECTIONS.POSTS).find({}).toArray();
+      const { collections } = await connectToDatabase();
+      const posts = await collections.posts.find().toArray();
       return formatMongoData(posts);
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -61,8 +61,8 @@ export const postsApi = {
   // Get post by ID
   getById: async (id: string): Promise<Post> => {
     try {
-      const { db } = await connectToDatabase();
-      const post = await db.collection(COLLECTIONS.POSTS).findOne({ _id: toObjectId(id) });
+      const { collections } = await connectToDatabase();
+      const post = await collections.posts.findOne({ _id: id });
       if (!post) throw new Error('Post not found');
       return formatMongoData(post);
     } catch (error) {
@@ -74,8 +74,8 @@ export const postsApi = {
   // Get post by slug
   getBySlug: async (slug: string): Promise<Post> => {
     try {
-      const { db } = await connectToDatabase();
-      const post = await db.collection(COLLECTIONS.POSTS).findOne({ slug });
+      const { collections } = await connectToDatabase();
+      const post = await collections.posts.findOne({ slug });
       if (!post) throw new Error('Post not found');
       return formatMongoData(post);
     } catch (error) {
@@ -86,9 +86,9 @@ export const postsApi = {
   
   getFeatured: async (): Promise<Post[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const featuredPosts = await db.collection(COLLECTIONS.POSTS)
-        .find({ featured: true })
+      const { collections } = await connectToDatabase();
+      const featuredPosts = await collections.posts
+        .find()
         .limit(3)
         .toArray();
       return formatMongoData(featuredPosts);
@@ -100,9 +100,9 @@ export const postsApi = {
   
   getTrending: async (): Promise<Post[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const trendingPosts = await db.collection(COLLECTIONS.POSTS)
-        .find({})
+      const { collections } = await connectToDatabase();
+      const trendingPosts = await collections.posts
+        .find()
         .sort({ likes: -1 })
         .limit(4)
         .toArray();
@@ -115,8 +115,8 @@ export const postsApi = {
   
   getByCategory: async (category: string): Promise<Post[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const posts = await db.collection(COLLECTIONS.POSTS)
+      const { collections } = await connectToDatabase();
+      const posts = await collections.posts
         .find({ category: category })
         .toArray();
       return formatMongoData(posts);
@@ -128,8 +128,8 @@ export const postsApi = {
   
   getByTag: async (tag: string): Promise<Post[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const posts = await db.collection(COLLECTIONS.POSTS)
+      const { collections } = await connectToDatabase();
+      const posts = await collections.posts
         .find({ topics: { $in: [tag] } })
         .toArray();
       return formatMongoData(posts);
@@ -142,18 +142,18 @@ export const postsApi = {
   // Admin operations
   create: async (post: Omit<Post, 'id'>): Promise<Post> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Generate slug if not provided
       if (!post.slug && post.title) {
         post.slug = post.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       }
       
-      const result = await db.collection(COLLECTIONS.POSTS).insertOne(post);
+      const result = await collections.posts.insertOne(post);
       
       // Update category count
       if (post.category) {
-        await db.collection(COLLECTIONS.CATEGORIES).updateOne(
+        await collections.categories.updateOne(
           { name: post.category },
           { $inc: { count: 1 } }
         );
@@ -162,10 +162,9 @@ export const postsApi = {
       // Update topic counts
       if (post.topics && post.topics.length > 0) {
         for (const topicName of post.topics) {
-          await db.collection(COLLECTIONS.TOPICS).updateOne(
+          await collections.topics.updateOne(
             { name: topicName },
-            { $inc: { count: 1 } },
-            { upsert: true }
+            { $inc: { count: 1 } }
           );
         }
       }
@@ -180,7 +179,7 @@ export const postsApi = {
   
   update: async (id: string, post: Partial<Post>): Promise<Post> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Generate slug if title is changed and slug is not provided
       if (post.title && !post.slug) {
@@ -188,27 +187,26 @@ export const postsApi = {
       }
       
       // Get original post for category/topic updates
-      const originalPost = await db.collection(COLLECTIONS.POSTS).findOne({ _id: toObjectId(id) });
+      const originalPost = await collections.posts.findOne({ _id: id });
       
       // Update the post
-      await db.collection(COLLECTIONS.POSTS).updateOne(
-        { _id: toObjectId(id) },
+      await collections.posts.updateOne(
+        { _id: id },
         { $set: post }
       );
       
       // Handle category change
       if (originalPost && post.category && originalPost.category !== post.category) {
         // Decrement old category count
-        await db.collection(COLLECTIONS.CATEGORIES).updateOne(
+        await collections.categories.updateOne(
           { name: originalPost.category },
           { $inc: { count: -1 } }
         );
         
         // Increment new category count
-        await db.collection(COLLECTIONS.CATEGORIES).updateOne(
+        await collections.categories.updateOne(
           { name: post.category },
-          { $inc: { count: 1 } },
-          { upsert: true }
+          { $inc: { count: 1 } }
         );
       }
       
@@ -217,7 +215,7 @@ export const postsApi = {
         // Decrement counts for removed topics
         const removedTopics = originalPost.topics?.filter(t => !post.topics?.includes(t)) || [];
         for (const topic of removedTopics) {
-          await db.collection(COLLECTIONS.TOPICS).updateOne(
+          await collections.topics.updateOne(
             { name: topic },
             { $inc: { count: -1 } }
           );
@@ -226,15 +224,14 @@ export const postsApi = {
         // Increment counts for new topics
         const newTopics = post.topics.filter(t => !originalPost.topics?.includes(t));
         for (const topic of newTopics) {
-          await db.collection(COLLECTIONS.TOPICS).updateOne(
+          await collections.topics.updateOne(
             { name: topic },
-            { $inc: { count: 1 } },
-            { upsert: true }
+            { $inc: { count: 1 } }
           );
         }
       }
       
-      const updatedPost = await db.collection(COLLECTIONS.POSTS).findOne({ _id: toObjectId(id) });
+      const updatedPost = await collections.posts.findOne({ _id: id });
       if (!updatedPost) throw new Error('Post not found after update');
       return formatMongoData(updatedPost);
     } catch (error) {
@@ -245,17 +242,17 @@ export const postsApi = {
   
   delete: async (id: string): Promise<{ success: boolean }> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Get the post before deletion for category/topic updates
-      const post = await db.collection(COLLECTIONS.POSTS).findOne({ _id: toObjectId(id) });
+      const post = await collections.posts.findOne({ _id: id });
       
       if (!post) {
         throw new Error('Post not found');
       }
       
       // Delete the post
-      const result = await db.collection(COLLECTIONS.POSTS).deleteOne({ _id: toObjectId(id) });
+      const result = await collections.posts.deleteOne({ _id: id });
       
       if (result.deletedCount === 0) {
         throw new Error('Post not found');
@@ -263,7 +260,7 @@ export const postsApi = {
       
       // Decrement category count
       if (post.category) {
-        await db.collection(COLLECTIONS.CATEGORIES).updateOne(
+        await collections.categories.updateOne(
           { name: post.category },
           { $inc: { count: -1 } }
         );
@@ -272,7 +269,7 @@ export const postsApi = {
       // Decrement topic counts
       if (post.topics && post.topics.length > 0) {
         for (const topic of post.topics) {
-          await db.collection(COLLECTIONS.TOPICS).updateOne(
+          await collections.topics.updateOne(
             { name: topic },
             { $inc: { count: -1 } }
           );
@@ -284,32 +281,15 @@ export const postsApi = {
       console.error(`Error deleting post ${id}:`, error);
       throw error;
     }
-  },
-  
-  // Initialize the posts collection with sample data if empty
-  initializeCollection: async (samplePosts: Post[]): Promise<void> => {
-    try {
-      const { db } = await connectToDatabase();
-      const count = await db.collection(COLLECTIONS.POSTS).countDocuments();
-      
-      if (count === 0) {
-        const postsWithoutId = samplePosts.map(({ id, ...rest }) => rest);
-        await db.collection(COLLECTIONS.POSTS).insertMany(postsWithoutId);
-        console.log('Posts collection initialized with sample data');
-      }
-    } catch (error) {
-      console.error('Error initializing posts collection:', error);
-      throw error;
-    }
   }
 };
 
-// Categories API with MongoDB
+// Categories API
 export const categoriesApi = {
   getAll: async (): Promise<Category[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const categories = await db.collection(COLLECTIONS.CATEGORIES).find({}).toArray();
+      const { collections } = await connectToDatabase();
+      const categories = await collections.categories.find().toArray();
       return formatMongoData(categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -319,8 +299,8 @@ export const categoriesApi = {
   
   getById: async (id: string): Promise<Category> => {
     try {
-      const { db } = await connectToDatabase();
-      const category = await db.collection(COLLECTIONS.CATEGORIES).findOne({ _id: toObjectId(id) });
+      const { collections } = await connectToDatabase();
+      const category = await collections.categories.findOne({ _id: id });
       if (!category) throw new Error('Category not found');
       return formatMongoData(category);
     } catch (error) {
@@ -331,8 +311,8 @@ export const categoriesApi = {
   
   getBySlug: async (slug: string): Promise<Category> => {
     try {
-      const { db } = await connectToDatabase();
-      const category = await db.collection(COLLECTIONS.CATEGORIES).findOne({ slug });
+      const { collections } = await connectToDatabase();
+      const category = await collections.categories.findOne({ slug });
       if (!category) throw new Error('Category not found');
       return formatMongoData(category);
     } catch (error) {
@@ -343,14 +323,14 @@ export const categoriesApi = {
   
   create: async (category: Omit<Category, 'id'>): Promise<Category> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Generate slug if not provided
       if (!category.slug && category.name) {
         category.slug = category.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       }
       
-      const result = await db.collection(COLLECTIONS.CATEGORIES).insertOne({
+      const result = await collections.categories.insertOne({
         ...category,
         count: category.count || 0
       });
@@ -365,19 +345,19 @@ export const categoriesApi = {
   
   update: async (id: string, category: Partial<Category>): Promise<Category> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Generate slug if name is changed and slug is not provided
       if (category.name && !category.slug) {
         category.slug = category.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       }
       
-      await db.collection(COLLECTIONS.CATEGORIES).updateOne(
-        { _id: toObjectId(id) },
+      await collections.categories.updateOne(
+        { _id: id },
         { $set: category }
       );
       
-      const updatedCategory = await db.collection(COLLECTIONS.CATEGORIES).findOne({ _id: toObjectId(id) });
+      const updatedCategory = await collections.categories.findOne({ _id: id });
       if (!updatedCategory) throw new Error('Category not found after update');
       return formatMongoData(updatedCategory);
     } catch (error) {
@@ -388,22 +368,22 @@ export const categoriesApi = {
   
   delete: async (id: string): Promise<{ success: boolean }> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Check if category is being used by any posts
-      const category = await db.collection(COLLECTIONS.CATEGORIES).findOne({ _id: toObjectId(id) });
+      const category = await collections.categories.findOne({ _id: id });
       if (!category) {
         throw new Error('Category not found');
       }
       
       // Check if any posts are using this category
-      const postsUsingCategory = await db.collection(COLLECTIONS.POSTS).countDocuments({ category: category.name });
+      const postsUsingCategory = await collections.posts.countDocuments({ category: category.name });
       if (postsUsingCategory > 0) {
         throw new Error(`Cannot delete: ${postsUsingCategory} posts are using this category`);
       }
       
       // Delete the category
-      const result = await db.collection(COLLECTIONS.CATEGORIES).deleteOne({ _id: toObjectId(id) });
+      const result = await collections.categories.deleteOne({ _id: id });
       
       if (result.deletedCount === 0) {
         throw new Error('Category not found');
@@ -414,32 +394,15 @@ export const categoriesApi = {
       console.error(`Error deleting category ${id}:`, error);
       throw error;
     }
-  },
-  
-  // Initialize the categories collection with sample data if empty
-  initializeCollection: async (sampleCategories: Category[]): Promise<void> => {
-    try {
-      const { db } = await connectToDatabase();
-      const count = await db.collection(COLLECTIONS.CATEGORIES).countDocuments();
-      
-      if (count === 0) {
-        const categoriesWithoutId = sampleCategories.map(({ id, ...rest }) => rest);
-        await db.collection(COLLECTIONS.CATEGORIES).insertMany(categoriesWithoutId);
-        console.log('Categories collection initialized with sample data');
-      }
-    } catch (error) {
-      console.error('Error initializing categories collection:', error);
-      throw error;
-    }
   }
 };
 
-// Topics/Hashtags API with MongoDB
+// Topics/Hashtags API
 export const topicsApi = {
   getAll: async (): Promise<Topic[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const topics = await db.collection(COLLECTIONS.TOPICS).find({}).toArray();
+      const { collections } = await connectToDatabase();
+      const topics = await collections.topics.find().toArray();
       return formatMongoData(topics);
     } catch (error) {
       console.error('Error fetching topics:', error);
@@ -449,8 +412,8 @@ export const topicsApi = {
   
   getById: async (id: string): Promise<Topic> => {
     try {
-      const { db } = await connectToDatabase();
-      const topic = await db.collection(COLLECTIONS.TOPICS).findOne({ _id: toObjectId(id) });
+      const { collections } = await connectToDatabase();
+      const topic = await collections.topics.findOne({ _id: id });
       if (!topic) throw new Error('Topic not found');
       return formatMongoData(topic);
     } catch (error) {
@@ -461,8 +424,8 @@ export const topicsApi = {
   
   getBySlug: async (slug: string): Promise<Topic> => {
     try {
-      const { db } = await connectToDatabase();
-      const topic = await db.collection(COLLECTIONS.TOPICS).findOne({ slug });
+      const { collections } = await connectToDatabase();
+      const topic = await collections.topics.findOne({ slug });
       if (!topic) throw new Error('Topic not found');
       return formatMongoData(topic);
     } catch (error) {
@@ -473,9 +436,9 @@ export const topicsApi = {
   
   getTrending: async (): Promise<Topic[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const trendingTopics = await db.collection(COLLECTIONS.TOPICS)
-        .find({})
+      const { collections } = await connectToDatabase();
+      const trendingTopics = await collections.topics
+        .find()
         .sort({ count: -1 })
         .limit(5)
         .toArray();
@@ -488,14 +451,14 @@ export const topicsApi = {
   
   create: async (topic: Omit<Topic, 'id'>): Promise<Topic> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Generate slug if not provided
       if (!topic.slug && topic.name) {
         topic.slug = topic.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       }
       
-      const result = await db.collection(COLLECTIONS.TOPICS).insertOne({
+      const result = await collections.topics.insertOne({
         ...topic,
         count: topic.count || 0
       });
@@ -510,19 +473,19 @@ export const topicsApi = {
   
   update: async (id: string, topic: Partial<Topic>): Promise<Topic> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Generate slug if name is changed and slug is not provided
       if (topic.name && !topic.slug) {
         topic.slug = topic.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       }
       
-      await db.collection(COLLECTIONS.TOPICS).updateOne(
-        { _id: toObjectId(id) },
+      await collections.topics.updateOne(
+        { _id: id },
         { $set: topic }
       );
       
-      const updatedTopic = await db.collection(COLLECTIONS.TOPICS).findOne({ _id: toObjectId(id) });
+      const updatedTopic = await collections.topics.findOne({ _id: id });
       if (!updatedTopic) throw new Error('Topic not found after update');
       return formatMongoData(updatedTopic);
     } catch (error) {
@@ -533,22 +496,22 @@ export const topicsApi = {
   
   delete: async (id: string): Promise<{ success: boolean }> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       // Check if topic is being used by any posts
-      const topic = await db.collection(COLLECTIONS.TOPICS).findOne({ _id: toObjectId(id) });
+      const topic = await collections.topics.findOne({ _id: id });
       if (!topic) {
         throw new Error('Topic not found');
       }
       
       // Check if any posts are using this topic
-      const postsUsingTopic = await db.collection(COLLECTIONS.POSTS).countDocuments({ topics: { $in: [topic.name] } });
+      const postsUsingTopic = await collections.posts.countDocuments({ topics: { $in: [topic.name] } });
       if (postsUsingTopic > 0) {
         throw new Error(`Cannot delete: ${postsUsingTopic} posts are using this topic`);
       }
       
       // Delete the topic
-      const result = await db.collection(COLLECTIONS.TOPICS).deleteOne({ _id: toObjectId(id) });
+      const result = await collections.topics.deleteOne({ _id: id });
       
       if (result.deletedCount === 0) {
         throw new Error('Topic not found');
@@ -559,32 +522,15 @@ export const topicsApi = {
       console.error(`Error deleting topic ${id}:`, error);
       throw error;
     }
-  },
-  
-  // Initialize the topics collection with sample data if empty
-  initializeCollection: async (sampleTopics: Topic[]): Promise<void> => {
-    try {
-      const { db } = await connectToDatabase();
-      const count = await db.collection(COLLECTIONS.TOPICS).countDocuments();
-      
-      if (count === 0) {
-        const topicsWithoutId = sampleTopics.map(({ id, ...rest }) => rest);
-        await db.collection(COLLECTIONS.TOPICS).insertMany(topicsWithoutId);
-        console.log('Topics collection initialized with sample data');
-      }
-    } catch (error) {
-      console.error('Error initializing topics collection:', error);
-      throw error;
-    }
   }
 };
 
-// Comments API with MongoDB
+// Comments API
 export const commentsApi = {
   getByPostId: async (postId: string): Promise<Comment[]> => {
     try {
-      const { db } = await connectToDatabase();
-      const comments = await db.collection(COLLECTIONS.COMMENTS)
+      const { collections } = await connectToDatabase();
+      const comments = await collections.comments
         .find({ postId })
         .sort({ date: -1 })
         .toArray();
@@ -597,7 +543,7 @@ export const commentsApi = {
   
   create: async (postId: string, comment: Omit<Comment, 'id'>): Promise<Comment> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       const commentWithPostId = {
         ...comment,
@@ -605,11 +551,11 @@ export const commentsApi = {
         date: comment.date || new Date().toISOString()
       };
       
-      const result = await db.collection(COLLECTIONS.COMMENTS).insertOne(commentWithPostId);
+      const result = await collections.comments.insertOne(commentWithPostId);
       
       // Update post comment count
-      await db.collection(COLLECTIONS.POSTS).updateOne(
-        { _id: toObjectId(postId) },
+      await collections.posts.updateOne(
+        { _id: postId },
         { $inc: { comments: 1 } }
       );
       
@@ -623,19 +569,19 @@ export const commentsApi = {
   
   addReply: async (commentId: string, reply: Omit<Comment, 'id'>): Promise<Comment> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
       const replyWithDate = {
         ...reply,
         date: reply.date || new Date().toISOString()
       };
       
-      await db.collection(COLLECTIONS.COMMENTS).updateOne(
-        { _id: toObjectId(commentId) },
+      await collections.comments.updateOne(
+        { _id: commentId },
         { $push: { replies: replyWithDate } }
       );
       
-      const updatedComment = await db.collection(COLLECTIONS.COMMENTS).findOne({ _id: toObjectId(commentId) });
+      const updatedComment = await collections.comments.findOne({ _id: commentId });
       if (!updatedComment) throw new Error('Comment not found after update');
       return formatMongoData(updatedComment);
     } catch (error) {
@@ -646,15 +592,15 @@ export const commentsApi = {
   
   delete: async (id: string): Promise<{ success: boolean }> => {
     try {
-      const { db } = await connectToDatabase();
+      const { collections } = await connectToDatabase();
       
-      const comment = await db.collection(COLLECTIONS.COMMENTS).findOne({ _id: toObjectId(id) });
+      const comment = await collections.comments.findOne({ _id: id });
       if (!comment) {
         throw new Error('Comment not found');
       }
       
       // Delete the comment
-      const result = await db.collection(COLLECTIONS.COMMENTS).deleteOne({ _id: toObjectId(id) });
+      const result = await collections.comments.deleteOne({ _id: id });
       
       if (result.deletedCount === 0) {
         throw new Error('Comment not found');
@@ -662,8 +608,8 @@ export const commentsApi = {
       
       // Update post comment count
       if (comment.postId) {
-        await db.collection(COLLECTIONS.POSTS).updateOne(
-          { _id: toObjectId(comment.postId) },
+        await collections.posts.updateOne(
+          { _id: comment.postId },
           { $inc: { comments: -1 } }
         );
       }
