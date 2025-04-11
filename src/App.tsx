@@ -15,8 +15,10 @@ import NotFound from "./pages/NotFound";
 
 // Travel feature pages
 import Travel from "./pages/Travel";
+import TravelPlanner from "./pages/TravelPlanner";
 import HotelResultsPage from "./pages/HotelResultsPage";
 import FlightResultsPage from "./pages/FlightResultsPage";
+import TourGuideResultsPage from "./pages/TourGuideResultsPage";
 import BookingPage from "./pages/BookingPage";
 import BookingConfirmationPage from "./pages/BookingConfirmationPage";
 
@@ -49,8 +51,10 @@ const App = () => (
           
           {/* Travel Feature Routes */}
           <Route path="/travel" element={<Travel />} />
+          <Route path="/travel/planner" element={<TravelPlanner />} />
           <Route path="/travel/hotels" element={<HotelResultsPage />} />
           <Route path="/travel/flights" element={<FlightResultsPage />} />
+          <Route path="/travel/guides" element={<TourGuideResultsPage />} />
           <Route path="/travel/booking/:type/:id" element={<BookingPage />} />
           <Route path="/travel/confirmation/:type/:id" element={<BookingConfirmationPage />} />
           

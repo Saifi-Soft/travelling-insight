@@ -7,14 +7,14 @@ import BookingConfirmation from '@/components/travel/BookingConfirmation';
 
 const BookingConfirmationPage = () => {
   const { type } = useParams<{ type: string }>();
-  const bookingType = type === 'hotel' ? 'hotel' : 'flight';
+  const bookingType = type === 'hotel' ? 'hotel' : type === 'flight' ? 'flight' : 'guide';
   
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
         <div className="container-custom py-10">
-          <BookingConfirmation type={bookingType as 'hotel' | 'flight'} />
+          <BookingConfirmation type={bookingType as 'hotel' | 'flight' | 'guide'} />
         </div>
       </main>
       <Footer />

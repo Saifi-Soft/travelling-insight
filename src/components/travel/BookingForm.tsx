@@ -323,7 +323,10 @@ const BookingForm = ({ type }: BookingFormProps) => {
               </div>
             </div>
             
-            <Button type="button" onClick={() => document.querySelector('[data-value="payment"]')?.click()}>
+            <Button type="button" onClick={() => {
+              const paymentTab = document.querySelector('[data-value="payment"]') as HTMLElement;
+              if (paymentTab) paymentTab.click();
+            }}>
               Continue to Payment
             </Button>
           </TabsContent>
