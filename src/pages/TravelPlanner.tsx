@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import TravelSearch from '@/components/travel/TravelSearch';
-import { Plane, Hotel, MapPin, CalendarClock, HelpingHand, Briefcase, PackageCheck, Globe, Star } from 'lucide-react';
+import { Plane, Hotel, MapPin, CalendarClock, HelpingHand, Briefcase, PackageCheck, Globe, Star, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const TravelPlanner = () => {
