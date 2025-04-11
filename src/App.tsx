@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,13 @@ import Community from "./pages/Community";
 import About from "./pages/About";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+
+// Travel feature pages
+import Travel from "./pages/Travel";
+import HotelResultsPage from "./pages/HotelResultsPage";
+import FlightResultsPage from "./pages/FlightResultsPage";
+import BookingPage from "./pages/BookingPage";
+import BookingConfirmationPage from "./pages/BookingConfirmationPage";
 
 // Create a query client with appropriate settings for auto-refresh
 const queryClient = new QueryClient({
@@ -38,6 +46,14 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/about" element={<About />} />
           <Route path="/admin" element={<Admin />} />
+          
+          {/* Travel Feature Routes */}
+          <Route path="/travel" element={<Travel />} />
+          <Route path="/travel/hotels" element={<HotelResultsPage />} />
+          <Route path="/travel/flights" element={<FlightResultsPage />} />
+          <Route path="/travel/booking/:type/:id" element={<BookingPage />} />
+          <Route path="/travel/confirmation/:type/:id" element={<BookingConfirmationPage />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
