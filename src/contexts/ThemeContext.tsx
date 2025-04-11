@@ -40,11 +40,12 @@ const defaultDarkColors: ThemeColors = {
   card: '#374151',
 };
 
+// Create a context with a default undefined value
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize state for both light and dark theme colors
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('light');
   const [lightThemeColors, setLightThemeColors] = useState<ThemeColors>(defaultLightColors);
   const [darkThemeColors, setDarkThemeColors] = useState<ThemeColors>(defaultDarkColors);
   const [themeColors, setThemeColors] = useState<ThemeColors>(defaultLightColors);
@@ -81,7 +82,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // Set theme and corresponding colors
     if (savedTheme === 'dark' || savedTheme === 'light' || savedTheme === 'system') {
-      setTheme(savedTheme);
+      setThemeState(savedTheme);
       
       if (savedTheme === 'dark' || 
           (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -92,7 +93,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       // Check system preference if no saved theme
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      setThemeState(prefersDark ? 'dark' : 'light');
       setThemeColors(prefersDark ? darkThemeColors : lightThemeColors);
     }
   }, []);
@@ -141,11 +142,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Toggle through themes: light -> dark -> system -> light
   const toggleTheme = () => {
-    setTheme(prevTheme => {
+    setThemeState(prevTheme => {
       if (prevTheme === 'light') return 'dark';
       if (prevTheme === 'dark') return 'system';
       return 'light';
     });
+  };
+
+  // Set theme directly
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
   };
 
   // Update theme color for specific mode (light/dark)

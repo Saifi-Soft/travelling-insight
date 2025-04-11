@@ -34,6 +34,7 @@ import AdminSettings from './pages/AdminSettings';
 import { initializeCollectionsWithSampleData } from './api/mongoApiService';
 import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './api/sampleData';
 import { toast } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -73,6 +74,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <Toaster />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
