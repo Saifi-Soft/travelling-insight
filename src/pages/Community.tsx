@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from "sonner";
@@ -25,6 +24,7 @@ import {
   travelMatchesApi
 } from '@/api/communityApiService';
 import { format } from 'date-fns';
+import { addItemToArray } from '@/utils/arrayUtils';
 
 const Community = () => {
   // State for active tab
@@ -156,15 +156,6 @@ const Community = () => {
       toast.error('Failed to save your preferences. Please try again.');
       console.error(error);
     }
-  };
-  
-  // Helper for adding items to arrays
-  const addItemToArray = (item: string, array: string[], setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    if (item && !array.includes(item)) {
-      setter([...array, item]);
-      return true;
-    }
-    return false;
   };
 
   // Format date for display
@@ -838,7 +829,7 @@ const Community = () => {
                     if (addItemToArray(
                       currentTravelStyle, 
                       profile.travelStyles, 
-                      (newStyles) => setProfile({...profile, travelStyles: newStyles})
+                      setProfile
                     )) {
                       setCurrentTravelStyle('');
                     }
@@ -881,7 +872,7 @@ const Community = () => {
                     if (addItemToArray(
                       currentInterest, 
                       profile.interests, 
-                      (newInterests) => setProfile({...profile, interests: newInterests})
+                      setProfile
                     )) {
                       setCurrentInterest('');
                     }
@@ -942,7 +933,7 @@ const Community = () => {
                     if (addItemToArray(
                       currentDestination, 
                       matchPreferences.destinations, 
-                      (newDestinations) => setMatchPreferences({...matchPreferences, destinations: newDestinations})
+                      setMatchPreferences
                     )) {
                       setCurrentDestination('');
                     }
@@ -985,7 +976,7 @@ const Community = () => {
                     if (addItemToArray(
                       currentTravelStyle, 
                       matchPreferences.travelStyles, 
-                      (newStyles) => setMatchPreferences({...matchPreferences, travelStyles: newStyles})
+                      setMatchPreferences
                     )) {
                       setCurrentTravelStyle('');
                     }
@@ -1028,7 +1019,7 @@ const Community = () => {
                     if (addItemToArray(
                       currentInterest, 
                       matchPreferences.interests, 
-                      (newInterests) => setMatchPreferences({...matchPreferences, interests: newInterests})
+                      setMatchPreferences
                     )) {
                       setCurrentInterest('');
                     }

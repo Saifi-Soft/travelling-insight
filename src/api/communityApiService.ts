@@ -1,4 +1,3 @@
-
 import { connectToDatabase, formatMongoData, COLLECTIONS } from './mongodb';
 import { 
   CommunityUser,

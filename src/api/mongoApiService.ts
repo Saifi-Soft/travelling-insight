@@ -1,4 +1,3 @@
-
 import { connectToDatabase, formatMongoData, toObjectId, initializeDatabase, COLLECTIONS } from './mongodb';
 import { Post, Category, Topic, Comment } from '@/types/common';
 
