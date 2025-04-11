@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search, User, Sun, Moon } from 'lucide-react';
+import { Menu, X, Search, User, Sun, Moon, Plane } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SearchModal from './SearchModal';
 
@@ -86,6 +86,14 @@ const Navbar = () => {
               Destinations
             </Link>
             <Link 
+              to="/travel/planner" 
+              className={`font-medium hover:text-primary transition-colors relative flex items-center ${
+                location.pathname.startsWith("/travel") ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-primary" : ""
+              }`}
+            >
+              <Plane className="h-4 w-4 mr-1" /> Travel
+            </Link>
+            <Link 
               to="/community" 
               className={`font-medium hover:text-primary transition-colors relative ${
                 location.pathname === "/community" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-primary" : ""
@@ -166,6 +174,13 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Destinations
+              </Link>
+              <Link 
+                to="/travel/planner" 
+                className={`font-medium hover:text-primary transition-colors py-2 flex items-center ${location.pathname.startsWith("/travel") ? "text-primary" : ""}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Plane className="h-4 w-4 mr-1" /> Travel
               </Link>
               <Link 
                 to="/community" 

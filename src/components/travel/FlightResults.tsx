@@ -1,77 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plane, Clock, ArrowRight } from 'lucide-react';
-import { format } from 'date-fns';
-
-// Mock flight data (in a real app, this would come from the affiliate API)
-const MOCK_FLIGHTS = [
-  {
-    id: "flight-1",
-    airline: "Emirates",
-    flightNumber: "EK083",
-    departure: {
-      code: "DXB",
-      city: "Dubai",
-      time: "08:45"
-    },
-    arrival: {
-      code: "LHR",
-      city: "London",
-      time: "13:15"
-    },
-    duration: "7h 30m",
-    stops: 0,
-    price: 850,
-    currency: "USD",
-    affiliateUrl: "/travel/booking/flight-1"
-  },
-  {
-    id: "flight-2",
-    airline: "British Airways",
-    flightNumber: "BA106",
-    departure: {
-      code: "DXB",
-      city: "Dubai",
-      time: "10:20"
-    },
-    arrival: {
-      code: "LHR",
-      city: "London",
-      time: "14:55"
-    },
-    duration: "7h 35m",
-    stops: 0,
-    price: 795,
-    currency: "USD",
-    affiliateUrl: "/travel/booking/flight-2"
-  },
-  {
-    id: "flight-3",
-    airline: "Qatar Airways",
-    flightNumber: "QR009",
-    departure: {
-      code: "DXB",
-      city: "Dubai",
-      time: "09:15"
-    },
-    arrival: {
-      code: "LHR",
-      city: "London",
-      time: "15:45"
-    },
-    duration: "9h 30m",
-    stops: 1,
-    stopLocation: "Doha (DOH)",
-    price: 720,
-    currency: "USD",
-    affiliateUrl: "/travel/booking/flight-3"
-  }
-];
+import { Plane, Clock, ArrowRight, ExternalLink } from 'lucide-react';
+import { flightApi } from '@/api/travelService';
+import { useToast } from '@/hooks/use-toast';
 
 interface FlightLocation {
   code: string;
@@ -91,12 +27,17 @@ interface Flight {
   price: number;
   currency: string;
   affiliateUrl: string;
+  originalUrl?: string;
 }
 
 const FlightResults = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [flights, setFlights] = useState<Flight[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  
   const query = new URLSearchParams(location.search);
   const departure = query.get('departure') || '';
   const destination = query.get('destination') || '';
@@ -105,36 +46,46 @@ const FlightResults = () => {
   const passengers = query.get('passengers') || '1';
 
   useEffect(() => {
-    // Simulate API call to affiliate partner
     const fetchFlights = async () => {
       try {
-        // In a real app, this would be an API call to the affiliate partner
-        console.log("Fetching flights for:", { 
-          departure, destination, departDate, returnDate, passengers 
+        setLoading(true);
+        setError(null);
+        
+        // Call our API service
+        const result = await flightApi.searchFlights({
+          departure,
+          destination,
+          departDate,
+          returnDate,
+          passengers: parseInt(passengers, 10)
         });
         
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Filter flights based on search (simple mock)
-        let filteredFlights = [...MOCK_FLIGHTS];
-        if (destination.toLowerCase().includes('london')) {
-          setFlights(filteredFlights);
-        } else {
-          // If no matching destination, return empty for demo
-          setFlights([]);
-        }
-        
-        setLoading(false);
+        setFlights(result.flights);
       } catch (error) {
         console.error("Error fetching flights:", error);
-        setFlights([]);
+        setError('Failed to load flights. Please try again.');
+        toast({
+          title: "Error",
+          description: "Failed to load flights. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
         setLoading(false);
       }
     };
 
     fetchFlights();
-  }, [departure, destination, departDate, returnDate, passengers]);
+  }, [departure, destination, departDate, returnDate, passengers, toast]);
+
+  const handleSelectFlight = (flight: Flight) => {
+    // For direct booking through our platform, navigate to our booking page
+    if (flight.originalUrl) {
+      navigate(flight.originalUrl);
+    } else {
+      // For affiliate links, open in new tab
+      window.open(flight.affiliateUrl, '_blank');
+    }
+  };
 
   if (loading) {
     return (
@@ -158,6 +109,16 @@ const FlightResults = () => {
           </Card>
         ))}
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="text-center p-8 mt-6">
+        <h3 className="text-xl font-semibold mb-2">Error</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </Card>
     );
   }
 
@@ -220,8 +181,8 @@ const FlightResults = () => {
               <span className="text-2xl font-bold">${flight.price}</span>
               <span className="text-sm text-muted-foreground ml-1">per person</span>
             </div>
-            <Button asChild>
-              <a href={flight.affiliateUrl}>Select Flight</a>
+            <Button onClick={() => handleSelectFlight(flight)}>
+              Select Flight <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </Card>

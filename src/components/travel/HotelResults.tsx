@@ -1,48 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, MapPin, Check } from 'lucide-react';
-
-// Mock hotel data (in a real app, this would come from the affiliate API)
-const MOCK_HOTELS = [
-  {
-    id: "hotel-1",
-    name: "Grand Plaza Hotel",
-    location: "Downtown Dubai",
-    price: 199,
-    currency: "USD",
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8aG90ZWx8ZW58MHx8MHx8fDI%3D&auto=format&fit=crop&w=800&q=60",
-    amenities: ["Free WiFi", "Pool", "Spa", "Restaurant"],
-    affiliateUrl: "/travel/booking/hotel-1"
-  },
-  {
-    id: "hotel-2",
-    name: "Ocean View Resort",
-    location: "Palm Jumeirah",
-    price: 299,
-    currency: "USD",
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGhvdGVsfGVufDB8fDB8fHwy&auto=format&fit=crop&w=800&q=60",
-    amenities: ["Beach Access", "Free WiFi", "Pool", "Gym"],
-    affiliateUrl: "/travel/booking/hotel-2"
-  },
-  {
-    id: "hotel-3",
-    name: "Desert Oasis Inn",
-    location: "Al Qudra",
-    price: 159,
-    currency: "USD",
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8aG90ZWx8ZW58MHx8MHx8fDI%3D&auto=format&fit=crop&w=800&q=60",
-    amenities: ["Desert View", "Free WiFi", "Pool"],
-    affiliateUrl: "/travel/booking/hotel-3"
-  }
-];
+import { Star, MapPin, Check, ExternalLink } from 'lucide-react';
+import { hotelApi } from '@/api/travelService';
+import { useToast } from '@/hooks/use-toast';
 
 interface Hotel {
   id: string;
@@ -54,12 +19,17 @@ interface Hotel {
   image: string;
   amenities: string[];
   affiliateUrl: string;
+  originalUrl: string;
 }
 
 const HotelResults = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  
   const query = new URLSearchParams(location.search);
   const destination = query.get('destination') || '';
   const checkIn = query.get('checkIn') || '';
@@ -67,32 +37,35 @@ const HotelResults = () => {
   const guests = query.get('guests') || '1';
 
   useEffect(() => {
-    // Simulate API call to affiliate partner
     const fetchHotels = async () => {
       try {
-        // In a real app, this would be an API call to the affiliate partner
-        // with proper tracking IDs and parameters
-        console.log("Fetching hotels for:", { destination, checkIn, checkOut, guests });
+        setLoading(true);
+        setError(null);
         
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Call our API service
+        const result = await hotelApi.searchHotels({
+          destination,
+          checkIn,
+          checkOut,
+          guests: parseInt(guests, 10)
+        });
         
-        // Filter hotels based on destination (simple mock)
-        const filteredHotels = MOCK_HOTELS.filter(
-          hotel => hotel.location.toLowerCase().includes(destination.toLowerCase())
-        );
-        
-        setHotels(filteredHotels.length > 0 ? filteredHotels : MOCK_HOTELS);
-        setLoading(false);
+        setHotels(result.hotels);
       } catch (error) {
         console.error("Error fetching hotels:", error);
-        setHotels([]);
+        setError('Failed to load hotels. Please try again.');
+        toast({
+          title: "Error",
+          description: "Failed to load hotels. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
         setLoading(false);
       }
     };
 
     fetchHotels();
-  }, [destination, checkIn, checkOut, guests]);
+  }, [destination, checkIn, checkOut, guests, toast]);
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -107,6 +80,16 @@ const HotelResults = () => {
     }
     
     return stars;
+  };
+  
+  const handleViewDeal = (hotel: Hotel) => {
+    // For direct booking through our platform, navigate to our booking page
+    if (hotel.originalUrl) {
+      navigate(hotel.originalUrl);
+    } else {
+      // For affiliate links, open in new tab
+      window.open(hotel.affiliateUrl, '_blank');
+    }
   };
 
   if (loading) {
@@ -133,6 +116,16 @@ const HotelResults = () => {
           </Card>
         ))}
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="text-center p-8 mt-6">
+        <h3 className="text-xl font-semibold mb-2">Error</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </Card>
     );
   }
 
@@ -188,8 +181,8 @@ const HotelResults = () => {
                   <span className="text-2xl font-bold">${hotel.price}</span>
                   <span className="text-sm text-muted-foreground ml-1">per night</span>
                 </div>
-                <Button asChild>
-                  <a href={hotel.affiliateUrl}>View Deal</a>
+                <Button onClick={() => handleViewDeal(hotel)}>
+                  View Deal <ExternalLink className="ml-2 h-4 w-4" />
                 </Button>
               </CardFooter>
             </div>

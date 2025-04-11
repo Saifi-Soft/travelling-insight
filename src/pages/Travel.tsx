@@ -26,12 +26,6 @@ const Travel = () => {
               <p className="text-lg text-muted-foreground max-w-2xl">
                 Search and book the best deals on flights, hotels, and tour guides without ever leaving our site.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-primary hover:bg-primary/90" onClick={() => navigate('/travel/planner')}>
-                  Plan Complete Trip
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </div>
         </div>

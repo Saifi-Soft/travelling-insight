@@ -5,104 +5,76 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Star, MapPin, Languages, Clock, Calendar, CheckCircle, Filter, SlidersHorizontal } from 'lucide-react';
+import { Star, MapPin, Languages, Clock, Calendar, CheckCircle, ExternalLink, SlidersHorizontal } from 'lucide-react';
+import { guideApi } from '@/api/travelService';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock data that would come from affiliate API
-const MOCK_GUIDES = [
-  {
-    id: "guide-1",
-    name: "Elena Martinez",
-    location: "Barcelona, Spain",
-    languages: ["English", "Spanish", "Catalan"],
-    price: 75,
-    currency: "USD",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    rating: 4.9,
-    reviewCount: 127,
-    specialties: ["Architecture", "Food", "History"],
-    availability: ["Monday", "Tuesday", "Thursday", "Friday", "Saturday"]
-  },
-  {
-    id: "guide-2",
-    name: "Hiroshi Tanaka",
-    location: "Kyoto, Japan",
-    languages: ["English", "Japanese"],
-    price: 89,
-    currency: "USD",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    rating: 4.8,
-    reviewCount: 92,
-    specialties: ["Traditional Culture", "Gardens", "Tea Ceremony"],
-    availability: ["Tuesday", "Wednesday", "Friday", "Sunday"]
-  },
-  {
-    id: "guide-3",
-    name: "Sophia Williams",
-    location: "Rome, Italy",
-    languages: ["English", "Italian", "French"],
-    price: 82,
-    currency: "USD",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=761&q=80",
-    rating: 4.7,
-    reviewCount: 113,
-    specialties: ["Ancient History", "Art", "Local Cuisine"],
-    availability: ["Monday", "Wednesday", "Thursday", "Saturday", "Sunday"]
-  },
-  {
-    id: "guide-4",
-    name: "Ahmed Hassan",
-    location: "Cairo, Egypt",
-    languages: ["English", "Arabic"],
-    price: 65,
-    currency: "USD",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-    rating: 4.9,
-    reviewCount: 78,
-    specialties: ["Archaeology", "Pyramids", "Egyptian History"],
-    availability: ["Tuesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  },
-];
+interface Guide {
+  id: string;
+  name: string;
+  location: string;
+  languages: string[];
+  price: number;
+  currency: string;
+  image: string;
+  rating: number;
+  reviewCount: number;
+  specialties: string[];
+  availability: string[];
+  affiliateUrl: string;
+  originalUrl?: string;
+}
 
 const TourGuideResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [guides, setGuides] = useState<any[]>([]);
+  const [guides, setGuides] = useState<Guide[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
   const destination = searchParams.get('destination') || '';
   const date = searchParams.get('date') || '';
+  const people = searchParams.get('people') || '1';
   
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // In a real implementation, this would be an API call to the affiliate
-        // with the search parameters
-        console.log('Searching for guides in:', destination);
+        setLoading(true);
+        setError(null);
         
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Call our API service
+        const result = await guideApi.searchGuides({
+          destination,
+          date,
+          people: parseInt(people, 10)
+        });
         
-        // Filter guides based on destination (in a real app this would be done by the API)
-        const filteredGuides = destination 
-          ? MOCK_GUIDES.filter(guide => 
-              guide.location.toLowerCase().includes(destination.toLowerCase()))
-          : MOCK_GUIDES;
-        
-        setGuides(filteredGuides);
-        setLoading(false);
+        setGuides(result.guides);
       } catch (error) {
         console.error("Error fetching guides:", error);
+        setError('Failed to load tour guides. Please try again.');
+        toast({
+          title: "Error",
+          description: "Failed to load tour guides. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
         setLoading(false);
-        setGuides([]);
       }
     };
     
     fetchData();
-  }, [destination]);
+  }, [destination, date, people, toast]);
   
-  const handleBookGuide = (guideId: string) => {
-    // In a real application, this would navigate to a booking page with the guide ID
-    navigate(`/travel/booking/guide/${guideId}`);
+  const handleBookGuide = (guide: Guide) => {
+    // For direct booking through our platform, navigate to our booking page
+    if (guide.originalUrl) {
+      navigate(guide.originalUrl);
+    } else {
+      // For affiliate links, open in new tab with tracking parameters
+      window.open(guide.affiliateUrl, '_blank');
+    }
   };
   
   if (loading) {
@@ -141,6 +113,16 @@ const TourGuideResults = () => {
           ))}
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="text-center p-8 mt-6">
+        <h3 className="text-xl font-semibold mb-2">Error</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </Card>
     );
   }
 
@@ -237,9 +219,9 @@ const TourGuideResults = () => {
                       <div className="text-2xl font-bold">
                         ${guide.price} <span className="text-sm font-normal text-muted-foreground">per hour</span>
                       </div>
-                      <Button onClick={() => handleBookGuide(guide.id)}>
+                      <Button onClick={() => handleBookGuide(guide)}>
                         <CheckCircle className="mr-2 h-4 w-4" />
-                        Book Guide
+                        Book Guide <ExternalLink className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
                   </div>

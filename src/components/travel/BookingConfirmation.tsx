@@ -1,230 +1,206 @@
-
-import React from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Calendar, MapPin, Plane, User, Download, Share, HelpingHand, Clock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { hotelApi, flightApi, guideApi } from '@/api/travelService';
+import { Check, ExternalLink, Loader2 } from 'lucide-react';
 
 interface BookingConfirmationProps {
   type: 'hotel' | 'flight' | 'guide';
 }
 
 const BookingConfirmation = ({ type }: BookingConfirmationProps) => {
+  const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
   
-  // Get data passed from the booking form
-  const bookingData = location.state || {
-    bookingId: 'Unknown',
-    itemDetails: null,
-    customerName: 'Guest'
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [item, setItem] = useState<any>(null);
+  const [affiliateUrl, setAffiliateUrl] = useState<string | null>(null);
+
+  // Get data from state if available, otherwise load from API
+  const bookingData = location.state || {};
+  const bookingId = bookingData.bookingId || `BK${Math.floor(100000 + Math.random() * 900000)}`;
+  
+  useEffect(() => {
+    const fetchItemDetails = async () => {
+      if (!id) {
+        setError('Booking ID not found');
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        
+        // If we have item details in state, use them
+        if (bookingData.itemDetails) {
+          setItem(bookingData.itemDetails);
+          setAffiliateUrl(bookingData.itemDetails.affiliateUrl);
+          setLoading(false);
+          return;
+        }
+        
+        // Otherwise fetch from API
+        if (type === 'hotel') {
+          const response = await hotelApi.getHotelDetails(id);
+          setItem(response.hotel);
+          setAffiliateUrl(response.hotel.affiliateUrl);
+        } else if (type === 'flight') {
+          const response = await flightApi.getFlightDetails(id);
+          setItem(response.flight);
+          setAffiliateUrl(response.flight.affiliateUrl);
+        } else if (type === 'guide') {
+          const response = await guideApi.getGuideDetails(id);
+          setItem(response.guide);
+          setAffiliateUrl(response.guide.affiliateUrl);
+        }
+        
+      } catch (error) {
+        console.error('Error loading booking details:', error);
+        setError('Failed to load booking details');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchItemDetails();
+  }, [id, type, bookingData]);
+  
+  const handleViewDetails = () => {
+    if (affiliateUrl) {
+      window.open(affiliateUrl, '_blank');
+    }
   };
-  
-  const { bookingId, itemDetails, customerName } = bookingData;
-  
-  if (!itemDetails) {
+
+  if (loading) {
     return (
-      <Card className="text-center p-8">
+      <div className="flex flex-col items-center justify-center p-12">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-center text-muted-foreground">Loading booking details...</p>
+      </div>
+    );
+  }
+
+  if (error || !item) {
+    return (
+      <Card className="w-full max-w-3xl mx-auto">
         <CardHeader>
-          <CardTitle>Booking Information Not Found</CardTitle>
+          <CardTitle className="text-xl text-red-500">Something went wrong</CardTitle>
+          <CardDescription>{error || 'Booking details not found'}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            We couldn't find your booking information. Please check your bookings in your account.
-          </p>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button onClick={() => navigate('/travel')}>Return to Travel</Button>
+        <CardFooter>
+          <Button onClick={() => navigate('/travel')}>Return to Travel Search</Button>
         </CardFooter>
       </Card>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+    <Card className="w-full max-w-3xl mx-auto">
+      <CardHeader className="text-center pb-2">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Check className="h-8 w-8 text-green-600" />
         </div>
-        <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
-        <p className="text-muted-foreground">
-          Your {type === 'guide' ? 'tour guide' : type} has been successfully booked. Your booking reference is <strong>{bookingId}</strong>.
-        </p>
-      </div>
+        <CardTitle className="text-2xl font-bold text-green-600">Booking Confirmed!</CardTitle>
+        <CardDescription className="text-base">
+          Your booking reference: <span className="font-medium">{bookingId}</span>
+        </CardDescription>
+      </CardHeader>
       
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>
-            {type === 'hotel' ? 'Hotel Details' : type === 'flight' ? 'Flight Details' : 'Tour Guide Details'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {type === 'hotel' ? (
-            <div className="grid gap-4">
-              <div className="flex flex-col md:flex-row items-start gap-4">
-                {itemDetails.image && (
-                  <div className="md:w-1/3">
-                    <img 
-                      src={itemDetails.image} 
-                      alt={itemDetails.name} 
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold">{itemDetails.name}</h3>
-                  <div className="flex items-center text-muted-foreground mt-1">
-                    <MapPin className="h-4 w-4 mr-1" /> 
-                    <span>{itemDetails.location}</span>
-                  </div>
-                </div>
+      <CardContent className="space-y-6">
+        <div className="bg-muted/50 rounded-lg p-4">
+          <h3 className="font-medium mb-2">Booking Details</h3>
+          
+          {type === 'hotel' && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Hotel:</span>
+                <span className="font-medium">{item.name}</span>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                <div>
-                  <div className="text-sm text-muted-foreground">Check-in</div>
-                  <div className="font-medium">April 15, 2025</div>
-                  <div className="text-sm">From 3:00 PM</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Check-out</div>
-                  <div className="font-medium">April 18, 2025</div>
-                  <div className="text-sm">Until 11:00 AM</div>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Location:</span>
+                <span>{item.location}</span>
               </div>
-            </div>
-          ) : type === 'flight' ? (
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-bold">
-                      {itemDetails.airline} · {itemDetails.flightNumber}
-                    </h3>
-                    <div className="text-sm text-muted-foreground">Economy Class</div>
-                  </div>
-                  <div className="text-sm font-medium">April 15, 2025</div>
-                </div>
-                
-                {itemDetails.departure && (
-                  <div className="flex items-center justify-between border-t pt-4">
-                    <div className="text-center">
-                      <div className="text-xl font-bold">{itemDetails.departure.time}</div>
-                      <div className="text-sm font-medium">{itemDetails.departure.code}</div>
-                      <div className="text-xs text-muted-foreground">{itemDetails.departure.city}</div>
-                    </div>
-                    
-                    <div className="flex-1 mx-4 px-6">
-                      <div className="relative">
-                        <div className="border-t border-dashed border-gray-300 absolute w-full top-4"></div>
-                        <div className="flex justify-center">
-                          <Plane className="h-8 w-8 rotate-90 bg-background z-10 p-1" />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-xl font-bold">{itemDetails.arrival.time}</div>
-                      <div className="text-sm font-medium">{itemDetails.arrival.code}</div>
-                      <div className="text-xs text-muted-foreground">{itemDetails.arrival.city}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row items-start gap-4">
-                {itemDetails.image && (
-                  <div className="md:w-1/3">
-                    <img 
-                      src={itemDetails.image} 
-                      alt={itemDetails.name} 
-                      className="w-full h-40 object-cover rounded-md"
-                    />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold">{itemDetails.name}</h3>
-                  <div className="flex items-center text-muted-foreground mt-1">
-                    <MapPin className="h-4 w-4 mr-1" /> 
-                    <span>{itemDetails.location}</span>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {itemDetails.specialties?.map((specialty: string) => (
-                      <Badge key={specialty} variant="secondary">
-                        {specialty}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-4 border-t pt-4">
-                <div>
-                  <div className="text-sm text-muted-foreground">Tour Date</div>
-                  <div className="flex items-center font-medium">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    {itemDetails.bookedDate || 'April 15, 2025'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Tour Duration</div>
-                  <div className="flex items-center font-medium">
-                    <Clock className="h-4 w-4 mr-2" />
-                    {itemDetails.hours || 3} hours
-                  </div>
-                </div>
-              </div>
-              
-              <div className="border-t pt-4">
-                <div className="flex justify-between mb-1">
-                  <div className="text-sm text-muted-foreground">Total Cost</div>
-                  <div className="font-medium">${itemDetails.totalPrice || itemDetails.price * 3}</div>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Price:</span>
+                <span className="font-medium">${item.price} per night</span>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-      
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Customer Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex items-center">
-            <User className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span>{customerName}</span>
-          </div>
           
-          <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span>Booked on {new Date().toLocaleDateString()}</span>
+          {type === 'flight' && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Airline:</span>
+                <span className="font-medium">{item.airline} {item.flightNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Route:</span>
+                <span>{item.departure?.city} to {item.arrival?.city}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Price:</span>
+                <span className="font-medium">${item.price} per person</span>
+              </div>
+            </div>
+          )}
+          
+          {type === 'guide' && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Guide:</span>
+                <span className="font-medium">{item.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Location:</span>
+                <span>{item.location}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Price:</span>
+                <span className="font-medium">${item.price} per hour</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-muted/50 rounded-lg p-4">
+          <h3 className="font-medium mb-2">Customer Details</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Name:</span>
+              <span className="font-medium">{bookingData.customerName || 'Guest User'}</span>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        
+        <Separator />
+        
+        <div className="text-center space-y-4">
+          <p>Thank you for booking through NomadJourney!</p>
+          <p className="text-sm text-muted-foreground">
+            A confirmation email has been sent with all the details of your booking.
+          </p>
+          
+          {affiliateUrl && (
+            <Button onClick={handleViewDetails} variant="outline" className="mt-2">
+              View Full Details <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </CardContent>
       
-      <div className="flex flex-col sm:flex-row gap-4">
-        <Button className="flex-1" variant="outline" onClick={() => navigate('/travel')}>
-          Return to Travel
+      <CardFooter className="flex justify-between border-t pt-6">
+        <Button variant="outline" onClick={() => navigate('/')}>
+          Return Home
         </Button>
-        <Button className="flex-1">
-          <Download className="mr-2 h-4 w-4" /> Download Receipt
+        <Button onClick={() => navigate('/travel/planner')}>
+          Plan Another Trip
         </Button>
-        <Button className="flex-1" variant="secondary">
-          <Share className="mr-2 h-4 w-4" /> Share Itinerary
-        </Button>
-      </div>
-      
-      <div className="text-center mt-10 text-sm text-muted-foreground">
-        <p>Need help with your booking? Contact us at support@travelblog.com</p>
-        <p className="mt-1">Booking ID: {bookingId}</p>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 
