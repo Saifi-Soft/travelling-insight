@@ -4,9 +4,17 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import PostsAdmin from '@/components/admin/PostsAdmin';
 import HashtagsManagement from '@/components/admin/HashtagsManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import { topicsApi } from '@/api/mongoApiService';
 
 const AdminPosts = () => {
   const [activeTab, setActiveTab] = useState('posts');
+  
+  // Fetch topics for the hashtags tab
+  const { data: topics = [], isLoading } = useQuery({
+    queryKey: ['topics'],
+    queryFn: topicsApi.getAll,
+  });
 
   return (
     <AdminLayout activeItem="posts">

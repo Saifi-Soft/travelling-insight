@@ -40,18 +40,21 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
+      staleTime: 1000 * 60 * 5, // 5 minutes
     },
   },
 });
 
 const App = () => {
   useEffect(() => {
-    // Initialize MongoDB collections with sample data
+    // Initialize localStorage collections with sample data if they don't exist
     const initializeData = async () => {
       try {
+        console.log('Initializing mock data in localStorage');
         await postsApi.initializeCollection(MOCK_POSTS);
         await categoriesApi.initializeCollection(MOCK_CATEGORIES);
         await topicsApi.initializeCollection(MOCK_TOPICS);
+        console.log('Data initialization complete');
       } catch (error) {
         console.error('Error initializing data:', error);
       }

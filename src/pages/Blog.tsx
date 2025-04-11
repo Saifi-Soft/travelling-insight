@@ -74,7 +74,6 @@ const Blog = () => {
         <BlogContent 
           filteredPosts={filteredPosts} 
           isLoading={postsLoading}
-          trendingTopics={trendingTopics}
         />
       </main>
       
