@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, X, FileText, MapPin } from 'lucide-react';
@@ -92,16 +92,18 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
     if (type === 'post') {
       console.log(`Navigating to blog post with ID: ${id}`);
       navigate(`/blog/${id}`);
+      handleClose();
     } else if (type === 'destination') {
       console.log(`Navigating to destination with ID: ${id}`);
       navigate(`/destinations/${id}`);
+      handleClose();
     }
-    handleClose();
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md md:max-w-xl p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Search</DialogTitle>
         <div className="flex items-center border-b p-4">
           <Search className="h-5 w-5 text-muted-foreground mr-2" />
           <Input 
