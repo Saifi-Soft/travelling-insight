@@ -11,8 +11,15 @@ import BlogPost from "./pages/BlogPost";
 import Destinations from "./pages/Destinations";
 import Community from "./pages/Community";
 import About from "./pages/About";
-import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminPosts from "./pages/AdminPosts";
+import AdminCategories from "./pages/AdminCategories";
+import AdminComments from "./pages/AdminComments";
+import AdminCommunity from "./pages/AdminCommunity";
+import AdminSettings from "./pages/AdminSettings";
+import AdminCreatePost from "./pages/AdminCreatePost";
+import AdminAuthGuard from "./components/admin/AdminAuthGuard";
 import NotFound from "./pages/NotFound";
 
 // Travel feature pages
@@ -45,14 +52,28 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:id" element={<BlogPost />} />
               <Route path="/destinations" element={<Destinations />} />
               <Route path="/community" element={<Community />} />
               <Route path="/about" element={<About />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              
+              {/* Admin Login */}
+              <Route path="/admin-login" element={<AdminLogin />} />
+              
+              {/* Protected Admin Routes */}
+              <Route path="/admin" element={<AdminAuthGuard><AdminDashboard /></AdminAuthGuard>} />
+              <Route path="/admin/posts" element={<AdminAuthGuard><AdminPosts /></AdminAuthGuard>} />
+              <Route path="/admin/posts/new" element={<AdminAuthGuard><AdminCreatePost /></AdminAuthGuard>} />
+              <Route path="/admin/categories" element={<AdminAuthGuard><AdminCategories /></AdminAuthGuard>} />
+              <Route path="/admin/comments" element={<AdminAuthGuard><AdminComments /></AdminAuthGuard>} />
+              <Route path="/admin/community" element={<AdminAuthGuard><AdminCommunity /></AdminAuthGuard>} />
+              <Route path="/admin/settings" element={<AdminAuthGuard><AdminSettings /></AdminAuthGuard>} />
+              
+              {/* Legacy route - redirect to new admin dashboard */}
+              <Route path="/admin-dashboard" element={<AdminAuthGuard><AdminDashboard /></AdminAuthGuard>} />
               
               {/* Travel Feature Routes */}
               <Route path="/travel" element={<Travel />} />
@@ -63,7 +84,7 @@ const App = () => {
               <Route path="/travel/booking/:type/:id" element={<BookingPage />} />
               <Route path="/travel/confirmation/:type/:id" element={<BookingConfirmationPage />} />
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

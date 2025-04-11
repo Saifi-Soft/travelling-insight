@@ -14,7 +14,7 @@ interface RichTextEditorProps {
   onAddMedia: (media: { type: string, url: string }) => void;
 }
 
-const RichTextEditor = ({ initialValue, onChange, onAddMedia }: RichTextEditorProps) => {
+export const RichTextEditor = ({ initialValue, onChange, onAddMedia }: RichTextEditorProps) => {
   const [value, setValue] = useState(initialValue);
   const [selection, setSelection] = useState({ start: 0, end: 0 });
   const textareaRef = useState<HTMLTextAreaElement | null>(null);
@@ -332,5 +332,3 @@ const RichTextEditor = ({ initialValue, onChange, onAddMedia }: RichTextEditorPr
     </div>
   );
 };
-
-export default RichTextEditor;

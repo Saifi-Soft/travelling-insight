@@ -1,70 +1,136 @@
 
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import PostsManagement from '@/components/admin/PostsManagement';
-import CategoriesManagement from '@/components/admin/CategoriesManagement';
-import TopicsManagement from '@/components/admin/TopicsManagement';
-import HashtagsManagement from '@/components/admin/HashtagsManagement';
-import BookingsManagement from '@/components/admin/BookingsManagement';
-import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
-import { useToast } from "@/components/ui/use-toast";
-import { Toaster } from "@/components/ui/toaster";
+import React from 'react';
+import AdminLayout from '@/components/admin/AdminLayout';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { 
+  LayoutDashboard, 
+  Eye, 
+  FolderOpen, 
+  MessageSquare,
+  TrendingUp 
+} from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("analytics");
-  const { toast } = useToast();
+  // Mock data for the dashboard stats
+  const stats = [
+    { 
+      id: 'posts',
+      title: 'Total Posts', 
+      value: 0, 
+      change: '+12.3%',
+      changeText: 'from last month',
+      icon: LayoutDashboard
+    },
+    { 
+      id: 'views',
+      title: 'Total Views', 
+      value: 0, 
+      change: '+19.5%',
+      changeText: 'from last month',
+      icon: Eye
+    },
+    { 
+      id: 'categories',
+      title: 'Categories', 
+      value: 6, 
+      change: '+7.2%',
+      changeText: 'from last month',
+      icon: FolderOpen
+    },
+    { 
+      id: 'comments',
+      title: 'Comments', 
+      value: 0, 
+      change: '+4.6%',
+      changeText: 'from last month',
+      icon: MessageSquare
+    }
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Navbar />
-      <main className="flex-grow py-12">
-        <div className="container-custom">
-          <div className="flex flex-col mb-8">
-            <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage your website content and view analytics</p>
-          </div>
-          
-          <Tabs defaultValue="analytics" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-8">
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="posts">Posts</TabsTrigger>
-              <TabsTrigger value="categories">Categories</TabsTrigger>
-              <TabsTrigger value="topics">Topics</TabsTrigger>
-              <TabsTrigger value="hashtags">Hashtags</TabsTrigger>
-              <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="analytics">
-              <AnalyticsDashboard />
-            </TabsContent>
-            
-            <TabsContent value="posts">
-              <PostsManagement />
-            </TabsContent>
-            
-            <TabsContent value="categories">
-              <CategoriesManagement />
-            </TabsContent>
-            
-            <TabsContent value="topics">
-              <TopicsManagement />
-            </TabsContent>
-            
-            <TabsContent value="hashtags">
-              <HashtagsManagement />
-            </TabsContent>
-            
-            <TabsContent value="bookings">
-              <BookingsManagement />
-            </TabsContent>
-          </Tabs>
+    <AdminLayout activeItem="dashboard">
+      <div className="space-y-8">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat) => (
+            <Card key={stat.id} className="bg-white p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm text-gray-500">{stat.title}</p>
+                  <h3 className="text-2xl font-bold mt-2">{stat.value}</h3>
+                  <p className="text-xs text-green-500 mt-1">
+                    {stat.change} {stat.changeText}
+                  </p>
+                </div>
+                <div className="p-2 rounded-full">
+                  <stat.icon className="h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
-      </main>
-      <Footer />
-      <Toaster />
-    </div>
+        
+        {/* Dashboard Tabs */}
+        <Tabs defaultValue="overview" className="mt-8">
+          <TabsList className="bg-white">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          </TabsList>
+          
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <TabsContent value="overview" className="col-span-2">
+              <Card className="bg-white p-6">
+                <h3 className="text-xl font-bold mb-4">Overview</h3>
+                <div className="h-64 flex items-center justify-center text-gray-400">
+                  Overview chart will appear here
+                </div>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="analytics" className="col-span-2">
+              <Card className="bg-white p-6">
+                <h3 className="text-xl font-bold mb-4">Analytics</h3>
+                <div className="h-64 flex items-center justify-center text-gray-400">
+                  Analytics data will appear here
+                </div>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="reports" className="col-span-2">
+              <Card className="bg-white p-6">
+                <h3 className="text-xl font-bold mb-4">Reports</h3>
+                <div className="h-64 flex items-center justify-center text-gray-400">
+                  Reports will appear here
+                </div>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="notifications" className="col-span-2">
+              <Card className="bg-white p-6">
+                <h3 className="text-xl font-bold mb-4">Notifications</h3>
+                <div className="h-64 flex items-center justify-center text-gray-400">
+                  Notifications will appear here
+                </div>
+              </Card>
+            </TabsContent>
+            
+            {/* Recent Posts Sidebar */}
+            <Card className="bg-white p-6 h-fit">
+              <h3 className="text-xl font-bold mb-4">Recent Posts</h3>
+              <p className="text-gray-500 mb-6">You published 0 posts this month.</p>
+              <div className="h-64 flex items-center justify-center text-gray-400">
+                Recent posts will appear here
+              </div>
+            </Card>
+          </div>
+        </Tabs>
+      </div>
+    </AdminLayout>
   );
 };
 
