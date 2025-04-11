@@ -67,3 +67,106 @@ export interface MediaItem {
   url: string;
   caption?: string;
 }
+
+// MongoDB operator types
+export interface MongoOperators {
+  $in?: any[];
+  // Add other MongoDB operators as needed
+}
+
+// Community types
+export interface CommunityUser {
+  id: string;
+  username: string;
+  email: string;
+  avatar?: string;
+  name: string;
+  bio?: string;
+  joinDate: Date;
+  lastActive?: Date;
+  status: 'pending' | 'active' | 'blocked';
+  experienceLevel: 'Newbie' | 'Casual' | 'Regular' | 'Experienced' | 'Globetrotter';
+  travelStyles?: string[];
+  visitedCountries?: {
+    name: string;
+    year: number;
+  }[];
+  wishlistDestinations?: string[];
+  interests?: string[];
+  badges?: {
+    name: string;
+    description: string;
+    dateEarned: Date;
+    icon: string;
+  }[];
+  reputation: number;
+  socialProfiles?: {
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+  };
+}
+
+export interface TravelGroup {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  category: string;
+  creator: string; // userId
+  image?: string;
+  members: string[]; // array of userIds
+  topics?: string[];
+  dateCreated: Date;
+  status: 'active' | 'archived';
+  featuredStatus: boolean;
+  memberCount: number;
+}
+
+export interface CommunityEvent {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  host: string; // userId
+  date: Date;
+  endDate?: Date;
+  location: {
+    type: 'online' | 'physical';
+    details: string; // Zoom link or address
+  };
+  image?: string;
+  capacity?: number;
+  attendees: string[]; // array of userIds
+  status: 'upcoming' | 'ongoing' | 'completed' | 'canceled';
+  category?: string;
+  tags?: string[];
+  createdAt: Date;
+}
+
+export interface TravelMatch {
+  id: string;
+  userId: string;
+  preferences: {
+    destinations: string[];
+    dateRange?: {
+      start?: Date;
+      end?: Date;
+    };
+    travelStyles: string[];
+    interests: string[];
+    ageRange?: {
+      min?: number;
+      max?: number;
+    };
+    languages?: string[];
+  };
+  status: 'active' | 'paused' | 'closed';
+  potentialMatches: {
+    userId: string;
+    compatibilityScore: number;
+    status: 'pending' | 'accepted' | 'rejected';
+  }[];
+  createdAt: Date;
+  updatedAt: Date;
+}

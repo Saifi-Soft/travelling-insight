@@ -1,10 +1,14 @@
 
 // MongoDB API implementation for browser environments
-import { Post, Category, Topic, Comment } from '@/types/common';
+import { Post, Category, Topic, Comment, MongoOperators } from '@/types/common';
 import { PostSchema } from '@/models/Post';
 import { CategorySchema } from '@/models/Category';
 import { TopicSchema } from '@/models/Topic';
 import { CommentSchema } from '@/models/Comment';
+import { CommunityUserSchema } from '@/models/CommunityUser';
+import { TravelGroupSchema } from '@/models/TravelGroup';
+import { CommunityEventSchema } from '@/models/CommunityEvent';
+import { TravelMatchSchema } from '@/models/TravelMatch';
 
 // Collections
 export const COLLECTIONS = {
@@ -12,18 +16,16 @@ export const COLLECTIONS = {
   CATEGORIES: 'categories',
   TOPICS: 'topics',
   COMMENTS: 'comments',
-  USERS: 'users'
+  USERS: 'users',
+  COMMUNITY_USERS: 'community_users',
+  TRAVEL_GROUPS: 'travel_groups',
+  COMMUNITY_EVENTS: 'community_events',
+  TRAVEL_MATCHES: 'travel_matches'
 };
 
 // For browser compatibility, we'll use a serverless approach
 // This implementation will work for demonstration purposes,
 // but in a real app you would use API routes to communicate with MongoDB
-
-// MongoDB operator types
-interface MongoOperators {
-  $in?: any[];
-  // Add other MongoDB operators as needed
-}
 
 // Mock MongoDB ObjectId generator
 export function toObjectId(id: string) {
@@ -65,6 +67,18 @@ export async function connectToDatabase() {
   }
   if (!localStorage.getItem(COLLECTIONS.COMMENTS)) {
     localStorage.setItem(COLLECTIONS.COMMENTS, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(COLLECTIONS.COMMUNITY_USERS)) {
+    localStorage.setItem(COLLECTIONS.COMMUNITY_USERS, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(COLLECTIONS.TRAVEL_GROUPS)) {
+    localStorage.setItem(COLLECTIONS.TRAVEL_GROUPS, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(COLLECTIONS.COMMUNITY_EVENTS)) {
+    localStorage.setItem(COLLECTIONS.COMMUNITY_EVENTS, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(COLLECTIONS.TRAVEL_MATCHES)) {
+    localStorage.setItem(COLLECTIONS.TRAVEL_MATCHES, JSON.stringify([]));
   }
 
   return {
@@ -108,6 +122,42 @@ export async function connectToDatabase() {
         updateOne: (query: any, update: any) => updateOne(COLLECTIONS.COMMENTS, query, update),
         deleteOne: (query: any) => deleteOne(COLLECTIONS.COMMENTS, query),
         countDocuments: (query?: any) => countDocuments(COLLECTIONS.COMMENTS, query)
+      },
+      community_users: {
+        find: () => createFindCursor(COLLECTIONS.COMMUNITY_USERS),
+        findOne: (query: any) => findOne(COLLECTIONS.COMMUNITY_USERS, query),
+        insertOne: (doc: any) => insertOne(COLLECTIONS.COMMUNITY_USERS, doc),
+        insertMany: (docs: any[]) => insertMany(COLLECTIONS.COMMUNITY_USERS, docs),
+        updateOne: (query: any, update: any) => updateOne(COLLECTIONS.COMMUNITY_USERS, query, update),
+        deleteOne: (query: any) => deleteOne(COLLECTIONS.COMMUNITY_USERS, query),
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.COMMUNITY_USERS, query)
+      },
+      travel_groups: {
+        find: () => createFindCursor(COLLECTIONS.TRAVEL_GROUPS),
+        findOne: (query: any) => findOne(COLLECTIONS.TRAVEL_GROUPS, query),
+        insertOne: (doc: any) => insertOne(COLLECTIONS.TRAVEL_GROUPS, doc),
+        insertMany: (docs: any[]) => insertMany(COLLECTIONS.TRAVEL_GROUPS, docs),
+        updateOne: (query: any, update: any) => updateOne(COLLECTIONS.TRAVEL_GROUPS, query, update),
+        deleteOne: (query: any) => deleteOne(COLLECTIONS.TRAVEL_GROUPS, query),
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.TRAVEL_GROUPS, query)
+      },
+      community_events: {
+        find: () => createFindCursor(COLLECTIONS.COMMUNITY_EVENTS),
+        findOne: (query: any) => findOne(COLLECTIONS.COMMUNITY_EVENTS, query),
+        insertOne: (doc: any) => insertOne(COLLECTIONS.COMMUNITY_EVENTS, doc),
+        insertMany: (docs: any[]) => insertMany(COLLECTIONS.COMMUNITY_EVENTS, docs),
+        updateOne: (query: any, update: any) => updateOne(COLLECTIONS.COMMUNITY_EVENTS, query, update),
+        deleteOne: (query: any) => deleteOne(COLLECTIONS.COMMUNITY_EVENTS, query),
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.COMMUNITY_EVENTS, query)
+      },
+      travel_matches: {
+        find: () => createFindCursor(COLLECTIONS.TRAVEL_MATCHES),
+        findOne: (query: any) => findOne(COLLECTIONS.TRAVEL_MATCHES, query),
+        insertOne: (doc: any) => insertOne(COLLECTIONS.TRAVEL_MATCHES, doc),
+        insertMany: (docs: any[]) => insertMany(COLLECTIONS.TRAVEL_MATCHES, docs),
+        updateOne: (query: any, update: any) => updateOne(COLLECTIONS.TRAVEL_MATCHES, query, update),
+        deleteOne: (query: any) => deleteOne(COLLECTIONS.TRAVEL_MATCHES, query),
+        countDocuments: (query?: any) => countDocuments(COLLECTIONS.TRAVEL_MATCHES, query)
       }
     }
   };
