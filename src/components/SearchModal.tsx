@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X } from 'lucide-react';
+import { Search, X, FileText, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Post } from '@/types/common';
 
-// Sample search data (this would come from an API in a real application)
+// Sample search data (this would ideally come from an API in a real application)
 const SEARCH_DATA = {
   posts: [
     {
@@ -114,6 +114,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
             size="icon"
             onClick={handleClose}
             className="ml-2"
+            aria-label="Close search"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -140,13 +141,16 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                       <div
                         key={post.id}
                         onClick={() => handleItemClick('post', post.id)}
-                        className="p-3 rounded-md hover:bg-muted transition-colors cursor-pointer"
+                        className="p-3 rounded-md hover:bg-muted transition-colors cursor-pointer flex items-start gap-3"
                       >
-                        <h4 className="font-medium">{post.title}</h4>
-                        <p className="text-sm text-muted-foreground">{post.excerpt}</p>
-                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                          {post.category}
-                        </span>
+                        <FileText className="h-5 w-5 mt-0.5 text-primary flex-shrink-0" />
+                        <div>
+                          <h4 className="font-medium">{post.title}</h4>
+                          <p className="text-sm text-muted-foreground">{post.excerpt}</p>
+                          <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                            {post.category}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -162,12 +166,15 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                       <div 
                         key={destination.id}
                         onClick={() => handleItemClick('destination', destination.id)}
-                        className="p-3 rounded-md hover:bg-muted transition-colors cursor-pointer"
+                        className="p-3 rounded-md hover:bg-muted transition-colors cursor-pointer flex items-start gap-3"
                       >
-                        <h4 className="font-medium">{destination.name}</h4>
-                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                          {destination.type}
-                        </span>
+                        <MapPin className="h-5 w-5 mt-0.5 text-primary flex-shrink-0" />
+                        <div>
+                          <h4 className="font-medium">{destination.name}</h4>
+                          <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                            {destination.type}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
