@@ -13,7 +13,7 @@ import { CalendarIcon, Save, X, Image, Link, Bold, Italic, List, ListOrdered, He
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { Post, Category, Topic } from '@/types/common';
-import RichTextEditor from './RichTextEditor';
+import { RichTextEditor } from './RichTextEditor';
 import MediaUploader from './MediaUploader';
 
 interface PostEditorProps {
