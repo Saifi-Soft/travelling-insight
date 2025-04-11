@@ -30,16 +30,12 @@ import SubscriptionModal from '@/components/community/SubscriptionModal';
 import IntelligentMatching from '@/components/community/IntelligentMatching';
 
 const Community = () => {
-  // State for active tab
   const [activeTab, setActiveTab] = useState('home');
-  
-  // States for dialogs and subscription
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   
-  // Profile and match states
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -60,17 +56,13 @@ const Community = () => {
   const [currentTravelStyle, setCurrentTravelStyle] = useState('');
   const [currentInterest, setCurrentInterest] = useState('');
   
-  // Simulate checking if user is logged in & subscribed
   useEffect(() => {
-    // This is where you would check if the user is logged in from your auth system
     const mockUserCheck = async () => {
-      // In your real implementation, check if the user is authenticated
       const isLoggedIn = localStorage.getItem('community_user_id');
       
       if (isLoggedIn) {
         setUserId(isLoggedIn);
         
-        // Check if user has an active subscription
         try {
           const hasSubscription = await communityPaymentApi.checkSubscriptionStatus(isLoggedIn);
           setIsSubscribed(hasSubscription);
@@ -83,7 +75,6 @@ const Community = () => {
     mockUserCheck();
   }, []);
   
-  // Fetch community data
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ['communityUsers'],
     queryFn: () => communityUsersApi.getAll(),
@@ -99,7 +90,6 @@ const Community = () => {
     queryFn: () => communityEventsApi.getAll(),
   });
   
-  // Filter active and featured data
   const activeUsers = users.filter(user => user.status === 'active');
   const featuredGroups = groups
     .filter(group => group.status === 'active' && group.featuredStatus)
@@ -109,7 +99,6 @@ const Community = () => {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
   
-  // Function to handle protected features
   const handleProtectedAction = (actionCallback: () => void, featureName: string = '') => {
     if (!userId) {
       toast.error('Please log in to continue', {
@@ -129,14 +118,12 @@ const Community = () => {
     actionCallback();
   };
   
-  // Function to handle button clicks that aren't fully implemented
   const handleFeatureNotAvailable = (featureName: string) => {
     toast(`The "${featureName}" feature will be available soon!`, {
       description: "We're working hard to bring this functionality to you.",
     });
   };
   
-  // Handle profile creation
   const handleCreateProfile = async () => {
     try {
       if (!profile.name || !profile.email) {
@@ -144,7 +131,6 @@ const Community = () => {
         return;
       }
       
-      // Create the new user profile
       const newUser = {
         username: profile.email.split('@')[0] + Math.floor(Math.random() * 1000),
         email: profile.email,
@@ -160,14 +146,12 @@ const Community = () => {
       
       const createdUser = await communityUsersApi.create(newUser);
       
-      // Save user ID to localStorage to simulate login
       localStorage.setItem('community_user_id', createdUser.id);
       setUserId(createdUser.id);
       
       toast.success('Your profile has been created and is pending approval!');
       setIsProfileDialogOpen(false);
       
-      // Prompt for subscription if not subscribed
       if (!isSubscribed) {
         setTimeout(() => {
           toast.info('Subscribe to unlock all community features', {
@@ -184,7 +168,6 @@ const Community = () => {
     }
   };
   
-  // Handle travel match creation
   const handleCreateMatch = async () => {
     try {
       if (matchPreferences.destinations.length === 0) {
@@ -192,10 +175,8 @@ const Community = () => {
         return;
       }
       
-      // In a real app, we would use the actual user ID here
       const matchUserId = userId || ('mock-user-' + Math.random().toString(36).substr(2, 9));
       
-      // Create the travel match preferences
       const newMatch = {
         userId: matchUserId,
         preferences: {
@@ -204,7 +185,7 @@ const Community = () => {
           interests: matchPreferences.interests,
           dateRange: {
             start: new Date(),
-            end: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days from now
+            end: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
           }
         },
         status: 'active' as 'active' | 'paused' | 'closed',
@@ -213,7 +194,6 @@ const Community = () => {
         updatedAt: new Date()
       };
       
-      // Save to database
       await travelMatchesApi.create(newMatch);
       
       toast.success('Your travel match preferences have been saved!');
@@ -225,7 +205,6 @@ const Community = () => {
     }
   };
   
-  // Handle successful subscription
   const handleSuccessfulSubscription = () => {
     setIsSubscribed(true);
     toast.success('Welcome to our premium community!', {
@@ -233,7 +212,6 @@ const Community = () => {
     });
   };
   
-  // Format date and time functions
   const formatDate = (dateString: string | Date) => {
     try {
       return format(new Date(dateString), 'MMM dd, yyyy');
@@ -254,7 +232,6 @@ const Community = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        {/* Hero Section */}
         <section className="relative py-24 overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1539635278303-d4002c07eae3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80')] bg-cover bg-center opacity-20"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background"></div>
@@ -308,7 +285,6 @@ const Community = () => {
           </div>
         </section>
         
-        {/* Community Content */}
         <section className="py-16">
           <div className="container-custom">
             <Tabs defaultValue="home" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -361,10 +337,8 @@ const Community = () => {
                 </TabsList>
               </div>
               
-              {/* Home Tab */}
               <TabsContent value="home" className="mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* Featured Members */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center">
@@ -405,7 +379,6 @@ const Community = () => {
                     </CardFooter>
                   </Card>
                   
-                  {/* Upcoming Events */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center">
@@ -454,7 +427,6 @@ const Community = () => {
                     </CardFooter>
                   </Card>
                   
-                  {/* Featured Groups */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center">
@@ -501,7 +473,6 @@ const Community = () => {
                   </Card>
                 </div>
                 
-                {/* Travel Buddy Matching Featured Section */}
                 <div className="mt-16">
                   <div className="rounded-xl overflow-hidden border border-border bg-card">
                     <div className="grid grid-cols-1 md:grid-cols-2">
@@ -560,7 +531,6 @@ const Community = () => {
                   </div>
                 </div>
                 
-                {/* Subscription CTA */}
                 {!isSubscribed && (
                   <div className="mt-12 text-center">
                     <h3 className="text-2xl font-bold mb-4">Unlock Premium Features</h3>
@@ -578,7 +548,6 @@ const Community = () => {
                 )}
               </TabsContent>
               
-              {/* Matches Tab (Premium only) */}
               <TabsContent value="matches" className="mt-0">
                 {isSubscribed ? (
                   <div>
@@ -623,7 +592,6 @@ const Community = () => {
                 )}
               </TabsContent>
               
-              {/* Members Tab */}
               <TabsContent value="members" className="mt-0">
                 <div className="flex flex-col items-center text-center mb-8">
                   <h2 className="text-3xl font-bold mb-4">Our Community Members</h2>
@@ -724,7 +692,6 @@ const Community = () => {
                 )}
               </TabsContent>
               
-              {/* Groups Tab */}
               <TabsContent value="groups" className="mt-0">
                 <div className="flex flex-col items-center text-center mb-8">
                   <h2 className="text-3xl font-bold mb-4">Travel Groups</h2>
@@ -782,8 +749,383 @@ const Community = () => {
                     ))
                   )}
                   
-                  {/* Create Group Card */}
                   <Card className="h-full flex flex-col border-dashed hover:border-primary/30 hover:bg-muted/50 transition-colors">
                     <div className="flex items-center justify-center flex-grow p-6">
                       <div className="text-center">
-                        <div className="mx-auto h-20 w-20
+                        <div className="mx-auto h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+                          <Plus className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-medium mt-4">Create New Group</h3>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Start your own travel group and connect with like-minded travelers
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-4 border-primary text-primary hover:bg-primary/10"
+                          onClick={() => handleProtectedAction(() => handleFeatureNotAvailable('Create Travel Group'), 'Travel Groups')}
+                        >
+                          <Plus className="h-4 w-4 mr-2" /> Create Group
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="events" className="mt-0">
+                <div className="flex flex-col items-center text-center mb-8">
+                  <h2 className="text-3xl font-bold mb-4">Community Events</h2>
+                  <p className="text-muted-foreground max-w-2xl">
+                    Discover and participate in travel events, meetups, and workshops
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {isLoadingEvents ? (
+                    <div className="col-span-full text-center py-12">Loading events...</div>
+                  ) : events.length === 0 ? (
+                    <div className="col-span-full text-center py-12">No events to display</div>
+                  ) : (
+                    events.map((event, idx) => (
+                      <Card key={event.id} className="overflow-hidden hover:border-primary/30 transition-colors">
+                        <CardHeader className="p-0">
+                          <div className="relative h-48">
+                            <img 
+                              src={event.image || `https://source.unsplash.com/random/400x200/?event`}
+                              alt={event.title}
+                              className="h-full w-full object-cover"
+                            />
+                            <div className="absolute top-4 right-4">
+                              <Badge>{event.type}</Badge>
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                              <h3 className="text-xl font-bold text-white">{event.title}</h3>
+                              <div className="flex items-center text-xs text-white/80 mt-1">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                <span>{formatDate(event.date)} • {formatTime(event.date)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                          <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                            {event.description}
+                          </p>
+                          <div className="flex items-center text-sm">
+                            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+                            <span>
+                              {event.location.type === 'online' 
+                                ? 'Online Event' 
+                                : event.location.details}
+                            </span>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="bg-muted/30 p-4">
+                          <Button 
+                            className="w-full bg-primary hover:bg-primary/90"
+                            onClick={() => handleFeatureNotAvailable(`RSVP to ${event.title}`)}
+                          >
+                            RSVP to Event
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+            </TabsContent>
+          </div>
+        </section>
+      </main>
+      <Footer />
+      
+      <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create Your Profile</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="name" className="text-sm font-medium">Name</label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                value={profile.name}
+                onChange={(e) => setProfile({...profile, name: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="email" className="text-sm font-medium">Email</label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Your email"
+                value={profile.email}
+                onChange={(e) => setProfile({...profile, email: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="bio" className="text-sm font-medium">Bio</label>
+              <Textarea
+                id="bio"
+                placeholder="Tell us about yourself"
+                value={profile.bio}
+                onChange={(e) => setProfile({...profile, bio: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="experience" className="text-sm font-medium">Travel Experience</label>
+              <Select 
+                value={profile.experienceLevel} 
+                onValueChange={(value) => setProfile({...profile, experienceLevel: value})}
+              >
+                <SelectTrigger id="experience">
+                  <SelectValue placeholder="Select your experience level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Newbie">Newbie</SelectItem>
+                  <SelectItem value="Casual">Casual</SelectItem>
+                  <SelectItem value="Regular">Regular</SelectItem>
+                  <SelectItem value="Experienced">Experienced</SelectItem>
+                  <SelectItem value="Globetrotter">Globetrotter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="travelStyle" className="text-sm font-medium">Travel Style</label>
+              <div className="flex">
+                <Input
+                  id="travelStyle"
+                  placeholder="Add travel style (e.g. Backpacking)"
+                  value={currentTravelStyle}
+                  onChange={(e) => setCurrentTravelStyle(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="ml-2"
+                  onClick={() => {
+                    addItemToArray(currentTravelStyle, profile.travelStyles, (newStyles) => {
+                      setProfile({...profile, travelStyles: newStyles});
+                      setCurrentTravelStyle('');
+                    });
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {profile.travelStyles.map((style, idx) => (
+                  <Badge key={idx} variant="secondary" className="px-2 py-1">
+                    {style}
+                    <button 
+                      className="ml-1 text-xs hover:text-destructive"
+                      onClick={() => setProfile({
+                        ...profile, 
+                        travelStyles: profile.travelStyles.filter((_, i) => i !== idx)
+                      })}
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="interest" className="text-sm font-medium">Interests</label>
+              <div className="flex">
+                <Input
+                  id="interest"
+                  placeholder="Add interest (e.g. Photography)"
+                  value={currentInterest}
+                  onChange={(e) => setCurrentInterest(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="ml-2"
+                  onClick={() => {
+                    addItemToArray(currentInterest, profile.interests, (newInterests) => {
+                      setProfile({...profile, interests: newInterests});
+                      setCurrentInterest('');
+                    });
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {profile.interests.map((interest, idx) => (
+                  <Badge key={idx} variant="outline" className="px-2 py-1">
+                    {interest}
+                    <button 
+                      className="ml-1 text-xs hover:text-destructive"
+                      onClick={() => setProfile({
+                        ...profile, 
+                        interests: profile.interests.filter((_, i) => i !== idx)
+                      })}
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProfileDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateProfile}>Create Profile</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isMatchDialogOpen} onOpenChange={setIsMatchDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Find Travel Buddies</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="destination" className="text-sm font-medium">Destinations</label>
+              <div className="flex">
+                <Input
+                  id="destination"
+                  placeholder="Add destination (e.g. Japan)"
+                  value={currentDestination}
+                  onChange={(e) => setCurrentDestination(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="ml-2"
+                  onClick={() => {
+                    addItemToArray(currentDestination, matchPreferences.destinations, (newDestinations) => {
+                      setMatchPreferences({...matchPreferences, destinations: newDestinations});
+                      setCurrentDestination('');
+                    });
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {matchPreferences.destinations.map((destination, idx) => (
+                  <Badge key={idx} className="px-2 py-1">
+                    {destination}
+                    <button 
+                      className="ml-1 text-xs hover:text-destructive"
+                      onClick={() => setMatchPreferences({
+                        ...matchPreferences, 
+                        destinations: matchPreferences.destinations.filter((_, i) => i !== idx)
+                      })}
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="matchTravelStyle" className="text-sm font-medium">Travel Style</label>
+              <div className="flex">
+                <Input
+                  id="matchTravelStyle"
+                  placeholder="Add travel style (e.g. Budget Travel)"
+                  value={currentTravelStyle}
+                  onChange={(e) => setCurrentTravelStyle(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="ml-2"
+                  onClick={() => {
+                    addItemToArray(currentTravelStyle, matchPreferences.travelStyles, (newStyles) => {
+                      setMatchPreferences({...matchPreferences, travelStyles: newStyles});
+                      setCurrentTravelStyle('');
+                    });
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {matchPreferences.travelStyles.map((style, idx) => (
+                  <Badge key={idx} variant="secondary" className="px-2 py-1">
+                    {style}
+                    <button 
+                      className="ml-1 text-xs hover:text-destructive"
+                      onClick={() => setMatchPreferences({
+                        ...matchPreferences, 
+                        travelStyles: matchPreferences.travelStyles.filter((_, i) => i !== idx)
+                      })}
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <label htmlFor="matchInterest" className="text-sm font-medium">Interests</label>
+              <div className="flex">
+                <Input
+                  id="matchInterest"
+                  placeholder="Add interest (e.g. Hiking)"
+                  value={currentInterest}
+                  onChange={(e) => setCurrentInterest(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="ml-2"
+                  onClick={() => {
+                    addItemToArray(currentInterest, matchPreferences.interests, (newInterests) => {
+                      setMatchPreferences({...matchPreferences, interests: newInterests});
+                      setCurrentInterest('');
+                    });
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {matchPreferences.interests.map((interest, idx) => (
+                  <Badge key={idx} variant="outline" className="px-2 py-1">
+                    {interest}
+                    <button 
+                      className="ml-1 text-xs hover:text-destructive"
+                      onClick={() => setMatchPreferences({
+                        ...matchPreferences, 
+                        interests: matchPreferences.interests.filter((_, i) => i !== idx)
+                      })}
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMatchDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateMatch}>Find Matches</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <SubscriptionModal 
+        open={isSubscriptionModalOpen}
+        onOpenChange={setIsSubscriptionModalOpen}
+        onSubscribe={handleSuccessfulSubscription}
+      />
+    </div>
+  );
+};
+
+export default Community;
