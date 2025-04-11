@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from "sonner";
@@ -833,7 +834,7 @@ const Community = () => {
                   )}
                 </div>
               </TabsContent>
-            </TabsContent>
+            </Tabs>
           </div>
         </section>
       </main>
