@@ -1,7 +1,7 @@
 
 import { Post, Category, Topic } from '@/types/common';
 
-// Sample posts data for the blog
+// Sample data for the blog
 export const MOCK_POSTS: Post[] = [
   {
     id: "1",
@@ -17,7 +17,7 @@ export const MOCK_POSTS: Post[] = [
     readTime: "8 min read",
     likes: 342,
     comments: 56,
-    topics: ["beach", "thailand", "travel-tips"]
+    topics: ["Thailand", "Beaches", "Travel Tips"]
   },
   {
     id: "2",
@@ -33,7 +33,7 @@ export const MOCK_POSTS: Post[] = [
     readTime: "12 min read",
     likes: 215,
     comments: 42,
-    topics: ["food", "italy", "local-cuisine"]
+    topics: ["Food", "Italy", "Cuisine"]
   },
   {
     id: "3",
@@ -49,7 +49,7 @@ export const MOCK_POSTS: Post[] = [
     readTime: "15 min read",
     likes: 421,
     comments: 83,
-    topics: ["japan", "culture", "temples"]
+    topics: ["Japan", "Culture", "Architecture"]
   },
   {
     id: "4",
@@ -65,7 +65,7 @@ export const MOCK_POSTS: Post[] = [
     readTime: "20 min read",
     likes: 287,
     comments: 49,
-    topics: ["backpacking", "budget-travel", "southeast-asia"]
+    topics: ["Backpacking", "Budget Travel", "Southeast Asia"]
   },
   {
     id: "5",
@@ -81,7 +81,7 @@ export const MOCK_POSTS: Post[] = [
     readTime: "10 min read",
     likes: 194,
     comments: 31,
-    topics: ["local-experiences", "travel-tips", "culture"]
+    topics: ["Travel Tips", "Cultural Immersion", "Local Experiences"]
   },
   {
     id: "6",
@@ -97,11 +97,10 @@ export const MOCK_POSTS: Post[] = [
     readTime: "12 min read",
     likes: 312,
     comments: 47,
-    topics: ["eco-tourism", "sustainable", "nature"]
+    topics: ["Eco-Tourism", "Sustainable Travel", "Environment"]
   }
 ];
 
-// Sample categories data
 export const MOCK_CATEGORIES: Category[] = [
   { id: "1", name: "Beaches", slug: "beaches", icon: "🏖️", count: 12 },
   { id: "2", name: "Mountains", slug: "mountains", icon: "🏔️", count: 8 },
@@ -113,20 +112,17 @@ export const MOCK_CATEGORIES: Category[] = [
   { id: "8", name: "Adventure", slug: "adventure", icon: "🧗", count: 18 }
 ];
 
-// Sample topics/hashtags data
 export const MOCK_TOPICS: Topic[] = [
-  { id: "1", name: "#Backpacking", slug: "backpacking", count: 24 },
-  { id: "2", name: "#RoadTrips", slug: "road-trips", count: 19 },
-  { id: "3", name: "#SoloTravel", slug: "solo-travel", count: 15 },
-  { id: "4", name: "#FamilyVacation", slug: "family-vacation", count: 12 },
-  { id: "5", name: "#Photography", slug: "photography", count: 28 },
-  { id: "6", name: "#DigitalNomad", slug: "digital-nomad", count: 13 },
-  { id: "7", name: "#LuxuryTravel", slug: "luxury-travel", count: 9 },
-  { id: "8", name: "#BudgetTravel", slug: "budget-travel", count: 17 },
-  { id: "9", name: "#BeachLife", slug: "beach-life", count: 22 },
-  { id: "10", name: "#MountainViews", slug: "mountain-views", count: 16 },
-  { id: "11", name: "#FoodTourism", slug: "food-tourism", count: 25 },
-  { id: "12", name: "#CultureTravel", slug: "culture-travel", count: 14 },
-  { id: "13", name: "#Sustainable", slug: "sustainable", count: 11 },
-  { id: "14", name: "#Adventure", slug: "adventure", count: 31 }
+  { id: "1", name: "Backpacking", slug: "backpacking", count: 24 },
+  { id: "2", name: "Road Trips", slug: "road-trips", count: 19 },
+  { id: "3", name: "Solo Travel", slug: "solo-travel", count: 15 },
+  { id: "4", name: "Family Vacation", slug: "family-vacation", count: 12 },
+  { id: "5", name: "Photography", slug: "photography", count: 28 },
+  { id: "6", name: "Digital Nomad", slug: "digital-nomad", count: 13 },
+  { id: "7", name: "Luxury Travel", slug: "luxury-travel", count: 9 },
+  { id: "8", name: "Budget Travel", slug: "budget-travel", count: 17 },
+  { id: "9", name: "Thailand", slug: "thailand", count: 11 },
+  { id: "10", name: "Italy", slug: "italy", count: 14 },
+  { id: "11", name: "Japan", slug: "japan", count: 16 },
+  { id: "12", name: "Southeast Asia", slug: "southeast-asia", count: 22 }
 ];

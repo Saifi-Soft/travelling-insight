@@ -30,6 +30,11 @@ import AdminComments from './pages/AdminComments';
 import AdminCommunity from './pages/AdminCommunity';
 import AdminSettings from './pages/AdminSettings';
 
+// MongoDB initialization
+import { initializeCollectionsWithSampleData } from './api/mongoApiService';
+import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './api/sampleData';
+import { toast } from '@/components/ui/use-toast';
+
 // Create a QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +47,29 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  useEffect(() => {
+    const initDB = async () => {
+      try {
+        // Initialize MongoDB collections with sample data if they're empty
+        await initializeCollectionsWithSampleData(
+          MOCK_POSTS,
+          MOCK_CATEGORIES,
+          MOCK_TOPICS
+        );
+        console.log('MongoDB initialized successfully');
+      } catch (error) {
+        console.error('Error initializing MongoDB:', error);
+        toast({
+          title: "Database Error",
+          description: "Failed to connect to MongoDB. Please check your connection settings.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    initDB();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
