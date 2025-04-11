@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,9 +7,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
+import { useTheme } from '@/contexts/ThemeContext';
+import {
+  Palette,
+  Sun,
+  Moon,
+  Monitor,
+  Brush,
+  Check
+} from 'lucide-react';
 
 const AdminSettings = () => {
   const { toast } = useToast();
+  const { theme, themeColors, setTheme, updateThemeColor } = useTheme();
   
   // General settings
   const [generalSettings, setGeneralSettings] = useState({
@@ -27,12 +36,6 @@ const AdminSettings = () => {
     generateSitemap: true
   });
   
-  // Theme settings
-  const [themeSettings, setThemeSettings] = useState({
-    mode: 'light',
-    accentColor: 'blue'
-  });
-  
   // Comment settings
   const [commentSettings, setCommentSettings] = useState({
     enableComments: true,
@@ -46,6 +49,14 @@ const AdminSettings = () => {
     googleAnalyticsConnected: false,
     mailchimpConnected: false
   });
+  
+  // Theme preview colors
+  const [previewColors, setPreviewColors] = useState({...themeColors});
+  
+  // Update preview colors when actual theme changes
+  useEffect(() => {
+    setPreviewColors({...themeColors});
+  }, [themeColors]);
   
   const handleGeneralSettingsSave = () => {
     // In a real app, you would save to an API
@@ -63,6 +74,11 @@ const AdminSettings = () => {
   };
   
   const handleThemeSettingsSave = () => {
+    // Apply all theme color changes at once
+    Object.entries(previewColors).forEach(([key, value]) => {
+      updateThemeColor(key as keyof typeof themeColors, value);
+    });
+    
     toast({
       title: "Success",
       description: "Theme settings saved successfully",
@@ -93,6 +109,64 @@ const AdminSettings = () => {
     toast({
       title: "Success",
       description: "API key regenerated successfully",
+    });
+  };
+
+  const handlePreviewColorChange = (colorType: keyof typeof previewColors, value: string) => {
+    setPreviewColors(prev => ({
+      ...prev,
+      [colorType]: value
+    }));
+  };
+
+  // Color palettes for quick selection
+  const colorPalettes = [
+    {
+      name: 'Blue',
+      primary: '#3b82f6',
+      background: '#ffffff',
+      foreground: '#222222',
+      footer: '#1e40af',
+      header: '#ffffff',
+      card: '#f8f9fa',
+    },
+    {
+      name: 'Green',
+      primary: '#10b981',
+      background: '#f8fafc',
+      foreground: '#334155',
+      footer: '#064e3b',
+      header: '#f0fdf4',
+      card: '#ecfdf5',
+    },
+    {
+      name: 'Purple',
+      primary: '#8b5cf6',
+      background: '#ffffff',
+      foreground: '#1f2937',
+      footer: '#5b21b6',
+      header: '#f5f3ff',
+      card: '#f3f4f6',
+    },
+    {
+      name: 'Orange',
+      primary: '#f97316',
+      background: '#ffffff',
+      foreground: '#1f2937',
+      footer: '#9a3412',
+      header: '#fff7ed',
+      card: '#f9fafb',
+    }
+  ];
+
+  const applyColorPalette = (palette: typeof colorPalettes[0]) => {
+    setPreviewColors({
+      primary: palette.primary,
+      background: palette.background,
+      foreground: palette.foreground,
+      footer: palette.footer,
+      header: palette.header,
+      card: palette.card,
     });
   };
 
@@ -216,44 +290,214 @@ const AdminSettings = () => {
                     <h2 className="text-xl font-bold mb-2">Theme Settings</h2>
                     <p className="text-sm text-gray-500 mb-4">Customize the appearance of your blog</p>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Theme Mode</label>
                         <div className="grid grid-cols-3 gap-4">
                           <Button 
-                            variant={themeSettings.mode === 'light' ? 'default' : 'outline'}
-                            className={themeSettings.mode === 'light' ? 'bg-blue-600 hover:bg-blue-700' : ''}
-                            onClick={() => setThemeSettings({ ...themeSettings, mode: 'light' })}
+                            variant={theme === 'light' ? 'default' : 'outline'}
+                            className={theme === 'light' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                            onClick={() => setTheme('light')}
                           >
+                            <Sun className="h-4 w-4 mr-2" />
                             Light
                           </Button>
                           <Button 
-                            variant={themeSettings.mode === 'dark' ? 'default' : 'outline'}
-                            className={themeSettings.mode === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : ''}
-                            onClick={() => setThemeSettings({ ...themeSettings, mode: 'dark' })}
+                            variant={theme === 'dark' ? 'default' : 'outline'}
+                            className={theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                            onClick={() => setTheme('dark')}
                           >
+                            <Moon className="h-4 w-4 mr-2" />
                             Dark
                           </Button>
                           <Button 
-                            variant={themeSettings.mode === 'system' ? 'default' : 'outline'}
-                            className={themeSettings.mode === 'system' ? 'bg-blue-600 hover:bg-blue-700' : ''}
-                            onClick={() => setThemeSettings({ ...themeSettings, mode: 'system' })}
+                            variant={theme === 'system' ? 'default' : 'outline'}
+                            className={theme === 'system' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                            onClick={() => setTheme('system')}
                           >
+                            <Monitor className="h-4 w-4 mr-2" />
                             System
                           </Button>
                         </div>
                       </div>
                       
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Accent Color</label>
-                        <div className="flex space-x-2">
-                          {['blue', 'green', 'purple', 'orange', 'red', 'yellow'].map(color => (
-                            <button 
-                              key={color}
-                              onClick={() => setThemeSettings({ ...themeSettings, accentColor: color })}
-                              className={`w-8 h-8 rounded-full bg-${color}-500 ${themeSettings.accentColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
-                            />
-                          ))}
+                      <div className="space-y-3 pt-4 border-t">
+                        <h3 className="text-lg font-medium">Color Settings</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Theme Presets</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {colorPalettes.map((palette) => (
+                                <Button
+                                  key={palette.name}
+                                  variant="outline"
+                                  className="flex items-center justify-center py-4"
+                                  onClick={() => applyColorPalette(palette)}
+                                >
+                                  <div className="flex flex-col items-center">
+                                    <div 
+                                      className="w-8 h-8 rounded-full mb-2" 
+                                      style={{backgroundColor: palette.primary}}
+                                    />
+                                    <span>{palette.name}</span>
+                                  </div>
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="p-4 border rounded-md" style={{backgroundColor: previewColors.background, color: previewColors.foreground}}>
+                            <h4 className="font-bold mb-2">Preview</h4>
+                            <div className="p-2 rounded mb-2" style={{backgroundColor: previewColors.header}}>
+                              Header
+                            </div>
+                            <div className="p-2 rounded mb-2" style={{backgroundColor: previewColors.card}}>
+                              Card
+                            </div>
+                            <div className="mb-2">
+                              <span style={{color: previewColors.primary}}>Primary Text</span>
+                            </div>
+                            <div className="p-2 rounded" style={{backgroundColor: previewColors.footer, color: '#ffffff'}}>
+                              Footer
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 pt-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Primary Color</label>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-6 h-6 rounded-full border"
+                                  style={{backgroundColor: previewColors.primary}}
+                                />
+                                <Input
+                                  type="color"
+                                  value={previewColors.primary}
+                                  onChange={(e) => handlePreviewColorChange('primary', e.target.value)}
+                                  className="w-16 p-0 h-8"
+                                />
+                                <Input
+                                  type="text"
+                                  value={previewColors.primary}
+                                  onChange={(e) => handlePreviewColorChange('primary', e.target.value)}
+                                  className="flex-grow"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Background Color</label>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-6 h-6 rounded-full border"
+                                  style={{backgroundColor: previewColors.background}}
+                                />
+                                <Input
+                                  type="color"
+                                  value={previewColors.background}
+                                  onChange={(e) => handlePreviewColorChange('background', e.target.value)}
+                                  className="w-16 p-0 h-8"
+                                />
+                                <Input
+                                  type="text"
+                                  value={previewColors.background}
+                                  onChange={(e) => handlePreviewColorChange('background', e.target.value)}
+                                  className="flex-grow"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Text Color</label>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-6 h-6 rounded-full border"
+                                  style={{backgroundColor: previewColors.foreground}}
+                                />
+                                <Input
+                                  type="color"
+                                  value={previewColors.foreground}
+                                  onChange={(e) => handlePreviewColorChange('foreground', e.target.value)}
+                                  className="w-16 p-0 h-8"
+                                />
+                                <Input
+                                  type="text"
+                                  value={previewColors.foreground}
+                                  onChange={(e) => handlePreviewColorChange('foreground', e.target.value)}
+                                  className="flex-grow"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Header Color</label>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-6 h-6 rounded-full border"
+                                  style={{backgroundColor: previewColors.header}}
+                                />
+                                <Input
+                                  type="color"
+                                  value={previewColors.header}
+                                  onChange={(e) => handlePreviewColorChange('header', e.target.value)}
+                                  className="w-16 p-0 h-8"
+                                />
+                                <Input
+                                  type="text"
+                                  value={previewColors.header}
+                                  onChange={(e) => handlePreviewColorChange('header', e.target.value)}
+                                  className="flex-grow"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Footer Color</label>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-6 h-6 rounded-full border"
+                                  style={{backgroundColor: previewColors.footer}}
+                                />
+                                <Input
+                                  type="color"
+                                  value={previewColors.footer}
+                                  onChange={(e) => handlePreviewColorChange('footer', e.target.value)}
+                                  className="w-16 p-0 h-8"
+                                />
+                                <Input
+                                  type="text"
+                                  value={previewColors.footer}
+                                  onChange={(e) => handlePreviewColorChange('footer', e.target.value)}
+                                  className="flex-grow"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Card Color</label>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-6 h-6 rounded-full border"
+                                  style={{backgroundColor: previewColors.card}}
+                                />
+                                <Input
+                                  type="color"
+                                  value={previewColors.card}
+                                  onChange={(e) => handlePreviewColorChange('card', e.target.value)}
+                                  className="w-16 p-0 h-8"
+                                />
+                                <Input
+                                  type="text"
+                                  value={previewColors.card}
+                                  onChange={(e) => handlePreviewColorChange('card', e.target.value)}
+                                  className="flex-grow"
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                       
@@ -261,7 +505,8 @@ const AdminSettings = () => {
                         onClick={handleThemeSettingsSave}
                         className="bg-blue-600 hover:bg-blue-700 mt-4"
                       >
-                        Save Theme Settings
+                        <Brush className="mr-2 h-4 w-4" />
+                        Apply Theme Settings
                       </Button>
                     </div>
                   </div>

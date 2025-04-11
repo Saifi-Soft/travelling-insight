@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -10,21 +10,33 @@ interface AdminAuthGuardProps {
 const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuth') === 'true';
+    const checkAuth = () => {
+      const authStatus = localStorage.getItem('adminAuth') === 'true';
+      setIsAuthenticated(authStatus);
+      
+      if (!authStatus) {
+        toast({
+          title: "Authentication required",
+          description: "Please login to access the admin area",
+          variant: "destructive",
+        });
+        navigate('/admin-login');
+      }
+      setLoading(false);
+    };
     
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please login to access the admin area",
-        variant: "destructive",
-      });
-      navigate('/admin-login');
-    }
+    checkAuth();
   }, [navigate, toast]);
 
-  return <>{children}</>;
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  return isAuthenticated ? <>{children}</> : null;
 };
 
 export default AdminAuthGuard;

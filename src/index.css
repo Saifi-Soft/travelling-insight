@@ -34,6 +34,14 @@
     --ring: 221.2 83.2% 53.3%;
  
     --radius: 0.75rem;
+
+    /* Custom theme variables */
+    --color-background: #ffffff;
+    --color-foreground: #222222;
+    --color-primary: #3b82f6;
+    --color-footer: #3b82f6;
+    --color-header: #ffffff;
+    --color-card: #f8f9fa;
   }
  
   .dark {
@@ -64,6 +72,14 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.5% 48%;
+
+    /* Custom theme variables for dark mode */
+    --color-background: #1f2937;
+    --color-foreground: #f8f9fa;
+    --color-primary: #3b82f6;
+    --color-footer: #1e3a8a;
+    --color-header: #111827;
+    --color-card: #374151;
   }
 }
 
@@ -74,6 +90,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
   }
   
   /* Add smooth scrolling to the page */
@@ -98,11 +116,13 @@
   /* Card hover effect */
   .hover-card {
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+    background-color: var(--color-card);
   }
   
   /* Gradient button */
   .btn-gradient {
-    @apply bg-gradient-to-r from-primary to-blue-700 hover:from-primary hover:to-blue-800 text-white font-medium;
+    background-color: var(--color-primary);
+    @apply hover:opacity-90 text-white font-medium;
   }
   
   /* Underline animation for links */
@@ -111,7 +131,8 @@
   }
   
   .link-hover::after {
-    @apply content-[''] absolute left-0 bottom-[-2px] w-0 h-0.5 bg-primary transition-all duration-300 ease-in-out;
+    @apply content-[''] absolute left-0 bottom-[-2px] w-0 h-0.5 transition-all duration-300 ease-in-out;
+    background-color: var(--color-primary);
   }
   
   .link-hover:hover::after {
@@ -121,6 +142,23 @@
   /* Glass effect */
   .glass-effect {
     @apply backdrop-blur-md bg-white/70 dark:bg-black/40 border border-white/20 dark:border-white/10;
+  }
+
+  /* Custom theme classes */
+  .bg-theme-primary {
+    background-color: var(--color-primary);
+  }
+  
+  .text-theme-primary {
+    color: var(--color-primary);
+  }
+
+  .bg-theme-footer {
+    background-color: var(--color-footer);
+  }
+
+  .bg-theme-header {
+    background-color: var(--color-header);
   }
 }
 

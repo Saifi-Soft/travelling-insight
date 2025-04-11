@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Search, User, Sun, Moon, Plane } from 'lucide-react';
@@ -47,7 +48,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={`bg-background sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'shadow-md backdrop-blur-sm bg-background/90' : 'shadow-none'}`}>
+    <nav className={`sticky top-0 z-50 transition-all duration-300 bg-theme-header ${scrolled ? 'shadow-md backdrop-blur-sm bg-opacity-90' : 'shadow-none'}`}>
       <div className="container-custom py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
