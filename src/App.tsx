@@ -12,6 +12,7 @@ import Destinations from "./pages/Destinations";
 import Community from "./pages/Community";
 import About from "./pages/About";
 import Admin from "./pages/Admin";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 // Travel feature pages
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/about" element={<About />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
             
             {/* Travel Feature Routes */}
             <Route path="/travel" element={<Travel />} />
