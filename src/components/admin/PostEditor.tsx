@@ -109,6 +109,16 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
     });
   };
 
+  // Function to handle content changes from RichTextEditor
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+  };
+
+  // Function to handle image selection from MediaUploader
+  const handleImageSelected = (url: string) => {
+    setCoverImage(url);
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -213,7 +223,7 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
               
               <div>
                 <label htmlFor="content" className="block text-sm font-medium mb-1">Content</label>
-                <RichTextEditor value={content} onChange={setContent} />
+                <RichTextEditor onChange={handleContentChange} />
               </div>
             </div>
           </TabsContent>
@@ -245,7 +255,7 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
             
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Media Gallery</h3>
-              <MediaUploader />
+              <MediaUploader onImageSelected={handleImageSelected} />
             </div>
           </TabsContent>
           

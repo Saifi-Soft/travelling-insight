@@ -99,7 +99,7 @@ const PostsManagement = () => {
     }
   };
   
-  const handleSubmit = (formData: Omit<Post, 'id'>) => {
+  const handleSave = (formData: any) => {
     if (currentPost) {
       updateMutation.mutate({ id: currentPost.id, post: formData });
     } else {
@@ -116,9 +116,8 @@ const PostsManagement = () => {
     return (
       <PostEditor
         post={currentPost}
-        onSubmit={handleSubmit}
+        onSave={handleSave}
         onCancel={() => setIsEditorOpen(false)}
-        isLoading={createMutation.isPending || updateMutation.isPending}
       />
     );
   }
