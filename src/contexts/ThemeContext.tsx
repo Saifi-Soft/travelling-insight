@@ -49,7 +49,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [darkThemeColors, setDarkThemeColors] = useState<ThemeColors>(defaultDarkColors);
   const [themeColors, setThemeColors] = useState<ThemeColors>(defaultLightColors);
 
-  // Initialize theme after component mounts
+  // Load saved theme and colors from localStorage after component mounts
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     
@@ -59,20 +59,32 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Set light theme colors
     if (savedLightColors) {
-      setLightThemeColors(JSON.parse(savedLightColors));
+      try {
+        const parsedLightColors = JSON.parse(savedLightColors);
+        setLightThemeColors(parsedLightColors);
+      } catch (e) {
+        console.error("Error parsing light theme colors:", e);
+        setLightThemeColors(defaultLightColors);
+      }
     }
     
     // Set dark theme colors
     if (savedDarkColors) {
-      setDarkThemeColors(JSON.parse(savedDarkColors));
+      try {
+        const parsedDarkColors = JSON.parse(savedDarkColors);
+        setDarkThemeColors(parsedDarkColors);
+      } catch (e) {
+        console.error("Error parsing dark theme colors:", e);
+        setDarkThemeColors(defaultDarkColors);
+      }
     }
     
-    // Set theme
+    // Set theme and corresponding colors
     if (savedTheme === 'dark' || savedTheme === 'light' || savedTheme === 'system') {
       setTheme(savedTheme);
       
-      // Set the active theme colors based on saved theme
-      if (savedTheme === 'dark') {
+      if (savedTheme === 'dark' || 
+          (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         setThemeColors(savedDarkColors ? JSON.parse(savedDarkColors) : defaultDarkColors);
       } else {
         setThemeColors(savedLightColors ? JSON.parse(savedLightColors) : defaultLightColors);
@@ -85,11 +97,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  // Update localStorage and document class when theme changes
+  // Apply theme changes
   useEffect(() => {
+    // Update localStorage
     localStorage.setItem('theme', theme);
-    
-    // Save both theme color sets
     localStorage.setItem('lightThemeColors', JSON.stringify(lightThemeColors));
     localStorage.setItem('darkThemeColors', JSON.stringify(darkThemeColors));
     
@@ -98,7 +109,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       theme === 'dark' || 
       (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     
-    // Apply theme class
+    // Apply theme class and set active theme colors
     if (isDark) {
       document.documentElement.classList.add('dark');
       setThemeColors(darkThemeColors);
@@ -108,20 +119,19 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     // Apply CSS variables for theme colors
-    document.documentElement.style.setProperty('--color-background', themeColors.background);
-    document.documentElement.style.setProperty('--color-foreground', themeColors.foreground);
-    document.documentElement.style.setProperty('--color-primary', themeColors.primary);
-    document.documentElement.style.setProperty('--color-footer', themeColors.footer);
-    document.documentElement.style.setProperty('--color-header', themeColors.header);
-    document.documentElement.style.setProperty('--color-card', themeColors.card);
+    Object.entries(themeColors).forEach(([key, value]) => {
+      document.documentElement.style.setProperty(`--color-${key}`, value);
+    });
+    
   }, [theme, lightThemeColors, darkThemeColors, themeColors]);
 
-  // Listen for system preference changes
+  // Update when system preference changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
+    
+    const handleChange = () => {
       if (theme === 'system') {
-        setThemeColors(e.matches ? darkThemeColors : lightThemeColors);
+        setThemeColors(mediaQuery.matches ? darkThemeColors : lightThemeColors);
       }
     };
     
@@ -152,6 +162,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
           ...prev,
           [colorType]: value
         }));
+        document.documentElement.style.setProperty(`--color-${colorType}`, value);
       }
     } else {
       setDarkThemeColors(prev => ({
@@ -165,6 +176,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
           ...prev,
           [colorType]: value
         }));
+        document.documentElement.style.setProperty(`--color-${colorType}`, value);
       }
     }
   };

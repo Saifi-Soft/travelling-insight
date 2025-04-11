@@ -28,7 +28,7 @@ const Footer = () => {
               placeholder="Your email address" 
               className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
             />
-            <Button className="bg-white text-theme-primary hover:bg-white/90">
+            <Button className="bg-white hover:bg-white/90 text-theme-primary">
               Subscribe
             </Button>
           </div>
