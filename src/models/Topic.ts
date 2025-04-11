@@ -1,8 +1,7 @@
 
-import mongoose from 'mongoose';
 import { Topic } from '@/types/common';
 
-// Topic schema definition
+// Topic schema definition for our MongoDB-like storage
 const TopicSchema = {
   name: { type: String, required: true },
   slug: { type: String, required: true },

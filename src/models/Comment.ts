@@ -1,8 +1,7 @@
 
-import mongoose from 'mongoose';
 import { Comment } from '@/types/common';
 
-// Comment schema definition
+// Comment schema definition for our MongoDB-like storage
 const CommentSchema = {
   author: {
     name: { type: String, required: true },

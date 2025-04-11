@@ -201,7 +201,7 @@ function queryMatches(doc: any, query: any): boolean {
       // Handle MongoDB operators
       if (key === '$in') {
         return false; // Not implemented for simplicity
-      } else if ('$in' in value) {
+      } else if (value.$in) {
         // Handle {topics: {$in: [tag]}}
         const targetArray = doc[key];
         const valuesToFind = value.$in as any[];

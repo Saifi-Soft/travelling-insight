@@ -1,8 +1,7 @@
 
-import mongoose from 'mongoose';
 import { Category } from '@/types/common';
 
-// Category schema definition
+// Category schema definition for our MongoDB-like storage
 const CategorySchema = {
   name: { type: String, required: true },
   slug: { type: String, required: true },

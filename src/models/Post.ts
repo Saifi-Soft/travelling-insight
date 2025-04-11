@@ -1,8 +1,7 @@
 
-import mongoose from 'mongoose';
 import { Post } from '@/types/common';
 
-// Post schema definition
+// Post schema definition for our MongoDB-like storage
 const PostSchema = {
   title: { type: String, required: true },
   slug: { type: String, required: true },
