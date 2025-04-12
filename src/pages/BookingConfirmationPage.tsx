@@ -7,6 +7,8 @@ import BookingConfirmation from '@/components/travel/BookingConfirmation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plane, Hotel, HelpingHand, Home } from 'lucide-react';
+import HeaderAd from '@/components/ads/HeaderAd';
+import FooterAd from '@/components/ads/FooterAd';
 
 const BookingConfirmationPage = () => {
   const navigate = useNavigate();
@@ -35,6 +37,11 @@ const BookingConfirmationPage = () => {
             </Button>
           </div>
           
+          {/* First ad placed at the top of the confirmation */}
+          <div className="bg-green-50 rounded-lg p-4 mb-6">
+            <HeaderAd className="mx-auto max-w-xl" />
+          </div>
+          
           <Tabs defaultValue={bookingType === 'hotel' ? 'hotels' : bookingType === 'flight' ? 'flights' : 'guides'} onValueChange={handleTabChange}>
             <TabsList className="mb-6">
               <TabsTrigger value="flights">
@@ -50,6 +57,14 @@ const BookingConfirmationPage = () => {
           </Tabs>
           
           <BookingConfirmation type={bookingType as 'hotel' | 'flight' | 'guide'} />
+          
+          {/* Second ad placed after the confirmation details */}
+          <div className="bg-blue-50 rounded-lg p-4 mt-8">
+            <p className="text-center text-sm text-gray-500 mb-2">
+              Deals you might be interested in
+            </p>
+            <FooterAd className="mx-auto max-w-xl" />
+          </div>
         </div>
       </main>
       <Footer />

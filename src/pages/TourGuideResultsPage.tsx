@@ -25,7 +25,6 @@ const TourGuideResultsPage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <HeaderAd />
       <main className="flex-grow">
         <div className="container-custom py-10">
           <div className="flex justify-between items-center mb-4">
@@ -33,6 +32,11 @@ const TourGuideResultsPage = () => {
             <Button variant="outline" onClick={() => navigate('/travel/planner')}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Planner
             </Button>
+          </div>
+          
+          {/* First ad styled with a nice background */}
+          <div className="bg-primary/5 rounded-lg p-4 mb-6">
+            <HeaderAd />
           </div>
           
           <Tabs defaultValue="guides" onValueChange={handleTabChange}>
@@ -53,9 +57,13 @@ const TourGuideResultsPage = () => {
           <div className="mt-8">
             <TourGuideResults />
           </div>
+          
+          {/* Second ad styled with a nice background */}
+          <div className="bg-secondary/5 rounded-lg p-4 mt-8">
+            <FooterAd />
+          </div>
         </div>
       </main>
-      <FooterAd />
       <Footer />
     </div>
   );

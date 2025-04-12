@@ -25,7 +25,6 @@ const FlightResultsPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
-      <HeaderAd />
       <main className="flex-grow">
         <div className="container-custom py-10">
           <div className="flex justify-between items-center mb-4">
@@ -33,6 +32,11 @@ const FlightResultsPage = () => {
             <Button variant="outline" onClick={() => navigate('/travel/planner')}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Planner
             </Button>
+          </div>
+          
+          {/* First ad placed in a nice card UI */}
+          <div className="bg-primary/5 rounded-lg p-4 mb-6">
+            <HeaderAd />
           </div>
           
           <Tabs defaultValue="flights" onValueChange={handleTabChange}>
@@ -51,9 +55,13 @@ const FlightResultsPage = () => {
           
           <TravelSearch type="flights" />
           <FlightResults />
+          
+          {/* Second ad placed after results */}
+          <div className="bg-secondary/5 rounded-lg p-4 mt-8">
+            <FooterAd />
+          </div>
         </div>
       </main>
-      <FooterAd />
       <Footer />
     </div>
   );

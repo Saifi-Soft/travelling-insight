@@ -8,6 +8,8 @@ import GuideBookingForm from '@/components/travel/GuideBookingForm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plane, Hotel, HelpingHand, ArrowLeft } from 'lucide-react';
+import HeaderAd from '@/components/ads/HeaderAd';
+import FooterAd from '@/components/ads/FooterAd';
 
 const BookingPage = () => {
   const navigate = useNavigate();
@@ -37,6 +39,14 @@ const BookingPage = () => {
             </Button>
           </div>
           
+          {/* First ad placed before the booking form */}
+          <div className="bg-primary/5 rounded-lg p-4 mb-6">
+            <p className="text-center text-sm text-gray-500 mb-2">
+              Special offers while booking
+            </p>
+            <HeaderAd className="mx-auto max-w-xl" />
+          </div>
+          
           <Tabs defaultValue={bookingType === 'hotel' ? 'hotels' : bookingType === 'flight' ? 'flights' : 'guides'} onValueChange={handleTabChange}>
             <TabsList className="mb-6">
               <TabsTrigger value="flights">
@@ -56,6 +66,14 @@ const BookingPage = () => {
           ) : (
             <BookingForm type={bookingType as 'hotel' | 'flight'} />
           )}
+          
+          {/* Second ad placed after the form */}
+          <div className="bg-secondary/5 rounded-lg p-4 mt-8">
+            <p className="text-center text-sm text-gray-500 mb-2">
+              Recommended add-ons for your trip
+            </p>
+            <FooterAd className="mx-auto max-w-xl" />
+          </div>
         </div>
       </main>
       <Footer />

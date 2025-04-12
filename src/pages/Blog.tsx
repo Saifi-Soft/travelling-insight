@@ -6,10 +6,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BlogHeader from '@/components/BlogHeader';
 import BlogContent from '@/components/BlogContent';
-import BetweenPostsAd from '@/components/ads/BetweenPostsAd';
 import HeaderAd from '@/components/ads/HeaderAd';
 import FooterAd from '@/components/ads/FooterAd';
-import SidebarAd from '@/components/ads/SidebarAd';
 import { postsApi, categoriesApi, topicsApi } from '@/api/mongoApiService';
 import { Loader2 } from 'lucide-react';
 
@@ -101,27 +99,11 @@ const Blog = () => {
         <div className="container mx-auto px-4 mt-8">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Main content */}
-            <div className="w-full lg:w-3/4">
-              {/* Add an ad at the top of the content */}
-              <BetweenPostsAd className="mt-6 mb-8" />
-              
+            <div className="w-full">
               <BlogContent 
                 filteredPosts={filteredPosts} 
                 isLoading={isLoading}
               />
-              
-              {/* Add another ad at the bottom of the content */}
-              <BetweenPostsAd className="mb-6 mt-8" />
-            </div>
-            
-            {/* Sidebar */}
-            <div className="w-full lg:w-1/4">
-              <div className="sticky top-8">
-                <SidebarAd />
-                
-                {/* Add another sidebar ad */}
-                <SidebarAd className="mt-6" />
-              </div>
             </div>
           </div>
         </div>

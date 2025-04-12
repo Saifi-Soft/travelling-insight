@@ -38,7 +38,6 @@ const TravelPlanner = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <HeaderAd />
       <main className="flex-grow">
         {/* Hero Section */}
         <div className="relative bg-gradient-to-b from-primary/20 to-background py-16 lg:py-24">
@@ -53,6 +52,11 @@ const TravelPlanner = () => {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* First ad placed strategically after hero section */}
+        <div className="py-6 bg-gray-50">
+          <HeaderAd className="max-w-5xl mx-auto" />
         </div>
 
         {/* Travel Planner Steps */}
@@ -238,6 +242,11 @@ const TravelPlanner = () => {
           </div>
         </div>
 
+        {/* Second ad placed strategically before testimonials */}
+        <div className="py-6 bg-gray-50 mb-8">
+          <FooterAd className="max-w-5xl mx-auto" />
+        </div>
+
         {/* Testimonials */}
         <div className="bg-gradient-to-r from-primary/5 to-primary/10 py-16">
           <div className="container-custom">
@@ -310,7 +319,6 @@ const TravelPlanner = () => {
           </div>
         </div>
       </main>
-      <FooterAd />
       <Footer />
     </div>
   );

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from "sonner";
@@ -115,7 +116,6 @@ const Destinations = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <HeaderAd />
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative py-24 overflow-hidden">
@@ -153,6 +153,13 @@ const Destinations = () => {
             </div>
           </div>
         </section>
+        
+        {/* First ad placed right after the hero section */}
+        <div className="py-6 bg-gradient-to-b from-muted/30 to-background">
+          <div className="container mx-auto">
+            <HeaderAd className="max-w-5xl mx-auto" />
+          </div>
+        </div>
         
         {/* Featured Destinations */}
         <section className="py-16 bg-muted/30">
@@ -252,6 +259,13 @@ const Destinations = () => {
           </div>
         </section>
         
+        {/* Second ad placed before CTA section */}
+        <div className="py-6 bg-gradient-to-t from-primary/10 to-background mb-8">
+          <div className="container mx-auto">
+            <FooterAd className="max-w-5xl mx-auto" />
+          </div>
+        </div>
+        
         {/* CTA Section */}
         <section className="py-16 bg-primary/10">
           <div className="container-custom">
@@ -275,7 +289,6 @@ const Destinations = () => {
           </div>
         </section>
       </main>
-      <FooterAd />
       <Footer />
     </div>
   );

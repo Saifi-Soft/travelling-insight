@@ -25,7 +25,6 @@ const HotelResultsPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
-      <HeaderAd />
       <main className="flex-grow">
         <div className="container-custom py-10">
           <div className="flex justify-between items-center mb-4">
@@ -49,11 +48,20 @@ const HotelResultsPage = () => {
             </TabsList>
           </Tabs>
           
+          {/* First ad placed strategically before the search */}
+          <div className="bg-primary/5 rounded-lg p-4 mb-6">
+            <HeaderAd />
+          </div>
+          
           <TravelSearch type="hotels" />
           <HotelResults />
+          
+          {/* Second ad placed after results */}
+          <div className="bg-secondary/5 rounded-lg p-4 mt-8">
+            <FooterAd />
+          </div>
         </div>
       </main>
-      <FooterAd />
       <Footer />
     </div>
   );
