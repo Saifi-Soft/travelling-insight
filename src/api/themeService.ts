@@ -1,76 +1,40 @@
 
-import { getDB } from './mongodb';
+import { connectToDatabase, COLLECTIONS } from './mongodb';
 
-export interface ThemePreference {
-  userId: string;
-  theme: 'light' | 'dark' | 'system';
-  lightThemeColors: {
-    background: string;
-    foreground: string;
-    primary: string;
-    footer: string;
-    header: string;
-    card: string;
-  };
-  darkThemeColors: {
-    background: string;
-    foreground: string;
-    primary: string;
-    footer: string;
-    header: string;
-    card: string;
-  };
+// Theme service functions
+export async function saveThemeSettings(userId: string, theme: any) {
+  try {
+    const { collections } = await connectToDatabase();
+    const existingSettings = await collections[COLLECTIONS.USER_SETTINGS]?.findOne({ userId });
+    
+    if (existingSettings) {
+      await collections[COLLECTIONS.USER_SETTINGS]?.updateOne(
+        { userId },
+        { $set: { theme } }
+      );
+    } else {
+      await collections[COLLECTIONS.USER_SETTINGS]?.insertOne({
+        userId,
+        theme,
+        createdAt: new Date().toISOString()
+      });
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving theme settings:', error);
+    return { success: false, error };
+  }
 }
 
-export const themeService = {
-  // Get user's theme preferences
-  async getUserThemePreference(userId: string): Promise<ThemePreference | null> {
-    try {
-      const db = await getDB();
-      const themePreference = await db.user_theme_preferences.findOne({ userId });
-      return themePreference;
-    } catch (error) {
-      console.error('Error getting user theme preference:', error);
-      return null;
-    }
-  },
-
-  // Save user's theme preferences
-  async saveUserThemePreference(themePreference: ThemePreference): Promise<boolean> {
-    try {
-      const db = await getDB();
-      
-      // Fix: Remove the third argument from updateOne since it only expects query and update
-      await db.user_theme_preferences.updateOne(
-        { userId: themePreference.userId },
-        { $set: themePreference }
-      );
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving user theme preference:', error);
-      return false;
-    }
-  },
-  
-  // Create the collection if it doesn't exist
-  async initializeThemeCollection(): Promise<void> {
-    try {
-      const db = await getDB();
-      
-      // Check if the collection exists
-      const collections = await db.listCollections().toArray();
-      const collectionExists = collections.some(col => col.name === 'user_theme_preferences');
-      
-      if (!collectionExists) {
-        await db.createCollection('user_theme_preferences');
-        console.log('Theme preferences collection created');
-      }
-    } catch (error) {
-      console.error('Error initializing theme collection:', error);
-    }
+export async function getThemeSettings(userId: string) {
+  try {
+    const { collections } = await connectToDatabase();
+    const settings = await collections[COLLECTIONS.USER_SETTINGS]?.findOne({ userId });
+    
+    return settings?.theme || null;
+  } catch (error) {
+    console.error('Error getting theme settings:', error);
+    return null;
   }
-};
-
-// Initialize the collection when this module is imported
-themeService.initializeThemeCollection().catch(console.error);
+}

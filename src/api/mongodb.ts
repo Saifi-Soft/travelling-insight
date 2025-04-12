@@ -1,10 +1,4 @@
-import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
-
-const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/';
-const dbName = process.env.DB_NAME || 'travel_blog';
-
-let cachedClient: MongoClient | null = null;
-let cachedDb: Db | null = null;
+import { ObjectId } from 'mongodb';
 
 // Define collections enum
 export enum COLLECTIONS {
@@ -12,60 +6,243 @@ export enum COLLECTIONS {
   CATEGORIES = 'categories',
   TOPICS = 'topics',
   COMMENTS = 'comments',
-  NEWSLETTER = 'newsletter'
+  NEWSLETTER = 'newsletter',
+  COMMUNITY_USERS = 'community_users',
+  TRAVEL_GROUPS = 'travel_groups',
+  COMMUNITY_EVENTS = 'community_events',
+  TRAVEL_MATCHES = 'travel_matches',
+  USER_SUBSCRIPTIONS = 'user_subscriptions',
+  USER_SETTINGS = 'user_settings'
 }
 
-// Define collections type
-type Collections = {
-  posts: Collection;
-  categories: Collection;
-  topics: Collection;
-  comments: Collection;
-  newsletter: Collection;
+// Mock in-memory database for browser compatibility
+const mockDb: Record<string, any[]> = {
+  [COLLECTIONS.POSTS]: [],
+  [COLLECTIONS.CATEGORIES]: [],
+  [COLLECTIONS.TOPICS]: [],
+  [COLLECTIONS.COMMENTS]: [],
+  [COLLECTIONS.NEWSLETTER]: [],
+  [COLLECTIONS.COMMUNITY_USERS]: [],
+  [COLLECTIONS.TRAVEL_GROUPS]: [],
+  [COLLECTIONS.COMMUNITY_EVENTS]: [],
+  [COLLECTIONS.TRAVEL_MATCHES]: [],
+  [COLLECTIONS.USER_SUBSCRIPTIONS]: [],
+  [COLLECTIONS.USER_SETTINGS]: []
 };
+
+// Define collections type
+export type Collections = {
+  [COLLECTIONS.POSTS]: any;
+  [COLLECTIONS.CATEGORIES]: any;
+  [COLLECTIONS.TOPICS]: any;
+  [COLLECTIONS.COMMENTS]: any;
+  [COLLECTIONS.NEWSLETTER]: any;
+  [COLLECTIONS.COMMUNITY_USERS]: any;
+  [COLLECTIONS.TRAVEL_GROUPS]: any;
+  [COLLECTIONS.COMMUNITY_EVENTS]: any;
+  [COLLECTIONS.TRAVEL_MATCHES]: any;
+  [COLLECTIONS.USER_SUBSCRIPTIONS]: any;
+  [COLLECTIONS.USER_SETTINGS]: any;
+};
+
+// Mock collection class
+class MockCollection {
+  private collectionName: string;
+
+  constructor(collectionName: string) {
+    this.collectionName = collectionName;
+    // Initialize collection if it doesn't exist
+    if (!mockDb[collectionName]) {
+      mockDb[collectionName] = [];
+    }
+  }
+
+  async find(filter = {}) {
+    return {
+      toArray: async () => {
+        return mockDb[this.collectionName].filter(item => {
+          // Simple filtering
+          return Object.entries(filter).every(([key, value]) => {
+            if (key === '_id' && typeof value === 'string') {
+              return item._id.toString() === value;
+            }
+            return item[key] === value;
+          });
+        });
+      },
+      sort: () => this,
+      limit: () => this,
+    };
+  }
+
+  async findOne(filter: any) {
+    const items = await this.find(filter).toArray();
+    return items[0] || null;
+  }
+
+  async insertOne(document: any) {
+    const _id = new ObjectId();
+    const newDoc = { ...document, _id };
+    mockDb[this.collectionName].push(newDoc);
+    return { insertedId: _id };
+  }
+
+  async insertMany(documents: any[]) {
+    const result = { insertedIds: [] };
+    for (const document of documents) {
+      const { insertedId } = await this.insertOne(document);
+      result.insertedIds.push(insertedId);
+    }
+    return result;
+  }
+
+  async updateOne(filter: any, update: any) {
+    let matchedCount = 0;
+    let modifiedCount = 0;
+
+    mockDb[this.collectionName] = mockDb[this.collectionName].map(item => {
+      // Match filter
+      const isMatch = Object.entries(filter).every(([key, value]) => {
+        if (key === '_id' && typeof value === 'string') {
+          return item._id.toString() === value;
+        }
+        return item[key] === value;
+      });
+
+      if (isMatch) {
+        matchedCount++;
+        if (update.$set) {
+          // Apply $set updates
+          modifiedCount++;
+          return { ...item, ...update.$set };
+        }
+        if (update.$inc) {
+          // Apply $inc updates
+          modifiedCount++;
+          const newItem = { ...item };
+          Object.entries(update.$inc).forEach(([key, value]) => {
+            newItem[key] = (newItem[key] || 0) + Number(value);
+          });
+          return newItem;
+        }
+        if (update.$push) {
+          // Apply $push updates
+          modifiedCount++;
+          const newItem = { ...item };
+          Object.entries(update.$push).forEach(([key, value]) => {
+            newItem[key] = [...(newItem[key] || []), value];
+          });
+          return newItem;
+        }
+        if (update.$pull) {
+          // Apply $pull updates
+          modifiedCount++;
+          const newItem = { ...item };
+          Object.entries(update.$pull).forEach(([key, value]) => {
+            newItem[key] = (newItem[key] || []).filter((v: any) => v !== value);
+          });
+          return newItem;
+        }
+      }
+      return item;
+    });
+
+    return { matchedCount, modifiedCount };
+  }
+
+  async deleteOne(filter: any) {
+    const initialLength = mockDb[this.collectionName].length;
+    mockDb[this.collectionName] = mockDb[this.collectionName].filter(item => {
+      const isMatch = Object.entries(filter).every(([key, value]) => {
+        if (key === '_id' && typeof value === 'string') {
+          return item._id.toString() === value;
+        }
+        return item[key] === value;
+      });
+      return !isMatch;
+    });
+    const deletedCount = initialLength - mockDb[this.collectionName].length;
+    return { deletedCount };
+  }
+
+  async countDocuments() {
+    return mockDb[this.collectionName].length;
+  }
+}
+
+// Mock DB and client classes
+class MockDb {
+  collection(name: string) {
+    return new MockCollection(name);
+  }
+}
+
+class MockClient {
+  async connect() {
+    console.log('Connected to mock MongoDB');
+    return this;
+  }
+
+  db() {
+    return new MockDb();
+  }
+}
+
+let cachedClient: MockClient | null = null;
+let cachedDb: MockDb | null = null;
 
 /**
  * Establishes a connection to the MongoDB database.
  * Uses a cached connection to improve performance.
  *
- * @returns {Promise<{ client: MongoClient, db: Db, collections: Collections }>}
+ * @returns {Promise<{ client: any, db: any, collections: Collections }>}
  *          An object containing the MongoDB client, database, and collections.
  */
-export async function connectToDatabase(): Promise<{ client: MongoClient, db: Db, collections: Collections }> {
+export async function connectToDatabase(): Promise<{ client: any, db: any, collections: Collections }> {
   if (cachedClient && cachedDb) {
     return {
       client: cachedClient,
       db: cachedDb,
       collections: {
-        posts: cachedDb.collection(COLLECTIONS.POSTS),
-        categories: cachedDb.collection(COLLECTIONS.CATEGORIES),
-        topics: cachedDb.collection(COLLECTIONS.TOPICS),
-        comments: cachedDb.collection(COLLECTIONS.COMMENTS),
-        newsletter: cachedDb.collection(COLLECTIONS.NEWSLETTER)
+        [COLLECTIONS.POSTS]: cachedDb.collection(COLLECTIONS.POSTS),
+        [COLLECTIONS.CATEGORIES]: cachedDb.collection(COLLECTIONS.CATEGORIES),
+        [COLLECTIONS.TOPICS]: cachedDb.collection(COLLECTIONS.TOPICS),
+        [COLLECTIONS.COMMENTS]: cachedDb.collection(COLLECTIONS.COMMENTS),
+        [COLLECTIONS.NEWSLETTER]: cachedDb.collection(COLLECTIONS.NEWSLETTER),
+        [COLLECTIONS.COMMUNITY_USERS]: cachedDb.collection(COLLECTIONS.COMMUNITY_USERS),
+        [COLLECTIONS.TRAVEL_GROUPS]: cachedDb.collection(COLLECTIONS.TRAVEL_GROUPS),
+        [COLLECTIONS.COMMUNITY_EVENTS]: cachedDb.collection(COLLECTIONS.COMMUNITY_EVENTS),
+        [COLLECTIONS.TRAVEL_MATCHES]: cachedDb.collection(COLLECTIONS.TRAVEL_MATCHES),
+        [COLLECTIONS.USER_SUBSCRIPTIONS]: cachedDb.collection(COLLECTIONS.USER_SUBSCRIPTIONS),
+        [COLLECTIONS.USER_SETTINGS]: cachedDb.collection(COLLECTIONS.USER_SETTINGS)
       }
     };
   }
 
-  const client = new MongoClient(uri);
-
   try {
+    const client = new MockClient();
     await client.connect();
-    console.log('Connected to MongoDB');
 
-    const db = client.db(dbName);
-
+    const db = client.db();
+    
     cachedClient = client;
     cachedDb = db;
 
     return {
-      client: client,
-      db: db,
+      client,
+      db,
       collections: {
-        posts: db.collection(COLLECTIONS.POSTS),
-        categories: db.collection(COLLECTIONS.CATEGORIES),
-        topics: db.collection(COLLECTIONS.TOPICS),
-        comments: db.collection(COLLECTIONS.COMMENTS),
-        newsletter: db.collection(COLLECTIONS.NEWSLETTER)
+        [COLLECTIONS.POSTS]: db.collection(COLLECTIONS.POSTS),
+        [COLLECTIONS.CATEGORIES]: db.collection(COLLECTIONS.CATEGORIES),
+        [COLLECTIONS.TOPICS]: db.collection(COLLECTIONS.TOPICS),
+        [COLLECTIONS.COMMENTS]: db.collection(COLLECTIONS.COMMENTS),
+        [COLLECTIONS.NEWSLETTER]: db.collection(COLLECTIONS.NEWSLETTER),
+        [COLLECTIONS.COMMUNITY_USERS]: db.collection(COLLECTIONS.COMMUNITY_USERS),
+        [COLLECTIONS.TRAVEL_GROUPS]: db.collection(COLLECTIONS.TRAVEL_GROUPS),
+        [COLLECTIONS.COMMUNITY_EVENTS]: db.collection(COLLECTIONS.COMMUNITY_EVENTS),
+        [COLLECTIONS.TRAVEL_MATCHES]: db.collection(COLLECTIONS.TRAVEL_MATCHES),
+        [COLLECTIONS.USER_SUBSCRIPTIONS]: db.collection(COLLECTIONS.USER_SUBSCRIPTIONS),
+        [COLLECTIONS.USER_SETTINGS]: db.collection(COLLECTIONS.USER_SETTINGS)
       }
     };
   } catch (e) {
@@ -84,10 +261,10 @@ export async function initializeDatabase(): Promise<void> {
     const { collections } = await connectToDatabase();
 
     // Check if the posts collection is empty
-    const postsCount = await collections.posts.countDocuments();
+    const postsCount = await collections[COLLECTIONS.POSTS].countDocuments();
     if (postsCount === 0) {
       // Seed the posts collection with sample data
-      await collections.posts.insertMany([
+      await collections[COLLECTIONS.POSTS].insertMany([
         {
           title: 'Sample Post 1',
           slug: 'sample-post-1',
@@ -111,10 +288,10 @@ export async function initializeDatabase(): Promise<void> {
     }
 
     // Check if the categories collection is empty
-    const categoriesCount = await collections.categories.countDocuments();
+    const categoriesCount = await collections[COLLECTIONS.CATEGORIES].countDocuments();
     if (categoriesCount === 0) {
       // Seed the categories collection with sample data
-      await collections.categories.insertMany([
+      await collections[COLLECTIONS.CATEGORIES].insertMany([
         { name: 'Travel', slug: 'travel' },
         { name: 'Food', slug: 'food' }
       ]);
@@ -122,10 +299,10 @@ export async function initializeDatabase(): Promise<void> {
     }
 
     // Check if the topics collection is empty
-    const topicsCount = await collections.topics.countDocuments();
+    const topicsCount = await collections[COLLECTIONS.TOPICS].countDocuments();
     if (topicsCount === 0) {
       // Seed the topics collection with sample data
-      await collections.topics.insertMany([
+      await collections[COLLECTIONS.TOPICS].insertMany([
         { name: 'Adventure', slug: 'adventure' },
         { name: 'Nature', slug: 'nature' },
         { name: 'Recipes', slug: 'recipes' },
@@ -167,7 +344,31 @@ export function formatMongoData(data: any | any[]) {
   }
 }
 
-// Fix the toObjectId function that was causing the error
+// Create a proper ObjectId class that works in browser
+export class ObjectId {
+  private id: string;
+  
+  constructor(id?: string) {
+    if (id) {
+      this.id = id;
+    } else {
+      // Generate a random hexadecimal string of 24 characters
+      this.id = Array.from({ length: 24 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+      ).join('');
+    }
+  }
+
+  toString() {
+    return this.id;
+  }
+
+  equals(other: ObjectId) {
+    return this.id === other.id;
+  }
+}
+
+// Utility function to convert string IDs to ObjectIds
 export const toObjectId = (id: string) => {
   try {
     return new ObjectId(id);

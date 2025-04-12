@@ -89,6 +89,21 @@ const AdminSettings = () => {
     return themeMode === 'light' ? lightModeColors : darkModeColors;
   };
   
+  // Handle preview color changes
+  const handlePreviewColorChange = (colorKey: string, value: string) => {
+    if (themeMode === 'light') {
+      setLightModeColors(prev => ({
+        ...prev,
+        [colorKey]: value
+      }));
+    } else {
+      setDarkModeColors(prev => ({
+        ...prev,
+        [colorKey]: value
+      }));
+    }
+  };
+  
   // Load Mailchimp configuration on component mount
   useEffect(() => {
     const config = loadMailchimpConfig();
@@ -110,7 +125,6 @@ const AdminSettings = () => {
     }
   }, []);
   
-  // Load all subscribers from Mailchimp and MongoDB
   const loadSubscribers = async () => {
     setIsLoadingSubscribers(true);
     try {
