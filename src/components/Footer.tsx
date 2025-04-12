@@ -1,16 +1,78 @@
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Facebook, 
   Twitter, 
   Instagram, 
   Youtube,
-  Mail
+  Mail,
+  Loader2,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
+import { subscribeToNewsletter } from '@/api/mailchimpService';
+import { saveSubscriber } from '@/models/Newsletter';
 
 const Footer = () => {
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Subscribe to Mailchimp
+      const result = await subscribeToNewsletter({ email });
+      
+      // Save to MongoDB regardless of Mailchimp result
+      // This ensures we have a backup of subscribers
+      await saveSubscriber({ email });
+      
+      if (result.success) {
+        setIsSuccess(true);
+        toast({
+          title: "Subscription Successful",
+          description: result.message,
+        });
+        
+        // Reset success state after 3 seconds
+        setTimeout(() => setIsSuccess(false), 3000);
+        setEmail('');
+      } else {
+        toast({
+          title: "Subscription Failed",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Newsletter subscription error:", error);
+      toast({
+        title: "Subscription Error",
+        description: "An error occurred while subscribing. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <footer className="bg-theme-footer text-white">
       <div className="container-custom py-12">
@@ -22,15 +84,33 @@ const Footer = () => {
               Get travel inspiration, tips and exclusive offers sent straight to your inbox
             </p>
           </div>
-          <div className="md:w-1/2 flex flex-col sm:flex-row gap-3">
-            <Input 
-              type="email" 
-              placeholder="Your email address" 
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
-            />
-            <Button className="bg-white hover:bg-white/90 text-theme-primary">
-              Subscribe
-            </Button>
+          <div className="md:w-1/2">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
+              <Input 
+                type="email" 
+                placeholder="Your email address" 
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting || isSuccess}
+              />
+              <Button 
+                type="submit"
+                className="bg-white hover:bg-white/90 text-theme-primary min-w-[120px]"
+                disabled={isSubmitting || isSuccess}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isSuccess ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Subscribed!
+                  </>
+                ) : (
+                  'Subscribe'
+                )}
+              </Button>
+            </form>
           </div>
         </div>
         

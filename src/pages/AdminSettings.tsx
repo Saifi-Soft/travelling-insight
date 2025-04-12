@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -15,8 +14,18 @@ import {
   Moon,
   Monitor,
   Brush,
-  Check
+  Check,
+  Loader2,
+  Users
 } from 'lucide-react';
+import { 
+  connectToMailchimp, 
+  disconnectMailchimp, 
+  loadMailchimpConfig, 
+  getSubscribers,
+  MailchimpSubscriber
+} from '@/api/mailchimpService';
+import { getAllSubscribers } from '@/models/Newsletter';
 
 const AdminSettings = () => {
   const { toast } = useToast();
@@ -51,6 +60,19 @@ const AdminSettings = () => {
     mailchimpConnected: false
   });
   
+  // Mailchimp settings
+  const [mailchimpSettings, setMailchimpSettings] = useState({
+    apiKey: '',
+    serverPrefix: '',
+    audienceId: '',
+    isConnecting: false,
+  });
+  
+  // Newsletter subscribers
+  const [subscribers, setSubscribers] = useState<MailchimpSubscriber[]>([]);
+  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  
   // Theme preview colors and current mode selection
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
   const [lightModeColors, setLightModeColors] = useState({...lightThemeColors});
@@ -65,6 +87,87 @@ const AdminSettings = () => {
   // Get current preview colors based on selected theme mode
   const getCurrentPreviewColors = () => {
     return themeMode === 'light' ? lightModeColors : darkModeColors;
+  };
+  
+  // Load Mailchimp configuration on component mount
+  useEffect(() => {
+    const config = loadMailchimpConfig();
+    setApiSettings(prev => ({
+      ...prev,
+      mailchimpConnected: config.isConnected
+    }));
+    
+    if (config.isConnected) {
+      setMailchimpSettings({
+        apiKey: config.apiKey,
+        serverPrefix: config.serverPrefix,
+        audienceId: config.audienceId,
+        isConnecting: false
+      });
+      
+      // Load subscribers
+      loadSubscribers();
+    }
+  }, []);
+  
+  // Load all subscribers from Mailchimp and MongoDB
+  const loadSubscribers = async () => {
+    setIsLoadingSubscribers(true);
+    try {
+      // Get subscribers from Mailchimp
+      const mailchimpResult = await getSubscribers();
+      
+      if (mailchimpResult.success && mailchimpResult.subscribers) {
+        // Also get subscribers from MongoDB
+        const mongoSubscribers = await getAllSubscribers();
+        
+        // Combine subscribers (removing duplicates by email)
+        const allEmails = new Set<string>();
+        const allSubscribers: MailchimpSubscriber[] = [];
+        
+        // Add Mailchimp subscribers
+        if (mailchimpResult.subscribers) {
+          mailchimpResult.subscribers.forEach(sub => {
+            allEmails.add(sub.email);
+            allSubscribers.push(sub);
+          });
+        }
+        
+        // Add MongoDB subscribers that aren't already in the list
+        mongoSubscribers.forEach(sub => {
+          if (!allEmails.has(sub.email) && sub.active) {
+            allSubscribers.push({
+              email: sub.email,
+              firstName: sub.firstName,
+              lastName: sub.lastName,
+              tags: sub.tags
+            });
+          }
+        });
+        
+        setSubscribers(allSubscribers);
+      } else {
+        // Fallback to MongoDB if Mailchimp fails
+        const mongoSubscribers = await getAllSubscribers();
+        const activeSubscribers = mongoSubscribers.filter(sub => sub.active);
+        
+        setSubscribers(activeSubscribers.map(sub => ({
+          email: sub.email,
+          firstName: sub.firstName,
+          lastName: sub.lastName,
+          tags: sub.tags
+        })));
+      }
+    } catch (error) {
+      console.error("Error loading subscribers:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load newsletter subscribers",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingSubscribers(false);
+    }
   };
   
   const handleGeneralSettingsSave = () => {
@@ -125,20 +228,88 @@ const AdminSettings = () => {
     });
   };
 
-  const handlePreviewColorChange = (colorType: keyof typeof lightModeColors, value: string) => {
-    if (themeMode === 'light') {
-      setLightModeColors(prev => ({
-        ...prev,
-        [colorType]: value
-      }));
-    } else {
-      setDarkModeColors(prev => ({
-        ...prev,
-        [colorType]: value
-      }));
+  const handleMailchimpConnect = async () => {
+    if (!mailchimpSettings.apiKey || !mailchimpSettings.serverPrefix || !mailchimpSettings.audienceId) {
+      toast({
+        title: "Error",
+        description: "Please fill in all Mailchimp fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setMailchimpSettings(prev => ({ ...prev, isConnecting: true }));
+    
+    try {
+      const result = await connectToMailchimp(
+        mailchimpSettings.apiKey, 
+        mailchimpSettings.serverPrefix, 
+        mailchimpSettings.audienceId
+      );
+      
+      if (result.success) {
+        setApiSettings(prev => ({
+          ...prev,
+          mailchimpConnected: true
+        }));
+        
+        toast({
+          title: "Success",
+          description: result.message
+        });
+        
+        // Load subscribers after successful connection
+        await loadSubscribers();
+      } else {
+        toast({
+          title: "Connection Failed",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error connecting to Mailchimp:", error);
+      toast({
+        title: "Connection Error",
+        description: "An unexpected error occurred while connecting to Mailchimp",
+        variant: "destructive"
+      });
+    } finally {
+      setMailchimpSettings(prev => ({ ...prev, isConnecting: false }));
     }
   };
 
+  const handleMailchimpDisconnect = () => {
+    const result = disconnectMailchimp();
+    
+    if (result.success) {
+      setApiSettings(prev => ({
+        ...prev,
+        mailchimpConnected: false
+      }));
+      
+      setMailchimpSettings({
+        apiKey: '',
+        serverPrefix: '',
+        audienceId: '',
+        isConnecting: false
+      });
+      
+      setSubscribers([]);
+      
+      toast({
+        title: "Success",
+        description: result.message
+      });
+    } else {
+      toast({
+        title: "Disconnect Failed",
+        description: result.message,
+        variant: "destructive"
+      });
+    }
+  };
+  
   // Color palettes for quick selection
   const lightColorPalettes = [
     {
@@ -155,7 +326,7 @@ const AdminSettings = () => {
       primary: '#10b981',
       background: '#f8fafc',
       foreground: '#334155',
-      footer: '#064e3b',
+      footer: '#065f46',
       header: '#f0fdf4',
       card: '#ecfdf5',
     },
@@ -240,7 +411,6 @@ const AdminSettings = () => {
     }
   };
 
-  // Get the relevant color palettes based on the selected theme mode
   const getCurrentPalettes = () => {
     return themeMode === 'light' ? lightColorPalettes : darkColorPalettes;
   };
@@ -257,6 +427,7 @@ const AdminSettings = () => {
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="seo">SEO</TabsTrigger>
             <TabsTrigger value="api">API & Integrations</TabsTrigger>
+            <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
           </TabsList>
           
           <TabsContent value="general" className="mt-6 space-y-6">
@@ -763,12 +934,21 @@ const AdminSettings = () => {
                           <h4 className="font-medium">Mailchimp</h4>
                           <p className="text-sm text-gray-500">Email newsletter integration</p>
                         </div>
-                        <Button 
-                          variant="outline"
-                          onClick={() => setApiSettings({ ...apiSettings, mailchimpConnected: !apiSettings.mailchimpConnected })}
-                        >
-                          {apiSettings.mailchimpConnected ? 'Disconnect' : 'Connect'}
-                        </Button>
+                        {apiSettings.mailchimpConnected ? (
+                          <Button 
+                            variant="outline"
+                            onClick={handleMailchimpDisconnect}
+                          >
+                            Disconnect
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline"
+                            onClick={() => document.getElementById('mailchimp-section')?.scrollIntoView({ behavior: 'smooth' })}
+                          >
+                            Configure
+                          </Button>
+                        )}
                       </div>
                       
                       <Button 
@@ -777,6 +957,197 @@ const AdminSettings = () => {
                       >
                         Save API Settings
                       </Button>
+                    </div>
+                  </div>
+                  
+                  <div id="mailchimp-section" className="mt-8 pt-6 border-t">
+                    <h3 className="text-lg font-bold mb-2">Mailchimp Integration</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      Connect your Mailchimp account to sync newsletter subscribers
+                    </p>
+                    
+                    {apiSettings.mailchimpConnected ? (
+                      <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded flex items-center mb-4">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <p className="text-sm text-green-700 dark:text-green-400">
+                          Your Mailchimp account is connected and active
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label htmlFor="mailchimp-api-key" className="text-sm font-medium">
+                            API Key
+                          </label>
+                          <div className="flex space-x-2">
+                            <Input
+                              id="mailchimp-api-key"
+                              type={showApiKey ? "text" : "password"}
+                              value={mailchimpSettings.apiKey}
+                              onChange={(e) => setMailchimpSettings({ 
+                                ...mailchimpSettings, 
+                                apiKey: e.target.value 
+                              })}
+                              placeholder="Enter your Mailchimp API key"
+                            />
+                            <Button 
+                              variant="outline"
+                              onClick={() => setShowApiKey(!showApiKey)}
+                              type="button"
+                            >
+                              {showApiKey ? 'Hide' : 'Show'}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Find your API key in your Mailchimp account under Account → Extras → API keys
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="mailchimp-server-prefix" className="text-sm font-medium">
+                            Server Prefix
+                          </label>
+                          <Input
+                            id="mailchimp-server-prefix"
+                            value={mailchimpSettings.serverPrefix}
+                            onChange={(e) => setMailchimpSettings({ 
+                              ...mailchimpSettings, 
+                              serverPrefix: e.target.value 
+                            })}
+                            placeholder="e.g., us1, us2, etc."
+                          />
+                          <p className="text-xs text-gray-500">
+                            The prefix in your Mailchimp URL (e.g., 'us1' in 'us1.admin.mailchimp.com')
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="mailchimp-audience-id" className="text-sm font-medium">
+                            Audience ID
+                          </label>
+                          <Input
+                            id="mailchimp-audience-id"
+                            value={mailchimpSettings.audienceId}
+                            onChange={(e) => setMailchimpSettings({ 
+                              ...mailchimpSettings, 
+                              audienceId: e.target.value 
+                            })}
+                            placeholder="Enter your Mailchimp audience ID"
+                          />
+                          <p className="text-xs text-gray-500">
+                            Find your Audience ID in Audience → Settings → Audience name and defaults
+                          </p>
+                        </div>
+                        
+                        <Button 
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={handleMailchimpConnect}
+                          disabled={mailchimpSettings.isConnecting}
+                        >
+                          {mailchimpSettings.isConnecting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Connecting...
+                            </>
+                          ) : (
+                            'Connect Mailchimp'
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="newsletter" className="mt-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold">Newsletter Subscribers</h2>
+                      <p className="text-sm text-gray-500">
+                        Manage your newsletter subscribers
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      variant="outline"
+                      onClick={loadSubscribers}
+                      disabled={isLoadingSubscribers}
+                    >
+                      {isLoadingSubscribers ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Refresh'
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {!apiSettings.mailchimpConnected && (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded">
+                      <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                        Mailchimp is not connected. Some features may be limited.{' '}
+                        <Button 
+                          variant="link" 
+                          className="p-0 text-blue-600 dark:text-blue-400 h-auto"
+                          onClick={() => document.getElementById('mailchimp-section')?.scrollIntoView({ behavior: 'smooth' })}
+                        >
+                          Connect Mailchimp
+                        </Button>
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="border rounded-md">
+                    <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b">
+                      <div className="grid grid-cols-12 gap-4 font-medium text-sm">
+                        <div className="col-span-5">Email</div>
+                        <div className="col-span-3">Name</div>
+                        <div className="col-span-4">Tags</div>
+                      </div>
+                    </div>
+                    
+                    <div className="divide-y">
+                      {isLoadingSubscribers ? (
+                        <div className="py-12 flex justify-center items-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                        </div>
+                      ) : subscribers.length === 0 ? (
+                        <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+                          <Users className="h-12 w-12 mb-2 opacity-20" />
+                          <p>No subscribers yet</p>
+                        </div>
+                      ) : (
+                        subscribers.map((subscriber, index) => (
+                          <div key={`${subscriber.email}-${index}`} className="px-4 py-3">
+                            <div className="grid grid-cols-12 gap-4 text-sm">
+                              <div className="col-span-5 truncate">{subscriber.email}</div>
+                              <div className="col-span-3 truncate">
+                                {subscriber.firstName && subscriber.lastName 
+                                  ? `${subscriber.firstName} ${subscriber.lastName}`
+                                  : subscriber.firstName || subscriber.lastName || '-'}
+                              </div>
+                              <div className="col-span-4 flex flex-wrap gap-1">
+                                {subscriber.tags && subscriber.tags.length > 0 ? (
+                                  subscriber.tags.map(tag => (
+                                    <span 
+                                      key={tag} 
+                                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-gray-400">-</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
