@@ -20,4 +20,27 @@ const SubscriptionSchema = {
   updatedAt: { type: Date, default: Date.now }
 };
 
-export { SubscriptionSchema };
+// Define the model interface for TypeScript
+interface Subscription {
+  id?: string;
+  userId: string;
+  planType: 'monthly' | 'annual';
+  status: 'active' | 'canceled' | 'expired';
+  paymentMethod: {
+    method: string;
+    cardLastFour?: string;
+    expiryDate?: string;
+  };
+  startDate: Date;
+  endDate: Date;
+  amount: number;
+  autoRenew: boolean;
+  canceledAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Create MongoDB collection name
+const COLLECTION_NAME = 'subscriptions';
+
+export { SubscriptionSchema, COLLECTION_NAME, Subscription };

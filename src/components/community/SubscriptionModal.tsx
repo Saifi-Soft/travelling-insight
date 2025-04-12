@@ -8,7 +8,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { CreditCard, Lock, CheckCircle2 } from 'lucide-react';
 import { communityPaymentApi } from '@/api/communityApiService';
-import { useQuery } from '@tanstack/react-query';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -96,21 +95,41 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
     setIsProcessing(true);
     
     try {
-      // Mock user ID for demo
-      const mockUserId = localStorage.getItem('community_user_id') || 'demo-user-' + Math.random().toString(36).substring(2, 9);
+      // Get user ID from localStorage or generate a new one
+      const userId = localStorage.getItem('community_user_id');
       
-      // Store subscription in MongoDB
+      if (!userId) {
+        toast.error('Please create a profile before subscribing');
+        onOpenChange(false);
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Calculate subscription end date based on plan type
+      const today = new Date();
+      const endDate = new Date();
+      
+      if (selectedPlan === 'monthly') {
+        endDate.setMonth(today.getMonth() + 1);
+      } else {
+        endDate.setFullYear(today.getFullYear() + 1);
+      }
+      
+      // Create subscription in MongoDB
       await communityPaymentApi.createSubscription(
-        mockUserId,
+        userId,
         selectedPlan,
         {
           method: 'credit_card',
           cardLastFour: data.cardNumber.slice(-4),
-          expiryDate: data.expiryDate,
+          expiryDate: data.expiryDate
+        },
+        {
           status: 'active',
-          startDate: new Date(),
-          endDate: new Date(Date.now() + (selectedPlan === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000),
+          startDate: today,
+          endDate: endDate,
           amount: selectedPlan === 'monthly' ? plans.monthly.price : plans.annual.price,
+          autoRenew: true
         }
       );
       

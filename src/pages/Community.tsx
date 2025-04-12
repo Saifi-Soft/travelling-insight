@@ -112,14 +112,13 @@ const Community = () => {
   // All action handlers must check for subscription first
   const handleProtectedAction = (actionCallback: () => void, featureName: string = '') => {
     if (!userId) {
-      toast.error('Please log in to continue', {
-        description: 'Create an account or log in to access this feature'
-      });
+      // If user is not logged in, prompt for login
       setIsProfileDialogOpen(true);
       return false;
     }
     
     if (!isSubscribed) {
+      // If not subscribed, show subscription modal
       toast.error('Premium feature', {
         description: `Subscribe to access ${featureName || 'all community features'}`
       });
@@ -127,20 +126,20 @@ const Community = () => {
       return false;
     }
     
+    // User is logged in and subscribed, proceed with action
     actionCallback();
     return true;
   };
   
   const handleFeatureNotAvailable = (featureName: string) => {
     if (!userId) {
-      toast.error('Please log in to continue', {
-        description: 'Create an account or log in to access this feature'
-      });
+      // If user is not logged in, prompt for login
       setIsProfileDialogOpen(true);
       return;
     }
     
     if (!isSubscribed) {
+      // If not subscribed, show subscription modal
       toast.error('Premium feature', {
         description: `Subscribe to access ${featureName || 'all community features'}`
       });
@@ -148,6 +147,7 @@ const Community = () => {
       return;
     }
     
+    // User is logged in and subscribed, show feature coming soon message
     toast(`The "${featureName}" feature will be available soon!`, {
       description: "We're working hard to bring this functionality to you.",
     });
@@ -183,13 +183,8 @@ const Community = () => {
       
       // Always show subscription prompt after profile creation
       setTimeout(() => {
-        toast.info('Subscribe to unlock all community features', {
-          action: {
-            label: 'Subscribe',
-            onClick: () => setIsSubscriptionModalOpen(true)
-          }
-        });
-      }, 1500);
+        setIsSubscriptionModalOpen(true);
+      }, 1000);
     } catch (error) {
       toast.error('Failed to create profile. Please try again.');
       console.error(error);
@@ -292,10 +287,11 @@ const Community = () => {
                   size="lg" 
                   className="bg-primary hover:bg-primary/90"
                   onClick={() => {
-                    if (!userId) {
-                      setIsProfileDialogOpen(true);
-                    } else if (!isSubscribed) {
+                    // Changed logic here to first check if user exists but isn't subscribed
+                    if (userId && !isSubscribed) {
                       setIsSubscriptionModalOpen(true);
+                    } else if (!userId) {
+                      setIsProfileDialogOpen(true);
                     } else {
                       setActiveTab('members');
                     }
@@ -308,7 +304,16 @@ const Community = () => {
                   size="lg" 
                   variant="outline" 
                   className="border-primary text-primary hover:bg-primary/10"
-                  onClick={() => handleProtectedAction(() => setIsMatchDialogOpen(true), 'Travel Buddy Matching')}
+                  onClick={() => {
+                    // Changed logic here to prioritize subscription over profile creation
+                    if (userId && !isSubscribed) {
+                      setIsSubscriptionModalOpen(true);
+                    } else if (!userId) {
+                      setIsProfileDialogOpen(true);
+                    } else {
+                      setIsMatchDialogOpen(true);
+                    }
+                  }}
                 >
                   <Compass className="mr-2 h-5 w-5" /> Find Travel Buddy
                 </Button>
