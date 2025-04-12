@@ -18,7 +18,6 @@ interface SubscriptionModalProps {
   onSubscribe: () => void;
 }
 
-// Define payment validation schema
 const paymentSchema = z.object({
   cardNumber: z.string().regex(/^\d{16}$/, "Card number must be 16 digits"),
   cardName: z.string().min(3, "Name must be at least 3 characters"),
@@ -54,7 +53,6 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
     }
   };
 
-  // Form integration
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -65,7 +63,6 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
     },
   });
 
-  // Reset form when modal opens
   useEffect(() => {
     if (open) {
       setStep('plans');
@@ -73,14 +70,12 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
     }
   }, [open, form]);
 
-  // Format card number with spaces for display
   const formatCardNumber = (value: string) => {
     const cleanValue = value.replace(/\s/g, '');
     if (cleanValue.length > 16) return cleanValue.slice(0, 16);
     return cleanValue.replace(/(\d{4})/g, '$1 ').trim();
   };
 
-  // Format expiry date as MM/YY
   const formatExpiryDate = (value: string) => {
     const cleanValue = value.replace(/[^\d]/g, '');
     if (cleanValue.length > 4) return cleanValue.slice(0, 4);
@@ -94,7 +89,6 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
     setIsProcessing(true);
     
     try {
-      // Get user ID from localStorage or generate a new one
       const userId = localStorage.getItem('community_user_id');
       
       if (!userId) {
@@ -104,7 +98,6 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
         return;
       }
       
-      // Calculate subscription end date based on plan type
       const today = new Date();
       const endDate = new Date();
       
@@ -114,29 +107,28 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
         endDate.setFullYear(today.getFullYear() + 1);
       }
       
-      // Create subscription in MongoDB
-      await communityPaymentApi.createSubscription({
+      await communityPaymentApi.createSubscription(
         userId,
-        planType: selectedPlan,
-        paymentMethod: {
-          method: 'credit_card',
-          cardLastFour: data.cardNumber.slice(-4),
-          expiryDate: data.expiryDate
-        },
-        status: 'active',
-        startDate: today,
-        endDate: endDate,
-        amount: selectedPlan === 'monthly' ? plans.monthly.price : plans.annual.price,
-        autoRenew: true
-      });
+        selectedPlan,
+        {
+          paymentMethod: {
+            method: 'credit_card',
+            cardLastFour: data.cardNumber.slice(-4),
+            expiryDate: data.expiryDate
+          },
+          status: 'active',
+          startDate: today,
+          endDate: endDate,
+          amount: selectedPlan === 'monthly' ? plans.monthly.price : plans.annual.price,
+          autoRenew: true
+        }
+      );
       
-      // Simulate payment processing
       setTimeout(() => {
         toast.success('Payment processed successfully!');
         onSubscribe();
         onOpenChange(false);
         setIsProcessing(false);
-        // Reset for next time
         setStep('plans');
       }, 1500);
       
