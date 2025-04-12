@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 
 // Define collections enum
 export enum COLLECTIONS {
@@ -13,6 +12,30 @@ export enum COLLECTIONS {
   TRAVEL_MATCHES = 'travel_matches',
   USER_SUBSCRIPTIONS = 'user_subscriptions',
   USER_SETTINGS = 'user_settings'
+}
+
+// Create a proper ObjectId class that works in browser
+export class ObjectId {
+  private id: string;
+  
+  constructor(id?: string) {
+    if (id) {
+      this.id = id;
+    } else {
+      // Generate a random hexadecimal string of 24 characters
+      this.id = Array.from({ length: 24 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+      ).join('');
+    }
+  }
+
+  toString() {
+    return this.id;
+  }
+
+  equals(other: ObjectId) {
+    return this.id === other.id;
+  }
 }
 
 // Mock in-memory database for browser compatibility
@@ -58,13 +81,19 @@ class MockCollection {
   }
 
   async find(filter = {}) {
+    // Return object directly with methods, not a promise that resolves to an object with methods
     return {
-      toArray: async () => {
+      async toArray() {
         return mockDb[this.collectionName].filter(item => {
           // Simple filtering
           return Object.entries(filter).every(([key, value]) => {
-            if (key === '_id' && typeof value === 'string') {
-              return item._id.toString() === value;
+            if (key === '_id') {
+              // Compare ObjectId or string
+              if (typeof value === 'string') {
+                return item._id.toString() === value;
+              } else if (value instanceof ObjectId) {
+                return item._id.toString() === value.toString();
+              }
             }
             return item[key] === value;
           });
@@ -88,7 +117,7 @@ class MockCollection {
   }
 
   async insertMany(documents: any[]) {
-    const result = { insertedIds: [] };
+    const result = { insertedIds: [] as ObjectId[] };
     for (const document of documents) {
       const { insertedId } = await this.insertOne(document);
       result.insertedIds.push(insertedId);
@@ -103,8 +132,13 @@ class MockCollection {
     mockDb[this.collectionName] = mockDb[this.collectionName].map(item => {
       // Match filter
       const isMatch = Object.entries(filter).every(([key, value]) => {
-        if (key === '_id' && typeof value === 'string') {
-          return item._id.toString() === value;
+        if (key === '_id') {
+          if (typeof value === 'string') {
+            return item._id.toString() === value;
+          } else if (value instanceof ObjectId) {
+            return item._id.toString() === value.toString();
+          }
+          return false;
         }
         return item[key] === value;
       });
@@ -154,8 +188,13 @@ class MockCollection {
     const initialLength = mockDb[this.collectionName].length;
     mockDb[this.collectionName] = mockDb[this.collectionName].filter(item => {
       const isMatch = Object.entries(filter).every(([key, value]) => {
-        if (key === '_id' && typeof value === 'string') {
-          return item._id.toString() === value;
+        if (key === '_id') {
+          if (typeof value === 'string') {
+            return item._id.toString() === value;
+          } else if (value instanceof ObjectId) {
+            return item._id.toString() === value.toString();
+          }
+          return false;
         }
         return item[key] === value;
       });
@@ -341,30 +380,6 @@ export function formatMongoData(data: any | any[]) {
       id: data._id.toString(),
       _id: undefined
     };
-  }
-}
-
-// Create a proper ObjectId class that works in browser
-export class ObjectId {
-  private id: string;
-  
-  constructor(id?: string) {
-    if (id) {
-      this.id = id;
-    } else {
-      // Generate a random hexadecimal string of 24 characters
-      this.id = Array.from({ length: 24 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join('');
-    }
-  }
-
-  toString() {
-    return this.id;
-  }
-
-  equals(other: ObjectId) {
-    return this.id === other.id;
   }
 }
 
