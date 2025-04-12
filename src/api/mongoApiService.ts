@@ -97,14 +97,57 @@ export const postsApi = {
     }
   },
   
+  // Track article clicks to determine trending status
+  trackClick: async (id: string): Promise<void> => {
+    try {
+      const { collections } = await connectToDatabase();
+      
+      // Update the clicks count for the article
+      await collections.posts.updateOne(
+        { _id: id },
+        { 
+          $inc: { clicks: 1 }, 
+          $set: { lastClickedAt: new Date() }
+        }
+      );
+      
+      console.log(`Tracked click for post ${id}`);
+    } catch (error) {
+      console.error(`Error tracking click for post ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  // Get trending posts based on clicks and recency
   getTrending: async (): Promise<Post[]> => {
     try {
       const { collections } = await connectToDatabase();
+      
+      // Get the current date
+      const now = new Date();
+      
+      // Calculate date 7 days ago
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      
+      // Find posts with clicks and sort by recency and click count
+      // This creates a weighted score favoring both recent and highly clicked posts
       const trendingPosts = await collections.posts
-        .find()
-        .sort({ likes: -1 })
-        .limit(4)
+        .find({
+          // Optionally filter by date range
+          // lastClickedAt: { $gte: weekAgo }
+        })
+        .sort({ 
+          // Sort first by clicks (primary trending indicator)
+          clicks: -1,
+          // Then by likes as a secondary indicator
+          likes: -1,
+          // Then by recency of the post
+          date: -1
+        })
+        .limit(5)
         .toArray();
+      
       return formatMongoData(trendingPosts);
     } catch (error) {
       console.error('Error fetching trending posts:', error);
@@ -152,7 +195,14 @@ export const postsApi = {
         post.slug = post.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       }
       
-      const result = await collections.posts.insertOne(post);
+      // Initialize click tracking fields
+      const postWithTracking = {
+        ...post,
+        clicks: 0,
+        lastClickedAt: null
+      };
+      
+      const result = await collections.posts.insertOne(postWithTracking);
       
       // Update category count
       if (post.category) {
@@ -172,7 +222,7 @@ export const postsApi = {
         }
       }
       
-      const newPost = { ...post, id: result.insertedId.toString() };
+      const newPost = { ...postWithTracking, id: result.insertedId.toString() };
       return newPost;
     } catch (error) {
       console.error('Error creating post:', error);

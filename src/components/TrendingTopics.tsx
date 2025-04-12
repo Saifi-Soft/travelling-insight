@@ -1,11 +1,14 @@
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Flame, Globe } from 'lucide-react';
+import { TrendingUp, Flame, Globe, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { topicsApi, categoriesApi, postsApi } from '@/api/apiService';
+import { topicsApi, categoriesApi, postsApi } from '@/api/mongoApiService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Topic, Category, Post } from '@/types/common';
+import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 
 const TrendingTopics = () => {
   const { 
@@ -34,6 +37,21 @@ const TrendingTopics = () => {
     queryFn: postsApi.getTrending,
     placeholderData: TRENDING_ARTICLES,
   });
+
+  // Track article clicks to determine trending status
+  const trackArticleClick = async (articleId: string) => {
+    try {
+      // Increment click count in the database
+      // This would typically update a 'clicks' or 'views' field for the article
+      await postsApi.trackClick(articleId);
+      
+      // Invalidate the trending articles query to refresh the data
+      // This would normally be handled by the QueryClient
+      console.log(`Tracked click for article ${articleId}`);
+    } catch (error) {
+      console.error('Error tracking article click:', error);
+    }
+  };
 
   return (
     <section className="section">
@@ -78,9 +96,16 @@ const TrendingTopics = () => {
           
           {/* Trending Articles */}
           <div>
-            <div className="flex items-center mb-6">
-              <Flame className="h-6 w-6 text-accent mr-2" />
-              <h2 className="text-2xl font-bold">Trending Articles</h2>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <Flame className="h-6 w-6 text-accent mr-2" />
+                <h2 className="text-2xl font-bold">Trending Articles</h2>
+              </div>
+              <Button variant="ghost" size="sm" className="text-primary flex items-center gap-1" asChild>
+                <Link to="/blog?trending=true">
+                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
+              </Button>
             </div>
             
             <Card className="overflow-hidden border-accent/10 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80">
@@ -97,7 +122,12 @@ const TrendingTopics = () => {
                   ))
                 ) : (
                   trendingArticles?.slice(0, 3).map((article) => (
-                    <Link to={`/blog/${article.id}`} key={article.id} className="flex gap-3 items-center hover:bg-muted/50 p-2 rounded-md transition-colors">
+                    <Link 
+                      to={`/blog/${article.id}`} 
+                      key={article.id} 
+                      className="flex gap-3 items-center hover:bg-muted/50 p-2 rounded-md transition-colors"
+                      onClick={() => trackArticleClick(article.id)}
+                    >
                       <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                         <img 
                           src={article.coverImage} 

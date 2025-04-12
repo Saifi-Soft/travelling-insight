@@ -1,6 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BlogHeader from '@/components/BlogHeader';
@@ -9,6 +10,9 @@ import { postsApi, categoriesApi, topicsApi } from '@/api/mongoApiService';
 import { Loader2 } from 'lucide-react';
 
 const Blog = () => {
+  const [searchParams] = useSearchParams();
+  const isTrending = searchParams.get("trending") === "true";
+  
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -16,6 +20,13 @@ const Blog = () => {
   const { data: posts = [], isLoading: postsLoading } = useQuery({
     queryKey: ['posts'],
     queryFn: postsApi.getAll,
+  });
+  
+  // Fetch trending posts if the trending parameter is set
+  const { data: trendingPosts = [], isLoading: trendingLoading } = useQuery({
+    queryKey: ['trending-posts'],
+    queryFn: postsApi.getTrending,
+    enabled: isTrending,
   });
   
   // Fetch categories using react-query
@@ -30,18 +41,26 @@ const Blog = () => {
     queryFn: topicsApi.getTrending,
   });
   
+  // Set page title based on trending filter
+  useEffect(() => {
+    document.title = isTrending ? "Trending Articles - Travel Blog" : "Blog - Travel Blog";
+  }, [isTrending]);
+  
   // Transform categories data to include "All" as first option
   const categories = ["All", ...categoriesData.map(category => category.name)];
   
+  // Use trending posts if the trending parameter is set, otherwise use all posts
+  const postsToDisplay = isTrending ? trendingPosts : posts;
+  
   // Filter posts based on category and search query
-  const filteredPosts = posts.filter(post => {
+  const filteredPosts = postsToDisplay.filter(post => {
     const matchesCategory = activeCategory === "All" || post.category === activeCategory;
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  const isLoading = postsLoading || categoriesLoading || topicsLoading;
+  const isLoading = (isTrending ? trendingLoading : postsLoading) || categoriesLoading || topicsLoading;
 
   if (isLoading) {
     return (
@@ -69,11 +88,12 @@ const Blog = () => {
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
           categories={categories}
+          isTrending={isTrending}
         />
         
         <BlogContent 
           filteredPosts={filteredPosts} 
-          isLoading={postsLoading}
+          isLoading={isLoading}
         />
       </main>
       

@@ -1,4 +1,3 @@
-
 // Define core types for the blog application
 
 export interface Author {
@@ -42,16 +41,32 @@ export interface Post {
   title: string;
   slug?: string;
   excerpt: string;
-  author: Author;
+  author: {
+    name: string;
+    avatar: string;
+    bio?: string;
+    social?: {
+      twitter?: string;
+      instagram?: string;
+      facebook?: string;
+    }
+  };
   category: string;
   coverImage: string;
+  content?: string;
   date: string;
   readTime: string;
   likes: number;
   comments: number;
-  content?: string;
   topics?: string[];
-  seo?: SeoData;
+  clicks?: number;
+  lastClickedAt?: Date | null;
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: string;
+    ogImage?: string;
+  }
 }
 
 export interface SeoData {
