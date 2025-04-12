@@ -9,16 +9,13 @@ interface HeaderAdProps {
 }
 
 const HeaderAd: React.FC<HeaderAdProps> = ({ className = '' }) => {
-  const { data: adPlacements = [] } = useQuery({
+  const { data: adPlacements = [], isLoading } = useQuery({
     queryKey: ['adPlacements', 'header'],
-    queryFn: async () => {
-      const allPlacements = await adPlacementsApi.getAll();
-      return allPlacements.filter(ad => ad.type === 'header' && ad.isEnabled);
-    },
+    queryFn: () => adPlacementsApi.getByType('header'),
   });
 
-  // If no enabled header ad placements, don't show anything
-  if (adPlacements.length === 0) return null;
+  // If no enabled header ad placements or still loading, don't show anything
+  if (adPlacements.length === 0 || isLoading) return null;
 
   // Get a random header ad
   const randomIndex = Math.floor(Math.random() * adPlacements.length);

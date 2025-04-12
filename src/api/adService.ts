@@ -110,6 +110,19 @@ export const adPlacementsApi = {
     }
   },
   
+  // Get ad placements by type
+  getByType: async (type: string): Promise<AdPlacement[]> => {
+    try {
+      const { collections } = await connectToDatabase();
+      const placements = await collections[COLLECTIONS.ADS].find().toArray();
+      const filteredPlacements = placements.filter((ad: any) => ad.type === type && ad.isEnabled);
+      return formatMongoData(filteredPlacements) as AdPlacement[];
+    } catch (error) {
+      console.error(`Error fetching ${type} ad placements:`, error);
+      return MOCK_ADS.filter(ad => ad.type === type && ad.isEnabled);
+    }
+  },
+  
   // Create new ad placement
   create: async (adPlacement: Omit<AdPlacement, 'id' | 'createdAt' | 'updatedAt'>): Promise<AdPlacement> => {
     try {

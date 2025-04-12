@@ -48,11 +48,13 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize ads for all pages
+// Initialize ads for all pages - Modified to prevent duplicate ad initialization
 const initializePageAds = () => {
   try {
-    // Force a push of any pending ads
-    if (window.adsbygoogle && typeof window.adsbygoogle.push === 'function') {
+    // Only initialize ads if they haven't been pushed yet
+    if (window.adsbygoogle && typeof window.adsbygoogle.push === 'function' && 
+        (!window.adsbygoogle.loaded)) {
+      window.adsbygoogle.loaded = true;
       window.adsbygoogle.push({});
       console.log('Global ads initialized');
     }
@@ -152,14 +154,14 @@ const App = () => {
     // Initialize database
     initDB();
     
-    // Initialize ads when app loads
-    initializePageAds();
+    // Initialize ads when app loads - only once
+    const timeoutId = setTimeout(() => {
+      initializePageAds();
+    }, 1000); // Delay to ensure DOM is ready
     
-    // Also initialize ads when route changes
-    window.addEventListener('popstate', initializePageAds);
-    
+    // Clean up timeout
     return () => {
-      window.removeEventListener('popstate', initializePageAds);
+      clearTimeout(timeoutId);
     };
   }, []);
 

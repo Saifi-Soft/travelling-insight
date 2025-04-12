@@ -9,16 +9,13 @@ interface SidebarAdProps {
 }
 
 const SidebarAd: React.FC<SidebarAdProps> = ({ className = '' }) => {
-  const { data: adPlacements = [] } = useQuery({
+  const { data: adPlacements = [], isLoading } = useQuery({
     queryKey: ['adPlacements', 'sidebar'],
-    queryFn: async () => {
-      const allPlacements = await adPlacementsApi.getAll();
-      return allPlacements.filter(ad => ad.type === 'sidebar' && ad.isEnabled);
-    },
+    queryFn: () => adPlacementsApi.getByType('sidebar'),
   });
 
-  // If no enabled sidebar ad placements, don't show anything
-  if (adPlacements.length === 0) return null;
+  // If no enabled sidebar ad placements or still loading, don't show anything
+  if (adPlacements.length === 0 || isLoading) return null;
 
   // Get a random sidebar ad
   const randomIndex = Math.floor(Math.random() * adPlacements.length);

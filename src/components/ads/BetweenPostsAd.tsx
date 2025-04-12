@@ -29,16 +29,10 @@ const BetweenPostsAd: React.FC<BetweenPostsAdProps> = ({ className = '', variant
 
   const { data: adPlacements = [], isLoading, error } = useQuery({
     queryKey: ['adPlacements', 'between-posts'],
-    queryFn: async () => {
-      const allPlacements = await adPlacementsApi.getAll();
-      return allPlacements.filter(ad => ad.type === 'between-posts' && ad.isEnabled);
-    },
+    queryFn: () => adPlacementsApi.getByType('between-posts'),
   });
 
   useEffect(() => {
-    // Log for debugging
-    console.log('Between posts ad placements:', adPlacements);
-    
     if (error) {
       console.error('Error fetching ad placements:', error);
       toast({
@@ -47,9 +41,9 @@ const BetweenPostsAd: React.FC<BetweenPostsAdProps> = ({ className = '', variant
         variant: "destructive"
       });
     }
-  }, [adPlacements, error]);
+  }, [error]);
 
-  // If no enabled ad placements, use a fallback ad slot
+  // If no enabled ad placements and not loading, use a fallback ad slot
   if (adPlacements.length === 0 && !isLoading) {
     return (
       <div className={`ad-container py-4 my-6 bg-gray-50 rounded-md ${className}`}>

@@ -33,26 +33,27 @@ const GoogleAdUnit = ({
   const adRef = useRef<HTMLElement>(null);
   const adRendered = useRef<boolean>(false);
   const [adError, setAdError] = useState<boolean>(false);
+  const adId = useRef<string>(`ad-${Math.random().toString(36).substring(2, 11)}`);
 
   useEffect(() => {
     try {
       // Initialize adsbygoogle if it hasn't been already
       if (!window.adsbygoogle) {
-        window.adsbygoogle = window.adsbygoogle || [];
+        window.adsbygoogle = [];
       }
 
       if (adRef.current && !adRendered.current) {
         // Set a timeout to ensure the ad loads after component mount
         const timer = setTimeout(() => {
           try {
+            console.log(`Pushing ad to queue: ${adId.current}`);
             window.adsbygoogle.push({});
             adRendered.current = true;
-            console.log('Ad pushed to queue:', adSlot, 'format:', adFormat);
           } catch (error) {
             console.error('Error pushing ad to queue:', error);
             setAdError(true);
           }
-        }, 100);
+        }, 300);
 
         return () => clearTimeout(timer);
       }
@@ -79,7 +80,7 @@ const GoogleAdUnit = ({
   }
 
   return (
-    <div className={`google-ad-container ${className}`}>
+    <div className={`google-ad-container ${className}`} key={adId.current}>
       <ins
         className="adsbygoogle"
         style={baseStyle}
@@ -89,6 +90,7 @@ const GoogleAdUnit = ({
         data-full-width-responsive={responsive ? "true" : "false"}
         ref={adRef as React.LegacyRef<HTMLModElement>}
         {...testAttributes}
+        id={adId.current}
       />
       {fallbackContent && adRendered.current === false && (
         <div className="ad-loading">{fallbackContent}</div>
