@@ -4,11 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Globe, MapPin, Users, Mail, Calendar } from 'lucide-react';
+import HeaderAd from '@/components/ads/HeaderAd';
+import FooterAd from '@/components/ads/FooterAd';
 
 const About = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative py-24 overflow-hidden">
@@ -29,6 +32,13 @@ const About = () => {
             </div>
           </div>
         </section>
+        
+        {/* First Ad placed strategically after hero section - blends with content */}
+        <div className="py-8 bg-gradient-to-b from-primary/5 to-background">
+          <div className="container-custom">
+            <HeaderAd className="max-w-5xl mx-auto rounded-lg overflow-hidden shadow-sm" />
+          </div>
+        </div>
         
         {/* Our Mission */}
         <section className="py-16">
@@ -200,7 +210,15 @@ const About = () => {
             </div>
           </div>
         </section>
+        
+        {/* Second Ad placed before footer - styled to blend with content */}
+        <div className="py-8 bg-gradient-to-t from-theme-footer/10 to-background">
+          <div className="container-custom">
+            <FooterAd className="max-w-5xl mx-auto rounded-lg overflow-hidden shadow-sm" />
+          </div>
+        </div>
       </main>
+      
       <Footer />
     </div>
   );
