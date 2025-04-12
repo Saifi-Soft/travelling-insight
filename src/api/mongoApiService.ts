@@ -116,9 +116,10 @@ export const postsApi = {
     try {
       const { collections } = await connectToDatabase();
       const posts = await collections.posts
-        .find({ category: category })
+        .find()
         .toArray();
-      return formatMongoData(posts);
+      const filteredPosts = posts.filter(post => post.category === category);
+      return formatMongoData(filteredPosts);
     } catch (error) {
       console.error(`Error fetching posts for category ${category}:`, error);
       throw error;
@@ -129,9 +130,12 @@ export const postsApi = {
     try {
       const { collections } = await connectToDatabase();
       const posts = await collections.posts
-        .find({ topics: { $in: [tag] } })
+        .find()
         .toArray();
-      return formatMongoData(posts);
+      const filteredPosts = posts.filter(post => 
+        post.topics && post.topics.includes(tag)
+      );
+      return formatMongoData(filteredPosts);
     } catch (error) {
       console.error(`Error fetching posts for tag ${tag}:`, error);
       throw error;
