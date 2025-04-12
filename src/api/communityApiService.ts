@@ -1,3 +1,4 @@
+
 import { connectToDatabase, formatMongoData, COLLECTIONS } from './mongodb';
 import { 
   CommunityUser,
@@ -11,7 +12,7 @@ export const communityUsersApi = {
   getAll: async (): Promise<CommunityUser[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const users = await collections.community_users.find().toArray();
+      const users = await collections[COLLECTIONS.COMMUNITY_USERS].find().toArray();
       return formatMongoData(users);
     } catch (error) {
       console.error('Error fetching community users:', error);
@@ -22,7 +23,7 @@ export const communityUsersApi = {
   getById: async (id: string): Promise<CommunityUser> => {
     try {
       const { collections } = await connectToDatabase();
-      const user = await collections.community_users.findOne({ _id: id });
+      const user = await collections[COLLECTIONS.COMMUNITY_USERS].findOne({ _id: id });
       if (!user) throw new Error('User not found');
       return formatMongoData(user);
     } catch (error) {
@@ -34,8 +35,8 @@ export const communityUsersApi = {
   getByStatus: async (status: string): Promise<CommunityUser[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const users = await collections.community_users.find().toArray();
-      return formatMongoData(users.filter(user => user.status === status));
+      const users = await collections[COLLECTIONS.COMMUNITY_USERS].find({ status }).toArray();
+      return formatMongoData(users);
     } catch (error) {
       console.error(`Error fetching users with status ${status}:`, error);
       throw error;
@@ -155,7 +156,7 @@ export const travelGroupsApi = {
   getAll: async (): Promise<TravelGroup[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const groups = await collections.travel_groups.find().toArray();
+      const groups = await collections[COLLECTIONS.TRAVEL_GROUPS].find().toArray();
       return formatMongoData(groups);
     } catch (error) {
       console.error('Error fetching travel groups:', error);
@@ -166,7 +167,7 @@ export const travelGroupsApi = {
   getById: async (id: string): Promise<TravelGroup> => {
     try {
       const { collections } = await connectToDatabase();
-      const group = await collections.travel_groups.findOne({ _id: id });
+      const group = await collections[COLLECTIONS.TRAVEL_GROUPS].findOne({ _id: id });
       if (!group) throw new Error('Group not found');
       return formatMongoData(group);
     } catch (error) {
@@ -178,8 +179,8 @@ export const travelGroupsApi = {
   getByCategory: async (category: string): Promise<TravelGroup[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const groups = await collections.travel_groups.find().toArray();
-      return formatMongoData(groups.filter(group => group.category === category));
+      const groups = await collections[COLLECTIONS.TRAVEL_GROUPS].find({ category }).toArray();
+      return formatMongoData(groups);
     } catch (error) {
       console.error(`Error fetching groups for category ${category}:`, error);
       throw error;
@@ -284,7 +285,7 @@ export const communityEventsApi = {
   getAll: async (): Promise<CommunityEvent[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const events = await collections.community_events.find().toArray();
+      const events = await collections[COLLECTIONS.COMMUNITY_EVENTS].find().toArray();
       return formatMongoData(events);
     } catch (error) {
       console.error('Error fetching community events:', error);
@@ -295,7 +296,7 @@ export const communityEventsApi = {
   getById: async (id: string): Promise<CommunityEvent> => {
     try {
       const { collections } = await connectToDatabase();
-      const event = await collections.community_events.findOne({ _id: id });
+      const event = await collections[COLLECTIONS.COMMUNITY_EVENTS].findOne({ _id: id });
       if (!event) throw new Error('Event not found');
       return formatMongoData(event);
     } catch (error) {
@@ -307,8 +308,8 @@ export const communityEventsApi = {
   getByStatus: async (status: string): Promise<CommunityEvent[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const events = await collections.community_events.find().toArray();
-      return formatMongoData(events.filter(event => event.status === status));
+      const events = await collections[COLLECTIONS.COMMUNITY_EVENTS].find({ status }).toArray();
+      return formatMongoData(events);
     } catch (error) {
       console.error(`Error fetching events with status ${status}:`, error);
       throw error;
@@ -400,7 +401,7 @@ export const travelMatchesApi = {
   getAll: async (): Promise<TravelMatch[]> => {
     try {
       const { collections } = await connectToDatabase();
-      const matches = await collections.travel_matches.find().toArray();
+      const matches = await collections[COLLECTIONS.TRAVEL_MATCHES].find().toArray();
       return formatMongoData(matches);
     } catch (error) {
       console.error('Error fetching travel matches:', error);

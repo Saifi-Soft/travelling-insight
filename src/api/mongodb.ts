@@ -80,7 +80,7 @@ class MockCollection {
     }
   }
 
-  async find(filter = {}) {
+  find(filter = {}) {
     // Return object directly with methods, not a promise that resolves to an object with methods
     return {
       async toArray() {
