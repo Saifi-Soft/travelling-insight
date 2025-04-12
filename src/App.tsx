@@ -48,13 +48,21 @@ const queryClient = new QueryClient({
   },
 });
 
+// Extend Window interface to include our custom property
+declare global {
+  interface Window {
+    adsbygoogle: any[];
+    adsInitialized?: boolean;
+  }
+}
+
 // Initialize ads for all pages - Modified to prevent duplicate ad initialization
 const initializePageAds = () => {
   try {
     // Only initialize ads if they haven't been pushed yet
     if (window.adsbygoogle && typeof window.adsbygoogle.push === 'function' && 
-        (!window.adsbygoogle.loaded)) {
-      window.adsbygoogle.loaded = true;
+        !window.adsInitialized) {
+      window.adsInitialized = true;
       window.adsbygoogle.push({});
       console.log('Global ads initialized');
     }
@@ -118,7 +126,7 @@ const initAdPlacements = async () => {
 
     // Check if ads collection has data
     const adsCollection = collections.ads;
-    const existingAds = await adsCollection.find().toArray();
+    const existingAds = await adsCollection.find({}).toArray();
 
     if (existingAds.length === 0) {
       await adsCollection.insertMany(MOCK_ADS);
