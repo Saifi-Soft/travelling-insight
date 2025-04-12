@@ -61,6 +61,70 @@ const initializePageAds = () => {
   }
 };
 
+// Initialize MongoDB with sample ad placements
+const initAdPlacements = async () => {
+  try {
+    const { collections } = await import('./api/mongodb');
+    const MOCK_ADS = [
+      {
+        name: 'Header Banner',
+        slot: '1234567890',
+        type: 'header',
+        format: 'horizontal',
+        location: 'all-pages',
+        isEnabled: true,
+        responsive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Sidebar Ad',
+        slot: '0987654321',
+        type: 'sidebar',
+        format: 'vertical',
+        location: 'blog',
+        isEnabled: true,
+        responsive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Between Posts',
+        slot: '1122334455',
+        type: 'between-posts',
+        format: 'auto',
+        location: 'blog',
+        isEnabled: true,
+        responsive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Footer Ad',
+        slot: '5566778899',
+        type: 'footer',
+        format: 'horizontal',
+        location: 'all-pages',
+        isEnabled: true,
+        responsive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+    ];
+
+    // Check if ads collection has data
+    const adsCollection = collections.ads;
+    const existingAds = await adsCollection.find().toArray();
+
+    if (existingAds.length === 0) {
+      await adsCollection.insertMany(MOCK_ADS);
+      console.log('Ad placements initialized with sample data');
+    }
+  } catch (error) {
+    console.error('Error initializing ad placements:', error);
+  }
+};
+
 const App = () => {
   useEffect(() => {
     const initDB = async () => {
@@ -71,6 +135,7 @@ const App = () => {
           MOCK_CATEGORIES,
           MOCK_TOPICS
         );
+        await initAdPlacements();
         console.log('MongoDB initialized successfully (browser compatible version)');
       } catch (error) {
         console.error('Error initializing MongoDB:', error);

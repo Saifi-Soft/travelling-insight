@@ -1,13 +1,16 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface GoogleAdUnitProps {
   adSlot: string;
-  adFormat?: 'auto' | 'rectangle' | 'horizontal' | 'vertical';
+  adFormat?: 'auto' | 'rectangle' | 'horizontal' | 'vertical' | 'fluid';
   responsive?: boolean;
   className?: string;
   adStyle?: React.CSSProperties;
   fallbackContent?: React.ReactNode;
+  width?: number;
+  height?: number;
+  testMode?: boolean;
 }
 
 declare global {
@@ -23,9 +26,13 @@ const GoogleAdUnit = ({
   className = '',
   adStyle = {},
   fallbackContent,
+  width,
+  height,
+  testMode = false,
 }: GoogleAdUnitProps) => {
-  const adRef = useRef<HTMLDivElement>(null);
+  const adRef = useRef<HTMLElement>(null);
   const adRendered = useRef<boolean>(false);
+  const [adError, setAdError] = useState<boolean>(false);
 
   useEffect(() => {
     try {
@@ -35,21 +42,41 @@ const GoogleAdUnit = ({
       }
 
       if (adRef.current && !adRendered.current) {
-        // Push the ad to Google's queue
-        window.adsbygoogle.push({});
-        adRendered.current = true;
-        console.log('Ad pushed to queue:', adSlot);
+        // Set a timeout to ensure the ad loads after component mount
+        const timer = setTimeout(() => {
+          try {
+            window.adsbygoogle.push({});
+            adRendered.current = true;
+            console.log('Ad pushed to queue:', adSlot, 'format:', adFormat);
+          } catch (error) {
+            console.error('Error pushing ad to queue:', error);
+            setAdError(true);
+          }
+        }, 100);
+
+        return () => clearTimeout(timer);
       }
     } catch (error) {
       console.error('Error loading Google AdSense ad:', error);
+      setAdError(true);
     }
-  }, [adSlot]);
+  }, [adSlot, adFormat]);
 
   const baseStyle: React.CSSProperties = {
     display: 'block',
     textAlign: 'center',
+    overflow: 'hidden',
+    width: width ? `${width}px` : '100%',
+    height: height ? `${height}px` : 'auto',
     ...adStyle
   };
+
+  // Use a data-ad-test attribute in development/test mode
+  const testAttributes = testMode ? { 'data-adtest': 'on' } : {};
+
+  if (adError && fallbackContent) {
+    return <div className={`google-ad-fallback ${className}`}>{fallbackContent}</div>;
+  }
 
   return (
     <div className={`google-ad-container ${className}`}>
@@ -60,9 +87,12 @@ const GoogleAdUnit = ({
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
         data-full-width-responsive={responsive ? "true" : "false"}
-        ref={adRef as unknown as React.LegacyRef<HTMLModElement>}
+        ref={adRef as React.LegacyRef<HTMLModElement>}
+        {...testAttributes}
       />
-      {fallbackContent}
+      {fallbackContent && adRendered.current === false && (
+        <div className="ad-loading">{fallbackContent}</div>
+      )}
     </div>
   );
 };
