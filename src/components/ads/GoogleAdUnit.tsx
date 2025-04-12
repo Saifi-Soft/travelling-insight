@@ -24,8 +24,7 @@ const GoogleAdUnit = ({
   adStyle = {},
   fallbackContent,
 }: GoogleAdUnitProps) => {
-  // Use React.RefObject with any to avoid the HTMLModElement type issue
-  const adRef = useRef<HTMLElement>(null);
+  const adRef = useRef<HTMLDivElement>(null);
   const adRendered = useRef<boolean>(false);
 
   useEffect(() => {
@@ -39,6 +38,7 @@ const GoogleAdUnit = ({
         // Push the ad to Google's queue
         window.adsbygoogle.push({});
         adRendered.current = true;
+        console.log('Ad pushed to queue:', adSlot);
       }
     } catch (error) {
       console.error('Error loading Google AdSense ad:', error);
@@ -60,7 +60,7 @@ const GoogleAdUnit = ({
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
         data-full-width-responsive={responsive ? "true" : "false"}
-        ref={adRef as React.RefObject<HTMLModElement>}
+        ref={adRef as unknown as React.LegacyRef<HTMLModElement>}
       />
       {fallbackContent}
     </div>

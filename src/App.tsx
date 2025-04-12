@@ -48,13 +48,17 @@ const queryClient = new QueryClient({
   },
 });
 
-// Add Google AdSense script
-const initializeAdSense = () => {
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX';
-  script.crossOrigin = 'anonymous';
-  document.head.appendChild(script);
+// Initialize ads for all pages
+const initializePageAds = () => {
+  try {
+    // Force a push of any pending ads
+    if (window.adsbygoogle && typeof window.adsbygoogle.push === 'function') {
+      window.adsbygoogle.push({});
+      console.log('Global ads initialized');
+    }
+  } catch (error) {
+    console.error('Error initializing page ads:', error);
+  }
 };
 
 const App = () => {
@@ -81,8 +85,15 @@ const App = () => {
     // Initialize database
     initDB();
     
-    // Initialize Google AdSense
-    initializeAdSense();
+    // Initialize ads when app loads
+    initializePageAds();
+    
+    // Also initialize ads when route changes
+    window.addEventListener('popstate', initializePageAds);
+    
+    return () => {
+      window.removeEventListener('popstate', initializePageAds);
+    };
   }, []);
 
   return (

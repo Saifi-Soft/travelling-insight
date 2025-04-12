@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BlogHeader from '@/components/BlogHeader';
 import BlogContent from '@/components/BlogContent';
+import BetweenPostsAd from '@/components/ads/BetweenPostsAd';
 import { postsApi, categoriesApi, topicsApi } from '@/api/mongoApiService';
 import { Loader2 } from 'lucide-react';
 
@@ -91,10 +92,20 @@ const Blog = () => {
           isTrending={isTrending}
         />
         
+        {/* Add an ad at the top of the content */}
+        <div className="container mx-auto px-4">
+          <BetweenPostsAd className="mt-6" />
+        </div>
+        
         <BlogContent 
           filteredPosts={filteredPosts} 
           isLoading={isLoading}
         />
+        
+        {/* Add another ad at the bottom of the content */}
+        <div className="container mx-auto px-4">
+          <BetweenPostsAd className="mb-6" />
+        </div>
       </main>
       
       <Footer />
