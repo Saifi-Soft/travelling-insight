@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Star, Info, ArrowRight } from 'lucide-react';
+import HeaderAd from '@/components/ads/HeaderAd';
+import FooterAd from '@/components/ads/FooterAd';
 
 type Destination = {
   id: number;
@@ -113,6 +115,7 @@ const Destinations = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <HeaderAd />
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative py-24 overflow-hidden">
@@ -272,6 +275,7 @@ const Destinations = () => {
           </div>
         </section>
       </main>
+      <FooterAd />
       <Footer />
     </div>
   );

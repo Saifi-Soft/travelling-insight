@@ -8,6 +8,8 @@ import TourGuideResults from '@/components/travel/TourGuideResults';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plane, Hotel, HelpingHand, ArrowLeft } from 'lucide-react';
+import HeaderAd from '@/components/ads/HeaderAd';
+import FooterAd from '@/components/ads/FooterAd';
 
 const TourGuideResultsPage = () => {
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ const TourGuideResultsPage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <HeaderAd />
       <main className="flex-grow">
         <div className="container-custom py-10">
           <div className="flex justify-between items-center mb-4">
@@ -52,6 +55,7 @@ const TourGuideResultsPage = () => {
           </div>
         </div>
       </main>
+      <FooterAd />
       <Footer />
     </div>
   );

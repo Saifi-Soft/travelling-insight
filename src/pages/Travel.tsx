@@ -7,6 +7,8 @@ import TravelSearch from '@/components/travel/TravelSearch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Plane, Hotel, HelpingHand, ArrowRight } from 'lucide-react';
+import HeaderAd from '@/components/ads/HeaderAd';
+import FooterAd from '@/components/ads/FooterAd';
 
 const Travel = () => {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ const Travel = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <HeaderAd />
       <main className="flex-grow">
         <div className="relative overflow-hidden bg-gradient-to-b from-primary/20 to-background py-16 lg:py-24">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80')] bg-cover bg-center opacity-20"></div>
@@ -55,6 +58,7 @@ const Travel = () => {
           </Tabs>
         </div>
       </main>
+      <FooterAd />
       <Footer />
     </div>
   );
