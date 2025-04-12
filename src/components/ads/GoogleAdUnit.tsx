@@ -24,7 +24,7 @@ const GoogleAdUnit = ({
   adStyle = {},
   fallbackContent,
 }: GoogleAdUnitProps) => {
-  // Update the ref type to HTMLInsElement which is appropriate for <ins> tag
+  // Use React.RefObject with any to avoid the HTMLModElement type issue
   const adRef = useRef<HTMLElement>(null);
   const adRendered = useRef<boolean>(false);
 
@@ -54,13 +54,13 @@ const GoogleAdUnit = ({
   return (
     <div className={`google-ad-container ${className}`}>
       <ins
-        ref={adRef}
         className="adsbygoogle"
         style={baseStyle}
         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" // Replace with your actual AdSense publisher ID
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
         data-full-width-responsive={responsive ? "true" : "false"}
+        ref={adRef as React.RefObject<HTMLModElement>}
       />
       {fallbackContent}
     </div>
