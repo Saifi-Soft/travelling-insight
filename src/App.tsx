@@ -64,7 +64,9 @@ const initializePageAds = () => {
 // Initialize MongoDB with sample ad placements
 const initAdPlacements = async () => {
   try {
-    const { collections } = await import('./api/mongodb');
+    const { connectToDatabase } = await import('./api/mongodb');
+    const { collections } = await connectToDatabase();
+    
     const MOCK_ADS = [
       {
         name: 'Header Banner',
