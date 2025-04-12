@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -116,22 +115,20 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
       }
       
       // Create subscription in MongoDB
-      await communityPaymentApi.createSubscription(
+      await communityPaymentApi.createSubscription({
         userId,
-        selectedPlan,
-        {
+        planType: selectedPlan,
+        paymentMethod: {
           method: 'credit_card',
           cardLastFour: data.cardNumber.slice(-4),
           expiryDate: data.expiryDate
         },
-        {
-          status: 'active',
-          startDate: today,
-          endDate: endDate,
-          amount: selectedPlan === 'monthly' ? plans.monthly.price : plans.annual.price,
-          autoRenew: true
-        }
-      );
+        status: 'active',
+        startDate: today,
+        endDate: endDate,
+        amount: selectedPlan === 'monthly' ? plans.monthly.price : plans.annual.price,
+        autoRenew: true
+      });
       
       // Simulate payment processing
       setTimeout(() => {

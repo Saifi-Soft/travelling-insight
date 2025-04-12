@@ -43,4 +43,5 @@ interface Subscription {
 // Create MongoDB collection name
 const COLLECTION_NAME = 'subscriptions';
 
-export { SubscriptionSchema, COLLECTION_NAME, Subscription };
+export { SubscriptionSchema, COLLECTION_NAME };
+export type { Subscription }; // Fixed: Using export type for interface
