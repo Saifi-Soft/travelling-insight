@@ -31,11 +31,12 @@ import SubscriptionModal from '@/components/community/SubscriptionModal';
 import IntelligentMatching from '@/components/community/IntelligentMatching';
 
 const Community = () => {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'members' | 'groups' | 'events' | 'matches'>('home');
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   
   const [profile, setProfile] = useState({
     name: '',
@@ -52,13 +53,13 @@ const Community = () => {
     interests: [] as string[]
   });
   
-  const [userId, setUserId] = useState<string | null>(null);
   const [currentDestination, setCurrentDestination] = useState('');
   const [currentTravelStyle, setCurrentTravelStyle] = useState('');
   const [currentInterest, setCurrentInterest] = useState('');
   
+  // Check subscription status when component mounts or userId changes
   useEffect(() => {
-    const mockUserCheck = async () => {
+    const checkUserAndSubscription = async () => {
       const isLoggedIn = localStorage.getItem('community_user_id');
       
       if (isLoggedIn) {
@@ -69,13 +70,15 @@ const Community = () => {
           setIsSubscribed(hasSubscription);
         } catch (error) {
           console.error('Error checking subscription:', error);
+          setIsSubscribed(false);
         }
       }
     };
     
-    mockUserCheck();
-  }, []);
+    checkUserAndSubscription();
+  }, [userId]);
   
+  // Fetch community data with React Query
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ['communityUsers'],
     queryFn: () => communityUsersApi.getAll(),
@@ -91,6 +94,7 @@ const Community = () => {
     queryFn: () => communityEventsApi.getAll(),
   });
   
+  // Filter data for display
   const activeUsers = users.filter(user => user.status === 'active');
   const featuredGroups = groups
     .filter(group => group.status === 'active' && group.featuredStatus)
@@ -100,11 +104,39 @@ const Community = () => {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
   
+  // Only show limited data for non-subscribed users
+  const limitedUsers = activeUsers.slice(0, 3);
+  const limitedGroups = featuredGroups.slice(0, 2);
+  const limitedEvents = upcomingEvents.slice(0, 1);
+  
+  // All action handlers must check for subscription first
   const handleProtectedAction = (actionCallback: () => void, featureName: string = '') => {
     if (!userId) {
       toast.error('Please log in to continue', {
         description: 'Create an account or log in to access this feature'
       });
+      setIsProfileDialogOpen(true);
+      return false;
+    }
+    
+    if (!isSubscribed) {
+      toast.error('Premium feature', {
+        description: `Subscribe to access ${featureName || 'all community features'}`
+      });
+      setIsSubscriptionModalOpen(true);
+      return false;
+    }
+    
+    actionCallback();
+    return true;
+  };
+  
+  const handleFeatureNotAvailable = (featureName: string) => {
+    if (!userId) {
+      toast.error('Please log in to continue', {
+        description: 'Create an account or log in to access this feature'
+      });
+      setIsProfileDialogOpen(true);
       return;
     }
     
@@ -116,10 +148,6 @@ const Community = () => {
       return;
     }
     
-    actionCallback();
-  };
-  
-  const handleFeatureNotAvailable = (featureName: string) => {
     toast(`The "${featureName}" feature will be available soon!`, {
       description: "We're working hard to bring this functionality to you.",
     });
@@ -153,16 +181,15 @@ const Community = () => {
       toast.success('Your profile has been created and is pending approval!');
       setIsProfileDialogOpen(false);
       
-      if (!isSubscribed) {
-        setTimeout(() => {
-          toast.info('Subscribe to unlock all community features', {
-            action: {
-              label: 'Subscribe',
-              onClick: () => setIsSubscriptionModalOpen(true)
-            }
-          });
-        }, 1500);
-      }
+      // Always show subscription prompt after profile creation
+      setTimeout(() => {
+        toast.info('Subscribe to unlock all community features', {
+          action: {
+            label: 'Subscribe',
+            onClick: () => setIsSubscriptionModalOpen(true)
+          }
+        });
+      }, 1500);
     } catch (error) {
       toast.error('Failed to create profile. Please try again.');
       console.error(error);
@@ -170,6 +197,10 @@ const Community = () => {
   };
   
   const handleCreateMatch = async () => {
+    if (!handleProtectedAction(() => {}, 'Travel Buddy Matching')) {
+      return;
+    }
+    
     try {
       if (matchPreferences.destinations.length === 0) {
         toast.error("Please add at least one destination");
@@ -212,6 +243,14 @@ const Community = () => {
       description: 'You now have access to all community features'
     });
   };
+
+  const handleTabChange = (value: string) => {
+    if ((value === 'members' || value === 'groups' || value === 'events') && !isSubscribed) {
+      handleProtectedAction(() => {}, value.charAt(0).toUpperCase() + value.slice(1));
+      return;
+    }
+    setActiveTab(value as 'home' | 'members' | 'groups' | 'events' | 'matches');
+  };
   
   const formatDate = (dateString: string | Date) => {
     try {
@@ -253,23 +292,23 @@ const Community = () => {
                   size="lg" 
                   className="bg-primary hover:bg-primary/90"
                   onClick={() => {
-                    if (userId) {
-                      handleProtectedAction(() => setActiveTab('members'));
-                    } else {
+                    if (!userId) {
                       setIsProfileDialogOpen(true);
+                    } else if (!isSubscribed) {
+                      setIsSubscriptionModalOpen(true);
+                    } else {
+                      setActiveTab('members');
                     }
                   }}
                 >
                   <UserPlus className="mr-2 h-5 w-5" /> 
-                  {userId ? 'Explore Community' : 'Join Community'}
+                  {userId ? (isSubscribed ? 'Explore Community' : 'Subscribe Now') : 'Join Community'}
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   className="border-primary text-primary hover:bg-primary/10"
-                  onClick={() => {
-                    handleProtectedAction(() => setIsMatchDialogOpen(true), 'Travel Buddy Matching');
-                  }}
+                  onClick={() => handleProtectedAction(() => setIsMatchDialogOpen(true), 'Travel Buddy Matching')}
                 >
                   <Compass className="mr-2 h-5 w-5" /> Find Travel Buddy
                 </Button>
@@ -288,47 +327,39 @@ const Community = () => {
         
         <section className="py-16">
           <div className="container-custom">
-            <Tabs defaultValue="home" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs defaultValue="home" value={activeTab} className="w-full">
               <div className="flex justify-center mb-8">
                 <TabsList className="bg-background border border-border">
-                  <TabsTrigger value="home" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger 
+                    value="home" 
+                    onClick={() => setActiveTab('home')}
+                    className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                  >
                     <Globe className="h-4 w-4 mr-2" /> Community Home
                   </TabsTrigger>
                   <TabsTrigger 
                     value="members" 
                     className="data-[state=active]:bg-primary data-[state=active]:text-white"
-                    onClick={(e) => {
-                      if (!isSubscribed) {
-                        e.preventDefault();
-                        handleProtectedAction(() => setActiveTab('members'), 'Members Directory');
-                      }
-                    }}
+                    onClick={() => handleTabChange('members')}
                   >
                     <Users className="h-4 w-4 mr-2" /> Members
+                    {!isSubscribed && <Lock className="ml-1 h-3 w-3" />}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="groups" 
                     className="data-[state=active]:bg-primary data-[state=active]:text-white"
-                    onClick={(e) => {
-                      if (!isSubscribed) {
-                        e.preventDefault();
-                        handleProtectedAction(() => setActiveTab('groups'), 'Travel Groups');
-                      }
-                    }}
+                    onClick={() => handleTabChange('groups')}
                   >
                     <Users className="h-4 w-4 mr-2" /> Travel Groups
+                    {!isSubscribed && <Lock className="ml-1 h-3 w-3" />}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="events" 
                     className="data-[state=active]:bg-primary data-[state=active]:text-white"
-                    onClick={(e) => {
-                      if (!isSubscribed) {
-                        e.preventDefault();
-                        handleProtectedAction(() => setActiveTab('events'), 'Community Events');
-                      }
-                    }}
+                    onClick={() => handleTabChange('events')}
                   >
                     <Calendar className="h-4 w-4 mr-2" /> Events
+                    {!isSubscribed && <Lock className="ml-1 h-3 w-3" />}
                   </TabsTrigger>
                   {isSubscribed && (
                     <TabsTrigger value="matches" className="data-[state=active]:bg-primary data-[state=active]:text-white">
@@ -349,10 +380,10 @@ const Community = () => {
                     <CardContent className="space-y-4">
                       {isLoadingUsers ? (
                         <div className="text-center py-4">Loading members...</div>
-                      ) : activeUsers.length === 0 ? (
+                      ) : limitedUsers.length === 0 ? (
                         <div className="text-center py-4">No members to display</div>
                       ) : (
-                        activeUsers.slice(0, 5).map((user, idx) => (
+                        limitedUsers.map((user, idx) => (
                           <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors">
                             <Avatar className="h-10 w-10 border border-border">
                               <AvatarImage src={user.avatar || `https://i.pravatar.cc/150?img=${idx + 10}`} alt={user.name} />
@@ -367,6 +398,21 @@ const Community = () => {
                             </Badge>
                           </div>
                         ))
+                      )}
+                      
+                      {!isSubscribed && limitedUsers.length > 0 && (
+                        <div className="relative mt-1 pt-4 border-t border-dashed border-border">
+                          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80 flex items-end justify-center pb-4">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="border-primary text-primary"
+                              onClick={() => setIsSubscriptionModalOpen(true)}
+                            >
+                              <Lock className="mr-1.5 h-3.5 w-3.5" /> Subscribe to See More
+                            </Button>
+                          </div>
+                        </div>
                       )}
                     </CardContent>
                     <CardFooter>
@@ -389,10 +435,10 @@ const Community = () => {
                     <CardContent className="space-y-4">
                       {isLoadingEvents ? (
                         <div className="text-center py-4">Loading events...</div>
-                      ) : upcomingEvents.length === 0 ? (
+                      ) : limitedEvents.length === 0 ? (
                         <div className="text-center py-4">No upcoming events</div>
                       ) : (
-                        upcomingEvents.map((event, idx) => (
+                        limitedEvents.map((event, idx) => (
                           <div 
                             key={idx} 
                             className="p-3 border border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
@@ -416,6 +462,21 @@ const Community = () => {
                           </div>
                         ))
                       )}
+                      
+                      {!isSubscribed && limitedEvents.length > 0 && upcomingEvents.length > limitedEvents.length && (
+                        <div className="relative mt-1 pt-4 border-t border-dashed border-border">
+                          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80 flex items-end justify-center pb-4">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="border-primary text-primary"
+                              onClick={() => setIsSubscriptionModalOpen(true)}
+                            >
+                              <Lock className="mr-1.5 h-3.5 w-3.5" /> Subscribe to See More
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                     <CardFooter>
                       <Button 
@@ -437,10 +498,10 @@ const Community = () => {
                     <CardContent className="space-y-4">
                       {isLoadingGroups ? (
                         <div className="text-center py-4">Loading groups...</div>
-                      ) : featuredGroups.length === 0 ? (
+                      ) : limitedGroups.length === 0 ? (
                         <div className="text-center py-4">No groups to display</div>
                       ) : (
-                        featuredGroups.map((group, idx) => (
+                        limitedGroups.map((group, idx) => (
                           <div 
                             key={idx} 
                             className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors"
@@ -460,6 +521,21 @@ const Community = () => {
                             <Badge>{group.category}</Badge>
                           </div>
                         ))
+                      )}
+                      
+                      {!isSubscribed && limitedGroups.length > 0 && featuredGroups.length > limitedGroups.length && (
+                        <div className="relative mt-1 pt-4 border-t border-dashed border-border">
+                          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80 flex items-end justify-center pb-4">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="border-primary text-primary"
+                              onClick={() => setIsSubscriptionModalOpen(true)}
+                            >
+                              <Lock className="mr-1.5 h-3.5 w-3.5" /> Subscribe to See More
+                            </Button>
+                          </div>
+                        </div>
                       )}
                     </CardContent>
                     <CardFooter>
@@ -594,245 +670,301 @@ const Community = () => {
               </TabsContent>
               
               <TabsContent value="members" className="mt-0">
-                <div className="flex flex-col items-center text-center mb-8">
-                  <h2 className="text-3xl font-bold mb-4">Our Community Members</h2>
-                  <p className="text-muted-foreground max-w-2xl">
-                    Connect with like-minded travelers from around the world
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {isLoadingUsers ? (
-                    <div className="col-span-full text-center py-12">Loading members...</div>
-                  ) : activeUsers.length === 0 ? (
-                    <div className="col-span-full text-center py-12">No community members to display</div>
-                  ) : (
-                    activeUsers.map((user, idx) => (
-                      <Card key={user.id} className="overflow-hidden border border-border hover:border-primary/50 transition-colors">
-                        <CardContent className="p-6">
-                          <div className="flex flex-col items-center mb-4">
-                            <Avatar className="h-20 w-20 border-2 border-primary/20">
-                              <AvatarImage src={user.avatar || `https://i.pravatar.cc/150?img=${idx + 10}`} alt={user.name} />
-                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <h3 className="mt-4 text-lg font-semibold">{user.name}</h3>
-                            <Badge className="mt-1">{user.experienceLevel}</Badge>
-                            
-                            {user.badges && user.badges.length > 0 && (
-                              <div className="flex mt-2 gap-1">
-                                {user.badges.map((badge, bidx) => (
-                                  <div 
-                                    key={bidx} 
-                                    className="text-yellow-500"
-                                    title={badge.name}
-                                  >
-                                    <Award className="h-4 w-4" />
+                {isSubscribed ? (
+                  <>
+                    <div className="flex flex-col items-center text-center mb-8">
+                      <h2 className="text-3xl font-bold mb-4">Our Community Members</h2>
+                      <p className="text-muted-foreground max-w-2xl">
+                        Connect with like-minded travelers from around the world
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {isLoadingUsers ? (
+                        <div className="col-span-full text-center py-12">Loading members...</div>
+                      ) : activeUsers.length === 0 ? (
+                        <div className="col-span-full text-center py-12">No community members to display</div>
+                      ) : (
+                        activeUsers.map((user, idx) => (
+                          <Card key={user.id} className="overflow-hidden border border-border hover:border-primary/50 transition-colors">
+                            <CardContent className="p-6">
+                              <div className="flex flex-col items-center mb-4">
+                                <Avatar className="h-20 w-20 border-2 border-primary/20">
+                                  <AvatarImage src={user.avatar || `https://i.pravatar.cc/150?img=${idx + 10}`} alt={user.name} />
+                                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <h3 className="mt-4 text-lg font-semibold">{user.name}</h3>
+                                <Badge className="mt-1">{user.experienceLevel}</Badge>
+                                
+                                {user.badges && user.badges.length > 0 && (
+                                  <div className="flex mt-2 gap-1">
+                                    {user.badges.map((badge, bidx) => (
+                                      <div 
+                                        key={bidx} 
+                                        className="text-yellow-500"
+                                        title={badge.name}
+                                      >
+                                        <Award className="h-4 w-4" />
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
+                                )}
                               </div>
-                            )}
-                          </div>
-                          
-                          <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                            {user.bio || "No bio available"}
-                          </p>
-                          
-                          <div className="space-y-3">
-                            {user.travelStyles && user.travelStyles.length > 0 && (
-                              <div>
-                                <p className="text-xs font-semibold text-muted-foreground mb-1">Travel Style:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {user.travelStyles.map((style, sidx) => (
-                                    <Badge key={sidx} variant="secondary" className="text-xs">
-                                      {style}
-                                    </Badge>
-                                  ))}
-                                </div>
+                              
+                              <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                                {user.bio || "No bio available"}
+                              </p>
+                              
+                              <div className="space-y-3">
+                                {user.travelStyles && user.travelStyles.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-muted-foreground mb-1">Travel Style:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {user.travelStyles.map((style, sidx) => (
+                                        <Badge key={sidx} variant="secondary" className="text-xs">
+                                          {style}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {user.interests && user.interests.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-muted-foreground mb-1">Interests:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {user.interests.map((interest, iidx) => (
+                                        <Badge key={iidx} variant="outline" className="text-xs border-primary/30 text-primary">
+                                          {interest}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                            )}
+                            </CardContent>
                             
-                            {user.interests && user.interests.length > 0 && (
-                              <div>
-                                <p className="text-xs font-semibold text-muted-foreground mb-1">Interests:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {user.interests.map((interest, iidx) => (
-                                    <Badge key={iidx} variant="outline" className="text-xs border-primary/30 text-primary">
-                                      {interest}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                        
-                        <CardFooter className="bg-muted/30 px-6 py-3">
-                          <Button 
-                            className="w-full bg-primary hover:bg-primary/90"
-                            onClick={() => handleFeatureNotAvailable(`Connect with ${user.name}`)}
-                          >
-                            Connect
-                          </Button>
-                        </CardFooter>
+                            <CardFooter className="bg-muted/30 px-6 py-3">
+                              <Button 
+                                className="w-full bg-primary hover:bg-primary/90"
+                                onClick={() => handleFeatureNotAvailable(`Connect with ${user.name}`)}
+                              >
+                                Connect
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        ))
+                      )}
+                      
+                      <Card className="h-full flex flex-col items-center justify-center p-6 text-center border-dashed">
+                        <UserPlus className="h-12 w-12 text-primary/50 mb-4" />
+                        <h3 className="text-xl font-semibold mb-2">Invite Friends</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Grow our community by inviting your travel-loving friends</p>
+                        <Button onClick={() => handleFeatureNotAvailable("Invite friends")}>
+                          Send Invites
+                        </Button>
                       </Card>
-                    ))
-                  )}
-                </div>
-                
-                {activeUsers.length > 0 && (
-                  <div className="mt-8 text-center">
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="mx-auto rounded-full bg-primary/10 p-4 w-16 h-16 flex items-center justify-center mb-4">
+                      <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">Premium Feature</h3>
+                    <p className="text-muted-foreground max-w-lg mx-auto mb-6">
+                      Subscribe to access our full community member directory and connect with like-minded travelers
+                    </p>
                     <Button 
                       size="lg" 
-                      variant="outline" 
-                      className="border-primary text-primary hover:bg-primary/10"
-                      onClick={() => setIsProfileDialogOpen(true)}
+                      onClick={() => setIsSubscriptionModalOpen(true)}
                     >
-                      <UserPlus className="mr-2 h-5 w-5" /> Join Our Community
+                      Subscribe Now
                     </Button>
                   </div>
                 )}
               </TabsContent>
               
               <TabsContent value="groups" className="mt-0">
-                <div className="flex flex-col items-center text-center mb-8">
-                  <h2 className="text-3xl font-bold mb-4">Travel Groups</h2>
-                  <p className="text-muted-foreground max-w-2xl">
-                    Join special interest groups and connect with travelers who share your passion
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {isLoadingGroups ? (
-                    <div className="col-span-full text-center py-12">Loading groups...</div>
-                  ) : groups.length === 0 ? (
-                    <div className="col-span-full text-center py-12">No groups to display</div>
-                  ) : (
-                    groups.filter(group => group.status === 'active').map((group, idx) => (
-                      <Card key={group.id} className="h-full flex flex-col overflow-hidden hover:border-primary/30 transition-colors">
-                        <div className="relative h-40">
-                          <img 
-                            src={group.image || `https://source.unsplash.com/random/400x200/?${group.category.toLowerCase()}`}
-                            alt={group.name}
-                            className="h-full w-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                          <div className="absolute bottom-4 left-4 right-4">
-                            <Badge className="mb-2">{group.category}</Badge>
-                            <h3 className="text-xl font-bold text-white">{group.name}</h3>
-                          </div>
-                        </div>
-                        
-                        <CardContent className="flex-grow p-6">
-                          <p className="text-sm text-muted-foreground mb-4">
-                            {group.description}
-                          </p>
-                          
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center">
-                              <Users className="h-4 w-4 mr-1 text-muted-foreground" />
-                              <span>{group.memberCount} members</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">
-                              Created {formatDate(group.dateCreated)}
-                            </span>
-                          </div>
-                        </CardContent>
-                        
-                        <CardFooter className="bg-muted/30 p-4">
-                          <Button 
-                            className="w-full bg-primary hover:bg-primary/90"
-                            onClick={() => handleFeatureNotAvailable(`Join ${group.name} group`)}
-                          >
-                            Join Group
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))
-                  )}
-                  
-                  <Card className="h-full flex flex-col border-dashed hover:border-primary/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center justify-center flex-grow p-6">
-                      <div className="text-center">
-                        <div className="mx-auto h-20 w-20 rounded-full bg-muted flex items-center justify-center">
-                          <Plus className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                        <h3 className="text-lg font-medium mt-4">Create New Group</h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Start your own travel group and connect with like-minded travelers
-                        </p>
-                        <Button 
-                          variant="outline" 
-                          className="mt-4 border-primary text-primary hover:bg-primary/10"
-                          onClick={() => handleProtectedAction(() => handleFeatureNotAvailable('Create Travel Group'), 'Travel Groups')}
-                        >
-                          <Plus className="h-4 w-4 mr-2" /> Create Group
-                        </Button>
-                      </div>
+                {isSubscribed ? (
+                  <>
+                    <div className="flex flex-col items-center text-center mb-8">
+                      <h2 className="text-3xl font-bold mb-4">Travel Groups</h2>
+                      <p className="text-muted-foreground max-w-2xl">
+                        Join special interest groups and connect with travelers who share your passion
+                      </p>
                     </div>
-                  </Card>
-                </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {isLoadingGroups ? (
+                        <div className="col-span-full text-center py-12">Loading groups...</div>
+                      ) : groups.length === 0 ? (
+                        <div className="col-span-full text-center py-12">No groups to display</div>
+                      ) : (
+                        groups.filter(group => group.status === 'active').map((group, idx) => (
+                          <Card key={group.id} className="h-full flex flex-col overflow-hidden hover:border-primary/30 transition-colors">
+                            <div className="relative h-40">
+                              <img 
+                                src={group.image || `https://source.unsplash.com/random/400x200/?${group.category.toLowerCase()}`}
+                                alt={group.name}
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                              <div className="absolute bottom-4 left-4 right-4">
+                                <Badge className="mb-2">{group.category}</Badge>
+                                <h3 className="text-xl font-bold text-white">{group.name}</h3>
+                              </div>
+                            </div>
+                            
+                            <CardContent className="flex-grow p-6">
+                              <p className="text-sm text-muted-foreground mb-4">
+                                {group.description}
+                              </p>
+                              
+                              <div className="flex items-center justify-between text-sm">
+                                <div className="flex items-center">
+                                  <Users className="h-4 w-4 mr-1 text-muted-foreground" />
+                                  <span>{group.memberCount} members</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  Created {formatDate(group.dateCreated)}
+                                </span>
+                              </div>
+                            </CardContent>
+                            
+                            <CardFooter className="bg-muted/30 p-4">
+                              <Button 
+                                className="w-full bg-primary hover:bg-primary/90"
+                                onClick={() => handleFeatureNotAvailable(`Join ${group.name} group`)}
+                              >
+                                Join Group
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        ))
+                      )}
+                      
+                      <Card className="h-full flex flex-col border-dashed hover:border-primary/30 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-center flex-grow p-6">
+                          <div className="text-center">
+                            <div className="mx-auto h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+                              <Plus className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                            <h3 className="text-lg font-medium mt-4">Create New Group</h3>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Start your own travel group and connect with like-minded travelers
+                            </p>
+                            <Button 
+                              variant="outline" 
+                              className="mt-4 border-primary text-primary hover:bg-primary/10"
+                              onClick={() => handleFeatureNotAvailable('Create Travel Group')}
+                            >
+                              <Plus className="h-4 w-4 mr-2" /> Create Group
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="mx-auto rounded-full bg-primary/10 p-4 w-16 h-16 flex items-center justify-center mb-4">
+                      <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">Premium Feature</h3>
+                    <p className="text-muted-foreground max-w-lg mx-auto mb-6">
+                      Subscribe to join special interest travel groups and connect with like-minded travelers
+                    </p>
+                    <Button 
+                      size="lg" 
+                      onClick={() => setIsSubscriptionModalOpen(true)}
+                    >
+                      Subscribe Now
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="events" className="mt-0">
-                <div className="flex flex-col items-center text-center mb-8">
-                  <h2 className="text-3xl font-bold mb-4">Community Events</h2>
-                  <p className="text-muted-foreground max-w-2xl">
-                    Discover and participate in travel events, meetups, and workshops
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {isLoadingEvents ? (
-                    <div className="col-span-full text-center py-12">Loading events...</div>
-                  ) : events.length === 0 ? (
-                    <div className="col-span-full text-center py-12">No events to display</div>
-                  ) : (
-                    events.map((event, idx) => (
-                      <Card key={event.id} className="overflow-hidden hover:border-primary/30 transition-colors">
-                        <CardHeader className="p-0">
-                          <div className="relative h-48">
-                            <img 
-                              src={event.image || `https://source.unsplash.com/random/400x200/?event`}
-                              alt={event.title}
-                              className="h-full w-full object-cover"
-                            />
-                            <div className="absolute top-4 right-4">
-                              <Badge>{event.type}</Badge>
-                            </div>
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                              <h3 className="text-xl font-bold text-white">{event.title}</h3>
-                              <div className="flex items-center text-xs text-white/80 mt-1">
-                                <Calendar className="h-3 w-3 mr-1" />
-                                <span>{formatDate(event.date)} • {formatTime(event.date)}</span>
+                {isSubscribed ? (
+                  <>
+                    <div className="flex flex-col items-center text-center mb-8">
+                      <h2 className="text-3xl font-bold mb-4">Community Events</h2>
+                      <p className="text-muted-foreground max-w-2xl">
+                        Discover and participate in travel events, meetups, and workshops
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {isLoadingEvents ? (
+                        <div className="col-span-full text-center py-12">Loading events...</div>
+                      ) : events.length === 0 ? (
+                        <div className="col-span-full text-center py-12">No events to display</div>
+                      ) : (
+                        events.map((event, idx) => (
+                          <Card key={event.id} className="overflow-hidden hover:border-primary/30 transition-colors">
+                            <CardHeader className="p-0">
+                              <div className="relative h-48">
+                                <img 
+                                  src={event.image || `https://source.unsplash.com/random/400x200/?event`}
+                                  alt={event.title}
+                                  className="h-full w-full object-cover"
+                                />
+                                <div className="absolute top-4 right-4">
+                                  <Badge>{event.type}</Badge>
+                                </div>
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                                  <h3 className="text-xl font-bold text-white">{event.title}</h3>
+                                  <div className="flex items-center text-xs text-white/80 mt-1">
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    <span>{formatDate(event.date)} • {formatTime(event.date)}</span>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                          <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                            {event.description}
-                          </p>
-                          <div className="flex items-center text-sm">
-                            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
-                            <span>
-                              {event.location.type === 'online' 
-                                ? 'Online Event' 
-                                : event.location.details}
-                            </span>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="bg-muted/30 p-4">
-                          <Button 
-                            className="w-full bg-primary hover:bg-primary/90"
-                            onClick={() => handleFeatureNotAvailable(`RSVP to ${event.title}`)}
-                          >
-                            RSVP to Event
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))
-                  )}
-                </div>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                              <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                                {event.description}
+                              </p>
+                              <div className="flex items-center text-sm">
+                                <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+                                <span>
+                                  {event.location.type === 'online' 
+                                    ? 'Online Event' 
+                                    : event.location.details}
+                                </span>
+                              </div>
+                            </CardContent>
+                            <CardFooter className="bg-muted/30 p-4">
+                              <Button 
+                                className="w-full bg-primary hover:bg-primary/90"
+                                onClick={() => handleFeatureNotAvailable(`RSVP to ${event.title}`)}
+                              >
+                                RSVP to Event
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="mx-auto rounded-full bg-primary/10 p-4 w-16 h-16 flex items-center justify-center mb-4">
+                      <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">Premium Feature</h3>
+                    <p className="text-muted-foreground max-w-lg mx-auto mb-6">
+                      Subscribe to access community events, meetups, and travel workshops
+                    </p>
+                    <Button 
+                      size="lg" 
+                      onClick={() => setIsSubscriptionModalOpen(true)}
+                    >
+                      Subscribe Now
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>

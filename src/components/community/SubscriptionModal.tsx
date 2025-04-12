@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { CreditCard, Lock, CheckCircle2 } from 'lucide-react';
 import { communityPaymentApi } from '@/api/communityApiService';
+import { useQuery } from '@tanstack/react-query';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 interface SubscriptionModalProps {
   open: boolean;
@@ -15,16 +20,17 @@ interface SubscriptionModalProps {
   onSubscribe: () => void;
 }
 
+// Define payment validation schema
+const paymentSchema = z.object({
+  cardNumber: z.string().regex(/^\d{16}$/, "Card number must be 16 digits"),
+  cardName: z.string().min(3, "Name must be at least 3 characters"),
+  expiryDate: z.string().regex(/^\d{2}\/\d{2}$/, "Format must be MM/YY"),
+  cvv: z.string().regex(/^\d{3,4}$/, "CVV must be 3-4 digits"),
+});
+
 const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModalProps) => {
   const [step, setStep] = useState<'plans' | 'payment'>('plans');
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
-  const [paymentDetails, setPaymentDetails] = useState({
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: '',
-    isValid: false
-  });
   const [isProcessing, setIsProcessing] = useState(false);
   
   const plans = {
@@ -50,96 +56,65 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
     }
   };
 
-  const validateCardNumber = (number: string) => {
-    // Basic validation - just check if it's 16 digits
-    return /^\d{16}$/.test(number.replace(/\s/g, ''));
-  };
+  // Form integration
+  const form = useForm<z.infer<typeof paymentSchema>>({
+    resolver: zodResolver(paymentSchema),
+    defaultValues: {
+      cardNumber: '',
+      cardName: '',
+      expiryDate: '',
+      cvv: '',
+    },
+  });
 
-  const validateExpiryDate = (date: string) => {
-    // Format should be MM/YY
-    if (!/^\d{2}\/\d{2}$/.test(date)) return false;
-    
-    const [month, year] = date.split('/').map(Number);
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear() % 100;
-    const currentMonth = currentDate.getMonth() + 1;
-    
-    if (month < 1 || month > 12) return false;
-    if (year < currentYear) return false;
-    if (year === currentYear && month < currentMonth) return false;
-    
-    return true;
-  };
-
-  const validateCVV = (cvv: string) => {
-    return /^\d{3,4}$/.test(cvv);
-  };
-
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Format card number with spaces after every 4 digits
-    let value = e.target.value.replace(/\s/g, '');
-    if (value.length > 16) value = value.slice(0, 16);
-    
-    // Add spaces for readability
-    const formattedValue = value.replace(/(\d{4})/g, '$1 ').trim();
-    
-    setPaymentDetails({
-      ...paymentDetails,
-      cardNumber: formattedValue,
-      isValid: validateCardDetails({
-        ...paymentDetails,
-        cardNumber: value
-      })
-    });
-  };
-
-  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d]/g, '');
-    
-    if (value.length > 4) value = value.slice(0, 4);
-    if (value.length > 2) {
-      value = value.slice(0, 2) + '/' + value.slice(2);
+  // Reset form when modal opens
+  useEffect(() => {
+    if (open) {
+      setStep('plans');
+      form.reset();
     }
-    
-    setPaymentDetails({
-      ...paymentDetails,
-      expiryDate: value,
-      isValid: validateCardDetails({
-        ...paymentDetails,
-        expiryDate: value
-      })
-    });
+  }, [open, form]);
+
+  // Format card number with spaces for display
+  const formatCardNumber = (value: string) => {
+    const cleanValue = value.replace(/\s/g, '');
+    if (cleanValue.length > 16) return cleanValue.slice(0, 16);
+    return cleanValue.replace(/(\d{4})/g, '$1 ').trim();
   };
 
-  const validateCardDetails = (details: typeof paymentDetails) => {
-    return (
-      validateCardNumber(details.cardNumber) &&
-      details.cardName.length >= 3 &&
-      validateExpiryDate(details.expiryDate) &&
-      validateCVV(details.cvv)
-    );
+  // Format expiry date as MM/YY
+  const formatExpiryDate = (value: string) => {
+    const cleanValue = value.replace(/[^\d]/g, '');
+    if (cleanValue.length > 4) return cleanValue.slice(0, 4);
+    if (cleanValue.length > 2) {
+      return cleanValue.slice(0, 2) + '/' + cleanValue.slice(2);
+    }
+    return cleanValue;
   };
 
-  const handleSubmitPayment = async () => {
+  const handleSubmitPayment = async (data: z.infer<typeof paymentSchema>) => {
     setIsProcessing(true);
     
     try {
-      // In a real implementation, this would securely process the payment
-      // For demo purposes, we'll simulate a successful payment
-      
       // Mock user ID for demo
-      const mockUserId = 'demo-user-' + Math.random().toString(36).substring(2, 9);
+      const mockUserId = localStorage.getItem('community_user_id') || 'demo-user-' + Math.random().toString(36).substring(2, 9);
       
+      // Store subscription in MongoDB
       await communityPaymentApi.createSubscription(
         mockUserId,
         selectedPlan,
         {
           method: 'credit_card',
-          cardLastFour: paymentDetails.cardNumber.slice(-4)
+          cardLastFour: data.cardNumber.slice(-4),
+          expiryDate: data.expiryDate,
+          status: 'active',
+          startDate: new Date(),
+          endDate: new Date(Date.now() + (selectedPlan === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000),
+          amount: selectedPlan === 'monthly' ? plans.monthly.price : plans.annual.price,
         }
       );
       
-      // Simulate loading
+      // Simulate payment processing
       setTimeout(() => {
         toast.success('Payment processed successfully!');
         onSubscribe();
@@ -223,94 +198,116 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cardNumber">Card Number</Label>
-                  <div className="relative">
-                    <Input 
-                      id="cardNumber" 
-                      placeholder="0000 0000 0000 0000" 
-                      value={paymentDetails.cardNumber}
-                      onChange={handleCardNumberChange}
-                    />
-                    <CreditCard className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="cardName">Cardholder Name</Label>
-                  <Input
-                    id="cardName"
-                    placeholder="John Smith"
-                    value={paymentDetails.cardName}
-                    onChange={(e) => setPaymentDetails({
-                      ...paymentDetails,
-                      cardName: e.target.value,
-                      isValid: validateCardDetails({
-                        ...paymentDetails,
-                        cardName: e.target.value
-                      })
-                    })}
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmitPayment)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="cardNumber"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Card Number</FormLabel>
+                        <div className="relative">
+                          <FormControl>
+                            <Input 
+                              placeholder="0000 0000 0000 0000"
+                              {...field}
+                              onChange={(e) => {
+                                const formatted = formatCardNumber(e.target.value.replace(/\s/g, ''));
+                                field.onChange(formatted);
+                              }}
+                            />
+                          </FormControl>
+                          <CreditCard className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiryDate">Expiry Date</Label>
-                    <Input
-                      id="expiryDate"
-                      placeholder="MM/YY"
-                      value={paymentDetails.expiryDate}
-                      onChange={handleExpiryDateChange}
+                  
+                  <FormField
+                    control={form.control}
+                    name="cardName" 
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Cardholder Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Smith" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="expiryDate"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Expiry Date</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="MM/YY" 
+                              {...field}
+                              onChange={(e) => {
+                                const formatted = formatExpiryDate(e.target.value);
+                                field.onChange(formatted);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="cvv"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>CVV</FormLabel>
+                          <div className="relative">
+                            <FormControl>
+                              <Input 
+                                placeholder="123" 
+                                maxLength={4} 
+                                {...field}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/[^\d]/g, '').slice(0, 4);
+                                  field.onChange(value);
+                                }}
+                              />
+                            </FormControl>
+                            <Lock className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <div className="relative">
-                      <Input
-                        id="cvv"
-                        placeholder="123"
-                        maxLength={4}
-                        value={paymentDetails.cvv}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^\d]/g, '').slice(0, 4);
-                          setPaymentDetails({
-                            ...paymentDetails,
-                            cvv: value,
-                            isValid: validateCardDetails({
-                              ...paymentDetails,
-                              cvv: value
-                            })
-                          });
-                        }}
-                      />
-                      <Lock className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    </div>
+                  <div className="pt-2">
+                    <p className="text-xs text-muted-foreground flex items-center">
+                      <Lock className="h-3 w-3 mr-1" />
+                      Your payment information is secured with SSL encryption
+                    </p>
                   </div>
-                </div>
-              </div>
-              
-              <div className="pt-2">
-                <p className="text-xs text-muted-foreground flex items-center">
-                  <Lock className="h-3 w-3 mr-1" />
-                  Your payment information is secured with SSL encryption
-                </p>
-              </div>
+                  
+                  <DialogFooter className="mt-6">
+                    <Button type="button" variant="outline" onClick={() => setStep('plans')} disabled={isProcessing}>
+                      Back
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isProcessing}
+                      className={isProcessing ? 'opacity-80' : ''}
+                    >
+                      {isProcessing ? 'Processing...' : `Pay $${plans[selectedPlan].price}`}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setStep('plans')} disabled={isProcessing}>
-                Back
-              </Button>
-              <Button 
-                onClick={handleSubmitPayment} 
-                disabled={!paymentDetails.isValid || isProcessing}
-                className={isProcessing ? 'opacity-80' : ''}
-              >
-                {isProcessing ? 'Processing...' : `Pay $${plans[selectedPlan].price}`}
-              </Button>
-            </DialogFooter>
           </>
         )}
       </DialogContent>
