@@ -104,7 +104,7 @@ export const postsApi = {
       
       // Update the clicks count for the article
       await collections.posts.updateOne(
-        { _id: id },
+        { _id: toObjectId(id) },
         { 
           $inc: { clicks: 1 }, 
           $set: { lastClickedAt: new Date() }

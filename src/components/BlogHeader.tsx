@@ -1,3 +1,4 @@
+
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter } from 'lucide-react';
@@ -8,6 +9,7 @@ interface BlogHeaderProps {
   activeCategory: string;
   setActiveCategory: (category: string) => void;
   categories: string[];
+  isTrending?: boolean;
 }
 
 const BlogHeader = ({ 
@@ -15,7 +17,8 @@ const BlogHeader = ({
   setSearchQuery, 
   activeCategory, 
   setActiveCategory,
-  categories 
+  categories,
+  isTrending = false
 }: BlogHeaderProps) => {
   return (
     <>
@@ -23,9 +26,13 @@ const BlogHeader = ({
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white py-16">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl font-bold mb-4">Travel Blog</h1>
+            <h1 className="text-4xl font-bold mb-4">
+              {isTrending ? "Trending Articles" : "Travel Blog"}
+            </h1>
             <p className="text-lg opacity-90">
-              Stories, guides, and insights from travelers around the world
+              {isTrending 
+                ? "Discover what's hot and happening in the travel world" 
+                : "Stories, guides, and insights from travelers around the world"}
             </p>
           </div>
         </div>
