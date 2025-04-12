@@ -1,93 +1,146 @@
 
 import React, { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
+  Bell, 
   LayoutDashboard, 
   FileText, 
   FolderOpen, 
-  MessageSquare, 
-  Users, 
   Settings, 
-  LogOut 
+  LogOut,
+  MessageSquare,
+  Users,
+  BarChart
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface AdminLayoutProps {
   children: ReactNode;
-  activeItem?: string;
+  activeItem?: 'dashboard' | 'posts' | 'categories' | 'comments' | 'community' | 'settings' | 'ads';
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeItem = 'dashboard' }) => {
+const AdminLayout = ({ children, activeItem = 'dashboard' }: AdminLayoutProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  // Navigation items for the sidebar
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
-    { id: 'posts', label: 'Posts', icon: FileText, path: '/admin/posts' },
-    { id: 'categories', label: 'Categories', icon: FolderOpen, path: '/admin/categories' },
-    { id: 'comments', label: 'Comments', icon: MessageSquare, path: '/admin/comments' },
-    { id: 'community', label: 'Community', icon: Users, path: '/admin/community' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      path: '/admin/dashboard'
+    },
+    {
+      id: 'posts',
+      label: 'Posts',
+      icon: <FileText className="h-5 w-5" />,
+      path: '/admin/posts'
+    },
+    {
+      id: 'categories',
+      label: 'Categories',
+      icon: <FolderOpen className="h-5 w-5" />,
+      path: '/admin/categories'
+    },
+    {
+      id: 'comments',
+      label: 'Comments',
+      icon: <MessageSquare className="h-5 w-5" />,
+      path: '/admin/comments'
+    },
+    {
+      id: 'community',
+      label: 'Community',
+      icon: <Users className="h-5 w-5" />,
+      path: '/admin/community'
+    },
+    {
+      id: 'ads',
+      label: 'Ads',
+      icon: <BarChart className="h-5 w-5" />,
+      path: '/admin/ads'
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: <Settings className="h-5 w-5" />,
+      path: '/admin/settings'
+    }
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('adminAuth');
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully",
-    });
-    navigate('/admin-login');
+    // For now, just redirect to login
+    navigate('/admin/login');
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 h-screen fixed">
-        <div className="p-6">
-          <div className="text-blue-600 font-bold text-xl mb-6">
-            Travelling Insight<br />Admin
-          </div>
-          <nav className="space-y-1">
-            {navItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={activeItem === item.id ? "default" : "ghost"}
-                className={cn(
-                  "w-full justify-start text-left font-normal h-12 mb-1",
-                  activeItem === item.id ? "bg-blue-600 text-white hover:bg-blue-700" : "hover:bg-slate-100 text-slate-700"
-                )}
-                onClick={() => navigate(item.path)}
-              >
-                <item.icon className={cn(
-                  "mr-3 h-5 w-5",
-                  activeItem === item.id ? "text-white" : "text-slate-500"
-                )} />
-                {item.label}
-              </Button>
-            ))}
-          </nav>
+      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200">
+          <Link to="/" className="flex items-center">
+            <span className="text-xl font-bold text-primary">Nomad Panel</span>
+          </Link>
         </div>
-
-        {/* Logout button at the bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-left font-normal text-red-500 hover:bg-red-50 hover:text-red-600"
+        
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.id}
+              to={item.path}
+              className={cn(
+                "flex items-center space-x-3 px-3 py-2 rounded-md text-sm transition-colors",
+                activeItem === item.id
+                  ? "bg-primary text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+        
+        <div className="p-4 border-t border-gray-200">
+          <button
             onClick={handleLogout}
+            className="flex items-center space-x-3 px-3 py-2 w-full rounded-md text-sm text-gray-700 hover:bg-gray-100 transition-colors"
           >
-            <LogOut className="mr-3 h-5 w-5" />
-            Logout
-          </Button>
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </button>
         </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="ml-64 w-full flex-1 p-8">
-        {children}
-      </main>
+      </div>
+      
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 py-4 px-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">Admin Panel</h1>
+          
+          <div className="flex items-center space-x-4">
+            <button className="relative rounded-full bg-gray-100 p-1">
+              <Bell className="h-6 w-6 text-gray-600" />
+              <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+            </button>
+            
+            <div className="flex items-center space-x-2">
+              <Avatar>
+                <AvatarImage src="https://ui-avatars.com/api/?name=Admin+User" />
+                <AvatarFallback>AU</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">Admin User</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        {/* Page Content */}
+        <main className="flex-1 p-6 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

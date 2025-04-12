@@ -4,6 +4,7 @@ import PostCard from '@/components/PostCard';
 import { Button } from '@/components/ui/button';
 import BlogTabs from '@/components/blog/BlogTabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import BetweenPostsAd from '@/components/ads/BetweenPostsAd';
 
 interface BlogContentProps {
   filteredPosts: Post[];
@@ -13,6 +14,30 @@ interface BlogContentProps {
 const BlogContent = ({ filteredPosts, isLoading = false }: BlogContentProps) => {
   // Create skeleton array for loading state
   const skeletons = Array(6).fill(0).map((_, i) => i);
+  
+  // Function to insert ads between posts
+  const renderPostsWithAds = (posts: Post[], variant: 'grid' | 'list') => {
+    const postsWithAds = [];
+    const adFrequency = 3; // Show an ad after every 3 posts
+    
+    for (let i = 0; i < posts.length; i++) {
+      // Add the post
+      postsWithAds.push(
+        <div key={posts[i].id}>
+          <PostCard post={posts[i]} variant={variant === 'list' ? 'horizontal' : 'default'} />
+        </div>
+      );
+      
+      // Add an ad after every adFrequency posts (except at the end)
+      if ((i + 1) % adFrequency === 0 && i < posts.length - 1) {
+        postsWithAds.push(
+          <BetweenPostsAd key={`ad-${i}`} className={variant === 'list' ? 'my-8' : ''} />
+        );
+      }
+    }
+    
+    return postsWithAds;
+  };
   
   const tabs = [
     {
@@ -37,9 +62,7 @@ const BlogContent = ({ filteredPosts, isLoading = false }: BlogContentProps) => 
             </div>
           ) : filteredPosts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredPosts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
+              {renderPostsWithAds(filteredPosts, 'grid')}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -75,9 +98,7 @@ const BlogContent = ({ filteredPosts, isLoading = false }: BlogContentProps) => 
             </div>
           ) : filteredPosts.length > 0 ? (
             <div className="space-y-8">
-              {filteredPosts.map((post) => (
-                <PostCard key={post.id} post={post} variant="horizontal" />
-              ))}
+              {renderPostsWithAds(filteredPosts, 'list')}
             </div>
           ) : (
             <div className="text-center py-12">

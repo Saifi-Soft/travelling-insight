@@ -29,6 +29,7 @@ import AdminCreatePost from './pages/AdminCreatePost';
 import AdminComments from './pages/AdminComments';
 import AdminCommunity from './pages/AdminCommunity';
 import AdminSettings from './pages/AdminSettings';
+import AdminAds from './pages/AdminAds';
 
 // MongoDB initialization
 import { initializeCollectionsWithSampleData } from './api/mongoApiService';
@@ -46,6 +47,15 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Add Google AdSense script
+const initializeAdSense = () => {
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX';
+  script.crossOrigin = 'anonymous';
+  document.head.appendChild(script);
+};
 
 const App = () => {
   useEffect(() => {
@@ -68,7 +78,11 @@ const App = () => {
       }
     };
 
+    // Initialize database
     initDB();
+    
+    // Initialize Google AdSense
+    initializeAdSense();
   }, []);
 
   return (
@@ -101,6 +115,7 @@ const App = () => {
             <Route path="/admin/comments" element={<AdminAuthGuard><AdminComments /></AdminAuthGuard>} />
             <Route path="/admin/community" element={<AdminAuthGuard><AdminCommunity /></AdminAuthGuard>} />
             <Route path="/admin/settings" element={<AdminAuthGuard><AdminSettings /></AdminAuthGuard>} />
+            <Route path="/admin/ads" element={<AdminAuthGuard><AdminAds /></AdminAuthGuard>} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />

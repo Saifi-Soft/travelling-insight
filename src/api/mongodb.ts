@@ -1,4 +1,3 @@
-
 // Define collections enum
 export enum COLLECTIONS {
   POSTS = 'posts',
@@ -11,7 +10,9 @@ export enum COLLECTIONS {
   COMMUNITY_EVENTS = 'community_events',
   TRAVEL_MATCHES = 'travel_matches',
   USER_SUBSCRIPTIONS = 'user_subscriptions',
-  USER_SETTINGS = 'user_settings'
+  USER_SETTINGS = 'user_settings',
+  ADS = 'ads',
+  AD_STATS = 'ad_stats'
 }
 
 // Create a proper ObjectId class that works in browser
@@ -50,7 +51,9 @@ const mockDb: Record<string, any[]> = {
   [COLLECTIONS.COMMUNITY_EVENTS]: [],
   [COLLECTIONS.TRAVEL_MATCHES]: [],
   [COLLECTIONS.USER_SUBSCRIPTIONS]: [],
-  [COLLECTIONS.USER_SETTINGS]: []
+  [COLLECTIONS.USER_SETTINGS]: [],
+  [COLLECTIONS.ADS]: [],
+  [COLLECTIONS.AD_STATS]: []
 };
 
 // Define collections type
@@ -66,6 +69,8 @@ export type Collections = {
   [COLLECTIONS.TRAVEL_MATCHES]: any;
   [COLLECTIONS.USER_SUBSCRIPTIONS]: any;
   [COLLECTIONS.USER_SETTINGS]: any;
+  [COLLECTIONS.ADS]: any;
+  [COLLECTIONS.AD_STATS]: any;
 };
 
 // Mock collection class
@@ -253,7 +258,9 @@ export async function connectToDatabase(): Promise<{ client: any, db: any, colle
         [COLLECTIONS.COMMUNITY_EVENTS]: cachedDb.collection(COLLECTIONS.COMMUNITY_EVENTS),
         [COLLECTIONS.TRAVEL_MATCHES]: cachedDb.collection(COLLECTIONS.TRAVEL_MATCHES),
         [COLLECTIONS.USER_SUBSCRIPTIONS]: cachedDb.collection(COLLECTIONS.USER_SUBSCRIPTIONS),
-        [COLLECTIONS.USER_SETTINGS]: cachedDb.collection(COLLECTIONS.USER_SETTINGS)
+        [COLLECTIONS.USER_SETTINGS]: cachedDb.collection(COLLECTIONS.USER_SETTINGS),
+        [COLLECTIONS.ADS]: cachedDb.collection(COLLECTIONS.ADS),
+        [COLLECTIONS.AD_STATS]: cachedDb.collection(COLLECTIONS.AD_STATS)
       }
     };
   }
@@ -281,7 +288,9 @@ export async function connectToDatabase(): Promise<{ client: any, db: any, colle
         [COLLECTIONS.COMMUNITY_EVENTS]: db.collection(COLLECTIONS.COMMUNITY_EVENTS),
         [COLLECTIONS.TRAVEL_MATCHES]: db.collection(COLLECTIONS.TRAVEL_MATCHES),
         [COLLECTIONS.USER_SUBSCRIPTIONS]: db.collection(COLLECTIONS.USER_SUBSCRIPTIONS),
-        [COLLECTIONS.USER_SETTINGS]: db.collection(COLLECTIONS.USER_SETTINGS)
+        [COLLECTIONS.USER_SETTINGS]: db.collection(COLLECTIONS.USER_SETTINGS),
+        [COLLECTIONS.ADS]: db.collection(COLLECTIONS.ADS),
+        [COLLECTIONS.AD_STATS]: db.collection(COLLECTIONS.AD_STATS)
       }
     };
   } catch (e) {
