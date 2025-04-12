@@ -24,7 +24,8 @@ const GoogleAdUnit = ({
   adStyle = {},
   fallbackContent,
 }: GoogleAdUnitProps) => {
-  const adRef = useRef<HTMLDivElement>(null);
+  // Update the ref type to HTMLInsElement which is appropriate for <ins> tag
+  const adRef = useRef<HTMLElement>(null);
   const adRendered = useRef<boolean>(false);
 
   useEffect(() => {
