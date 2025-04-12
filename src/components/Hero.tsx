@@ -1,5 +1,6 @@
 
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -18,11 +19,11 @@ const Hero = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="bg-primary hover:bg-primary/90">
-              Start Exploring
+            <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+              <Link to="/blog">Start Exploring</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10">
-              Join Community
+            <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10" asChild>
+              <Link to="/community">Join Community</Link>
             </Button>
           </div>
           
