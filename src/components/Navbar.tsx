@@ -11,7 +11,7 @@ const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  const isDarkMode = theme === 'dark';
+  const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const location = useLocation();
 
   useEffect(() => {
@@ -46,58 +46,58 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 bg-custom-green text-custom-green-light`}>
+    <nav className={`sticky top-0 z-50 transition-all duration-300 bg-theme-header text-theme-foreground`}>
       <div className="container-custom py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-custom-green-light">NomadJourney</span>
+            <span className="text-2xl font-bold">NomadJourney</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
-              className={`font-medium hover:text-custom-green-light transition-colors relative ${
-                location.pathname === "/" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
+              className={`font-medium hover:text-theme-primary transition-colors relative ${
+                location.pathname === "/" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-theme-primary" : ""
               }`}
             >
               Home
             </Link>
             <Link 
               to="/blog" 
-              className={`font-medium hover:text-custom-green-light transition-colors relative ${
-                location.pathname === "/blog" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
+              className={`font-medium hover:text-theme-primary transition-colors relative ${
+                location.pathname === "/blog" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-theme-primary" : ""
               }`}
             >
               Blog
             </Link>
             <Link 
               to="/destinations" 
-              className={`font-medium hover:text-custom-green-light transition-colors relative ${
-                location.pathname === "/destinations" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
+              className={`font-medium hover:text-theme-primary transition-colors relative ${
+                location.pathname === "/destinations" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-theme-primary" : ""
               }`}
             >
               Destinations
             </Link>
             <Link 
               to="/travel/planner" 
-              className={`font-medium hover:text-custom-green-light transition-colors relative flex items-center ${
-                location.pathname.startsWith("/travel") ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
+              className={`font-medium hover:text-theme-primary transition-colors relative flex items-center ${
+                location.pathname.startsWith("/travel") ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-theme-primary" : ""
               }`}
             >
               <Plane className="h-4 w-4 mr-1" /> Travel
             </Link>
             <Link 
               to="/community" 
-              className={`font-medium hover:text-custom-green-light transition-colors relative ${
-                location.pathname === "/community" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
+              className={`font-medium hover:text-theme-primary transition-colors relative ${
+                location.pathname === "/community" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-theme-primary" : ""
               }`}
             >
               Community
             </Link>
             <Link 
               to="/about" 
-              className={`font-medium hover:text-custom-green-light transition-colors relative ${
-                location.pathname === "/about" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
+              className={`font-medium hover:text-theme-primary transition-colors relative ${
+                location.pathname === "/about" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-theme-primary" : ""
               }`}
             >
               About
@@ -105,16 +105,16 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={openSearch} className="hover:bg-custom-green-light/10 text-custom-green-light">
+            <Button variant="ghost" size="icon" onClick={openSearch} className="hover:bg-theme-primary/10">
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hover:bg-custom-green-light/10 text-custom-green-light">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hover:bg-theme-primary/10">
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-custom-green-light/10 text-custom-green-light">
+            <Button variant="ghost" size="icon" className="hover:bg-theme-primary/10">
               <User className="h-5 w-5" />
             </Button>
-            <Button variant="default" className="bg-custom-green-light text-custom-green hover:bg-custom-green-light/90 ml-2 rounded-full px-6">
+            <Button variant="default" className="bg-theme-primary text-white hover:bg-theme-primary/90 ml-2 rounded-full px-6">
               Sign In
             </Button>
           </div>
@@ -124,13 +124,13 @@ const Navbar = () => {
               variant="ghost" 
               size="icon" 
               onClick={openSearch}
-              className="mr-2 hover:bg-custom-green-light/10 text-custom-green-light"
+              className="mr-2 hover:bg-theme-primary/10"
             >
               <Search className="h-5 w-5" />
             </Button>
             <button
               onClick={toggleMenu}
-              className="p-2 rounded-md text-custom-green-light hover:bg-custom-green-light/10"
+              className="p-2 rounded-md hover:bg-theme-primary/10"
             >
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -146,56 +146,56 @@ const Navbar = () => {
             <div className="flex flex-col space-y-4">
               <Link 
                 to="/" 
-                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/" ? "text-custom-green-light" : ""}`}
+                className={`font-medium hover:text-theme-primary transition-colors py-2 ${location.pathname === "/" ? "text-theme-primary" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
               <Link 
                 to="/blog" 
-                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/blog" ? "text-custom-green-light" : ""}`}
+                className={`font-medium hover:text-theme-primary transition-colors py-2 ${location.pathname === "/blog" ? "text-theme-primary" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Blog
               </Link>
               <Link 
                 to="/destinations" 
-                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/destinations" ? "text-custom-green-light" : ""}`}
+                className={`font-medium hover:text-theme-primary transition-colors py-2 ${location.pathname === "/destinations" ? "text-theme-primary" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Destinations
               </Link>
               <Link 
                 to="/travel/planner" 
-                className={`font-medium hover:text-custom-green-light transition-colors py-2 flex items-center ${location.pathname.startsWith("/travel") ? "text-custom-green-light" : ""}`}
+                className={`font-medium hover:text-theme-primary transition-colors py-2 flex items-center ${location.pathname.startsWith("/travel") ? "text-theme-primary" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Plane className="h-4 w-4 mr-1" /> Travel
               </Link>
               <Link 
                 to="/community" 
-                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/community" ? "text-custom-green-light" : ""}`}
+                className={`font-medium hover:text-theme-primary transition-colors py-2 ${location.pathname === "/community" ? "text-theme-primary" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Community
               </Link>
               <Link 
                 to="/about" 
-                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/about" ? "text-custom-green-light" : ""}`}
+                className={`font-medium hover:text-theme-primary transition-colors py-2 ${location.pathname === "/about" ? "text-theme-primary" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
               </Link>
               <div className="flex items-center justify-between pt-4">
-                <Button variant="outline" size="sm" className="w-1/2 mr-2 border-custom-green-light text-custom-green-light" onClick={() => {openSearch(); setIsMenuOpen(false);}}>
+                <Button variant="outline" size="sm" className="w-1/2 mr-2 border-theme-primary text-theme-primary" onClick={() => {openSearch(); setIsMenuOpen(false);}}>
                   <Search className="h-4 w-4 mr-2" />
                   Search
                 </Button>
-                <Button variant="default" size="sm" className="w-1/2 bg-custom-green-light text-custom-green rounded-full">
+                <Button variant="default" size="sm" className="w-1/2 bg-theme-primary text-white rounded-full">
                   Sign In
                 </Button>
               </div>
-              <Button variant="ghost" size="sm" className="mt-2 w-full justify-center text-custom-green-light" onClick={toggleTheme}>
+              <Button variant="ghost" size="sm" className="mt-2 w-full justify-center" onClick={toggleTheme}>
                 {isDarkMode ? (
                   <>
                     <Sun className="h-4 w-4 mr-2" />

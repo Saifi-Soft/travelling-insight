@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getThemeSettings, saveThemeSettings } from '@/api/themeService';
 import { useSession } from '@/hooks/useSession';
@@ -32,7 +33,7 @@ const defaultLightColors: ThemeColors = {
   card: '#f8f9fa',
 };
 
-// Restore original dark mode colors
+// Original dark mode colors - ensure these are not modified by light mode changes
 const defaultDarkColors: ThemeColors = {
   background: '#1A1F2C',  // Dark purple for dark mode
   foreground: '#f8f9fa',  // Light text for dark mode
@@ -42,7 +43,7 @@ const defaultDarkColors: ThemeColors = {
   card: '#2D3748',        // Dark card background
 };
 
-// Create a context with default values instead of undefined
+// Create a context with default values
 const ThemeContext = createContext<ThemeContextType>({
   theme: 'light',
   themeColors: defaultLightColors,
@@ -79,9 +80,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               setLightThemeColors(savedTheme.lightThemeColors);
             }
             
-            // Set dark theme colors if available
+            // Set dark theme colors if available, or use the default dark colors
             if (savedTheme.darkThemeColors) {
               setDarkThemeColors(savedTheme.darkThemeColors);
+            } else {
+              setDarkThemeColors(defaultDarkColors);
             }
             
             // Set active colors based on current theme
@@ -127,7 +130,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
     
-    // Set dark theme colors
+    // Set dark theme colors - make sure to use default dark colors if none saved
     if (savedDarkColors) {
       try {
         const parsedDarkColors = JSON.parse(savedDarkColors);
@@ -136,6 +139,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         console.error("Error parsing dark theme colors:", e);
         setDarkThemeColors(defaultDarkColors);
       }
+    } else {
+      // Explicitly set to default dark colors if none found in localStorage
+      setDarkThemeColors(defaultDarkColors);
     }
     
     // Set theme and corresponding colors
@@ -154,7 +160,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Check system preference if no saved theme
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setThemeState(prefersDark ? 'dark' : 'light');
-      setThemeColors(prefersDark ? darkThemeColors : lightThemeColors);
+      setThemeColors(prefersDark ? defaultDarkColors : lightThemeColors);
     }
   };
 
@@ -266,7 +272,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
     
-    // Save updated theme settings
+    // Save updated theme settings with appropriate colors for each mode
     const updatedLightThemeColors = mode === 'light' ? {
       ...lightThemeColors,
       [colorType]: value
