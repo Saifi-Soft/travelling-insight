@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,7 +14,6 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [initialChecking, setInitialChecking] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
 
   // Check if user is already logged in

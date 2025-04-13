@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -37,7 +36,7 @@ import AdminHashtags from './pages/AdminHashtags';
 import { mongoApiService } from './api/mongoApiService';
 import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './api/sampleData';
 import { Toaster } from '@/components/ui/toaster';
-import { Post, Category, Topic } from '@/types/common'; // Add this import
+import { Post, Category, Topic } from '@/types/common';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
