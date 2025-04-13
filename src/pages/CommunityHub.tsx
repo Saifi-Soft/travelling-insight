@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -43,8 +42,8 @@ const CommunityHub = () => {
 
   const { data: notificationCount = 0 } = useQuery({
     queryKey: ['notificationCount', userId],
-    queryFn: () => userId ? communityApi.notifications?.getUnreadCount(userId) || 0 : 0,
-    enabled: !!userId,
+    queryFn: () => userId && communityApi.notifications ? communityApi.notifications.getUnreadCount(userId) : 0,
+    enabled: !!userId && !!communityApi.notifications,
   });
 
   const isProfileIncomplete = !userData || 
@@ -63,7 +62,7 @@ const CommunityHub = () => {
     }
   }, [isLoadingUser, isProfileIncomplete]);
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     toast.info(`Searching for: ${searchQuery}`);
     // Implement actual search functionality
@@ -226,7 +225,7 @@ const CommunityHub = () => {
                 {activeTab === 'buddies' && <TravelBuddyFinder />}
                 {activeTab === 'messages' && <MessagesContent />}
                 {activeTab === 'create' && <CreatePost />}
-                {activeTab === 'profile' && <UserProfile userId={userId} />}
+                {activeTab === 'profile' && <UserProfile userId={userId || ''} />}
               </div>
             </div>
           </main>

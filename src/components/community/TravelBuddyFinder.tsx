@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -11,10 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { MapPin, Calendar, Users, Filter, Plane, UserPlus, Clock, CheckCircle } from 'lucide-react';
 import { mongoApiService } from '@/api/mongoApiService';
 import { communityApi } from '@/api/communityApiService';
+import { TravelMatch, BuddyMatch } from '@/types/common';
 import {
   Select,
   SelectContent,
@@ -35,22 +36,6 @@ interface TravelBuddyRequest {
   description: string;
   createdAt: string;
   status: 'active' | 'completed' | 'cancelled';
-}
-
-interface BuddyMatch {
-  _id?: string;
-  userId: string;
-  name: string;
-  avatar?: string;
-  destination: string;
-  dates: {
-    start: string;
-    end: string;
-  };
-  compatibilityScore: number;
-  travelStyles: string[];
-  interests: string[];
-  languages: string[];
 }
 
 const TravelBuddyFinder = () => {
@@ -138,7 +123,7 @@ const TravelBuddyFinder = () => {
     request.status === 'active' && request.userId !== userId
   );
 
-  const filteredMatches = matches.filter((match: BuddyMatch) => 
+  const filteredMatches = matches.filter((match: TravelMatch) => 
     match.compatibilityScore >= compatibilityThreshold[0]
   );
 
@@ -214,8 +199,8 @@ const TravelBuddyFinder = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredMatches.map((match: BuddyMatch) => (
-                  <Card key={match._id} className="border border-border bg-card/50">
+                {filteredMatches.map((match: TravelMatch) => (
+                  <Card key={match.id || match.userId} className="border border-border bg-card/50">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -232,7 +217,7 @@ const TravelBuddyFinder = () => {
                             <p className="font-semibold">{match.name}</p>
                             <p className="text-xs text-muted-foreground flex items-center">
                               <MapPin className="h-3 w-3 mr-1" />
-                              {match.destination}
+                              {match.destination || match.destinations?.[0] || 'No location set'}
                             </p>
                           </div>
                         </div>

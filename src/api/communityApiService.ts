@@ -1,4 +1,3 @@
-
 import { mongoApiService } from './mongoApiService';
 import { CommunityUser, TravelGroup, CommunityEvent, TravelMatch } from '@/types/common';
 
@@ -229,11 +228,47 @@ export const communityPaymentApi = {
   }
 };
 
+// Define notifications API
+export const notificationsApi = {
+  getUnreadCount: async (userId: string): Promise<number> => {
+    try {
+      const notifications = await mongoApiService.queryDocuments('notifications', { 
+        userId, 
+        read: false 
+      });
+      return notifications.length;
+    } catch (error) {
+      console.error('Error fetching notification count:', error);
+      return 0;
+    }
+  },
+  
+  getAllNotifications: async (userId: string): Promise<any[]> => {
+    try {
+      return await mongoApiService.queryDocuments('notifications', { userId });
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      return [];
+    }
+  },
+  
+  markAsRead: async (notificationId: string): Promise<boolean> => {
+    try {
+      await mongoApiService.updateDocument('notifications', notificationId, { read: true });
+      return true;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      return false;
+    }
+  }
+};
+
 // Combined community API for convenience
 export const communityApi = {
   users: communityUsersApi,
   groups: travelGroupsApi,
   events: communityEventsApi,
   matches: travelMatchesApi,
-  payments: communityPaymentApi
+  payments: communityPaymentApi,
+  notifications: notificationsApi
 };

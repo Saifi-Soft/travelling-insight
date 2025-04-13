@@ -93,12 +93,16 @@ export interface CommunityUser {
   name: string;
   avatar?: string;
   bio?: string;
+  location?: string; // Adding location property
+  website?: string; // Adding website property
   experienceLevel: string;
   travelStyles: string[];
   interests: string[];
   status: 'active' | 'blocked' | 'pending';
   joinDate: Date;
   reputation: number;
+  connections?: Array<string>; // Adding connections property
+  trips?: Array<any>; // Adding trips property
   visitedCountries?: Array<{ 
     name: string;
     year: number;
@@ -151,10 +155,33 @@ export interface CommunityEvent {
 export interface TravelMatch {
   id?: string;
   userId: string;
-  name: string; // Making this required as per the error message
+  name: string;
   avatar?: string;
   compatibilityScore: number;
   destinations: string[];
   travelStyles: string[];
   interests: string[];
+  destination?: string; // Adding missing properties from BuddyMatch
+  dates?: {
+    start: string;
+    end: string;
+  };
+  languages?: string[];
+}
+
+// BuddyMatch interface to match the one used in TravelBuddyFinder.tsx
+export interface BuddyMatch {
+  _id?: string;
+  userId: string;
+  name: string;
+  avatar?: string;
+  destination: string;
+  dates: {
+    start: string;
+    end: string;
+  };
+  compatibilityScore: number;
+  travelStyles: string[];
+  interests: string[];
+  languages: string[];
 }

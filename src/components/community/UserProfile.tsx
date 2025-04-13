@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import { toast } from 'sonner';
 import { communityApi } from '@/api/communityApiService';
 import { communityPostsApi } from '@/api/communityPostsService';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CommunityUser } from '@/types/common';
 
 interface UserProfileProps {
   userId: string;
@@ -35,25 +35,25 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
   const currentUserId = localStorage.getItem('community_user_id') || '';
   const isOwnProfile = currentUserId === userId;
   
-  // Fetch user profile data
   const { data: userData, isLoading } = useQuery({
     queryKey: ['communityUser', userId],
     queryFn: () => communityApi.users.getById(userId),
-    onSuccess: (data) => {
-      if (data) {
-        setFormData({
-          name: data.name || '',
-          bio: data.bio || '',
-          location: data.location || '',
-          website: data.website || '',
-          travelStyles: data.travelStyles || [],
-          visitedCountries: data.visitedCountries || []
-        });
-      }
-    }
+    enabled: !!userId
   });
   
-  // Fetch user posts
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        name: userData.name || '',
+        bio: userData.bio || '',
+        location: userData.location || '',
+        website: userData.website || '',
+        travelStyles: userData.travelStyles || [],
+        visitedCountries: userData.visitedCountries?.map(c => c.name) || []
+      });
+    }
+  }, [userData]);
+  
   const { data: userPosts = [], isLoading: isLoadingPosts } = useQuery({
     queryKey: ['userPosts', userId],
     queryFn: async () => {
@@ -63,14 +63,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
     enabled: !!userId
   });
   
-  // Fetch saved posts
   const { data: savedPosts = [], isLoading: isLoadingSaved } = useQuery({
     queryKey: ['savedPosts', userId],
     queryFn: () => isOwnProfile ? communityPostsApi.getSavedPosts(userId) : [],
     enabled: isOwnProfile && !!userId && activeTab === 'saved'
   });
   
-  // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: (profileData: any) => communityApi.users.update(userId, profileData),
     onSuccess: () => {
@@ -124,29 +122,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
   };
   
   if (isLoading) {
-    return (
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="h-24 w-24 rounded-full bg-secondary animate-pulse"></div>
-            <div className="ml-4 space-y-2">
-              <div className="h-6 w-32 bg-secondary rounded animate-pulse"></div>
-              <div className="h-4 w-24 bg-secondary rounded animate-pulse"></div>
-            </div>
-          </div>
-          <div className="h-9 w-24 bg-secondary rounded animate-pulse"></div>
-        </div>
-        <div className="h-20 w-full bg-secondary rounded animate-pulse"></div>
-        <div className="h-40 w-full bg-secondary rounded animate-pulse"></div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
   
   return (
     <div className="profile">
       {!isEditing ? (
         <div className="p-4">
-          {/* Profile Header */}
           <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
             <div className="flex items-center">
               <Avatar className="h-24 w-24 border-4 border-background">
@@ -203,7 +185,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
             )}
           </div>
           
-          {/* Bio */}
           {userData?.bio ? (
             <p className="mb-4">{userData.bio}</p>
           ) : isOwnProfile ? (
@@ -217,19 +198,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
             </Button>
           ) : null}
           
-          {/* Travel Interests */}
           {userData?.travelStyles && userData.travelStyles.length > 0 && (
             <div className="mb-4">
               <h3 className="text-sm font-medium mb-2">Travel Style</h3>
               <div className="flex flex-wrap gap-2">
-                {userData.travelStyles.map((style) => (
-                  <Badge key={style} variant="secondary">{style}</Badge>
+                {userData.travelStyles.map((style, index) => (
+                  <Badge key={index} variant="secondary">{style}</Badge>
                 ))}
               </div>
             </div>
           )}
           
-          {/* Countries Visited */}
           {userData?.visitedCountries && userData.visitedCountries.length > 0 && (
             <div className="mb-6">
               <h3 className="text-sm font-medium mb-2 flex items-center">
@@ -238,8 +217,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </h3>
               <ScrollArea className="whitespace-nowrap h-10">
                 <div className="flex gap-2">
-                  {userData.visitedCountries.map((country) => (
-                    <Badge key={country} variant="outline">{country}</Badge>
+                  {userData.visitedCountries.map((country, index) => (
+                    <Badge key={index} variant="outline">{typeof country === 'string' ? country : country.name}</Badge>
                   ))}
                   {isOwnProfile && (
                     <Badge 
@@ -258,7 +237,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
           
           <Separator className="my-4" />
           
-          {/* Tabs for Posts, Saved, Trips */}
           <Tabs defaultValue="posts" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="posts">Posts</TabsTrigger>
@@ -266,7 +244,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               <TabsTrigger value="trips">Trips</TabsTrigger>
             </TabsList>
             
-            {/* Posts Tab */}
             <TabsContent value="posts">
               {isLoadingPosts ? (
                 <div className="space-y-4">
@@ -341,7 +318,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               )}
             </TabsContent>
             
-            {/* Saved Posts Tab (Only visible to profile owner) */}
             {isOwnProfile && (
               <TabsContent value="saved">
                 {isLoadingSaved ? (
@@ -422,7 +398,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </TabsContent>
             )}
             
-            {/* Trips Tab */}
             <TabsContent value="trips">
               <div className="text-center p-8">
                 <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
@@ -442,7 +417,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
           </Tabs>
         </div>
       ) : (
-        /* Edit Profile Form */
         <div className="p-4">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Edit Profile</h2>
@@ -450,7 +424,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
           </div>
           
           <form onSubmit={handleProfileUpdate} className="space-y-4">
-            {/* Profile Picture */}
             <div className="flex flex-col items-center mb-6">
               <Avatar className="h-24 w-24 border-4 border-background mb-3">
                 {userData?.avatar ? (
@@ -473,7 +446,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </Button>
             </div>
             
-            {/* Name */}
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">Name</label>
               <Input 
@@ -486,7 +458,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               />
             </div>
             
-            {/* Bio */}
             <div className="space-y-2">
               <label htmlFor="bio" className="text-sm font-medium">Bio</label>
               <Textarea 
@@ -499,7 +470,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               />
             </div>
             
-            {/* Location */}
             <div className="space-y-2">
               <label htmlFor="location" className="text-sm font-medium">Location</label>
               <Input 
@@ -512,7 +482,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               />
             </div>
             
-            {/* Website */}
             <div className="space-y-2">
               <label htmlFor="website" className="text-sm font-medium">Website</label>
               <Input 
@@ -525,7 +494,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               />
             </div>
             
-            {/* Travel Styles */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Travel Style</label>
               <div className="flex flex-wrap gap-2">
@@ -543,7 +511,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </div>
             </div>
             
-            {/* Countries Visited */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Countries Visited</label>
               <div className="flex flex-wrap gap-2 mb-2">
