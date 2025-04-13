@@ -17,7 +17,7 @@ export async function saveThemeSettings(userId: string, theme: any) {
         }
       );
       
-      console.log('Theme settings updated successfully:', theme);
+      console.log('Theme settings updated successfully:', JSON.stringify(theme));
     } else {
       await mongoApiService.insertDocument(
         'userSettings', 
@@ -29,7 +29,7 @@ export async function saveThemeSettings(userId: string, theme: any) {
         }
       );
       
-      console.log('Theme settings created successfully:', theme);
+      console.log('Theme settings created successfully:', JSON.stringify(theme));
     }
     
     return { success: true };
@@ -44,10 +44,11 @@ export async function getThemeSettings(userId: string) {
     const userSettings = await mongoApiService.queryDocuments('userSettings', { userId });
     
     if (userSettings.length > 0 && userSettings[0].theme) {
+      console.log('Retrieved theme settings:', JSON.stringify(userSettings[0].theme));
       return userSettings[0].theme;
     } else {
       // Return default theme settings if not found
-      return {
+      const defaultSettings = {
         theme: 'light',
         // Default light theme colors
         lightThemeColors: {
@@ -76,6 +77,8 @@ export async function getThemeSettings(userId: string) {
           accent: '#8B5CF6',
         }
       };
+      console.log('Using default theme settings');
+      return defaultSettings;
     }
   } catch (error) {
     console.error('Error getting theme settings:', error);

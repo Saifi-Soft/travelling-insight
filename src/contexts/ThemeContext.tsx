@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getThemeSettings, saveThemeSettings } from '@/api/themeService';
 import { useSession } from '@/hooks/useSession';
@@ -11,10 +12,10 @@ interface ThemeColors {
   footer: string;
   header: string;
   card: string;
-  text?: string;
-  link?: string;
-  button?: string;
-  accent?: string;
+  text: string;
+  link: string;
+  button: string;
+  accent: string;
 }
 
 interface ThemeContextType {
@@ -203,8 +204,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // Apply theme changes immediately
     const isDark = 
-      theme === 'dark' || 
-      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      newTheme === 'dark' || 
+      (newTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     
     if (isDark) {
       setThemeColors({...newDarkColors});
@@ -234,10 +235,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       document.documentElement.style.setProperty(`--color-${key}`, value);
     });
     
-    // Save settings
-    saveToDb();
+    // Update body text color explicitly to handle text color changes
+    document.body.style.color = themeColors.text;
     
-  }, [theme, lightThemeColors, darkThemeColors, session?.user?.id]);
+  }, [theme, lightThemeColors, darkThemeColors, themeColors]);
 
   // Update when system preference changes
   useEffect(() => {

@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { mongoApiService } from '@/api/mongoApiService';
+import SubscriptionModal from '@/components/community/SubscriptionModal';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,20 +61,24 @@ const Register = () => {
       localStorage.setItem('userName', name);
       localStorage.setItem('userEmail', email);
       localStorage.setItem('userRole', 'user');
+      localStorage.setItem('community_user_id', newUser.insertedId);
       
       toast.success('Registration successful!');
       
-      // Redirect to home page after successful registration
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+      // Show subscription modal after successful registration
+      setIsLoading(false);
+      setSubscriptionModalOpen(true);
       
     } catch (error) {
       console.error('Registration error:', error);
       toast.error('Registration failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubscriptionComplete = () => {
+    // Navigate to community hub after successful subscription
+    navigate('/community-hub');
   };
 
   return (
@@ -166,6 +172,12 @@ const Register = () => {
           </Card>
         </div>
       </main>
+      
+      <SubscriptionModal 
+        open={subscriptionModalOpen} 
+        onOpenChange={setSubscriptionModalOpen}
+        onSubscribe={handleSubscriptionComplete}
+      />
       
       <Footer />
     </div>

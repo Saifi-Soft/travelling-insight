@@ -7,13 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { mongoApiService } from '@/api/mongoApiService';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InfoCircle } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('demo@example.com');
+  const [password, setPassword] = useState('password123');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -28,6 +30,9 @@ const Login = () => {
       if (users.length > 0) {
         // Store user ID in localStorage
         localStorage.setItem('community_user_id', users[0]._id);
+        localStorage.setItem('userId', users[0]._id);
+        localStorage.setItem('userName', users[0].name || 'Demo User');
+        localStorage.setItem('userEmail', email);
         
         toast.success('Login successful!');
         setTimeout(() => {
@@ -38,14 +43,42 @@ const Login = () => {
       } else {
         // If no user found, create a new one for demo purposes
         const newUser = await mongoApiService.insertDocument('users', {
+          name: 'Demo User',
           email,
           password: 'hashed_would_go_here',
+          role: 'user',
+          isSubscribed: true, // Make demo user subscribed by default
           createdAt: new Date(),
         });
         
         localStorage.setItem('community_user_id', newUser.insertedId);
+        localStorage.setItem('userId', newUser.insertedId);
+        localStorage.setItem('userName', 'Demo User');
+        localStorage.setItem('userEmail', email);
         
-        toast.success('Account created and logged in!');
+        // Create a subscription for the demo user
+        try {
+          await mongoApiService.insertDocument('subscriptions', {
+            userId: newUser.insertedId,
+            planType: 'monthly',
+            status: 'active',
+            paymentMethod: {
+              method: 'credit_card',
+              cardLastFour: '4242',
+              expiryDate: '12/25'
+            },
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+            amount: 9.99,
+            autoRenew: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        } catch (subError) {
+          console.error('Error creating subscription:', subError);
+        }
+        
+        toast.success('Demo account created and logged in!');
         setTimeout(() => {
           // Return to community page if that's where they came from
           const previousPage = document.referrer.includes('/community') ? '/community' : '/';
@@ -74,6 +107,17 @@ const Login = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <Alert className="mb-4 bg-blue-50 text-blue-800 border-blue-200">
+                <div className="flex items-start gap-3">
+                  <InfoCircle className="h-5 w-5 mt-0.5" />
+                  <AlertDescription className="text-sm text-left">
+                    <strong>Demo credentials:</strong><br />
+                    Email: demo@example.com<br />
+                    Password: password123
+                  </AlertDescription>
+                </div>
+              </Alert>
+              
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -110,9 +154,9 @@ const Login = () => {
             <CardFooter className="flex flex-col space-y-4">
               <div className="text-sm text-center text-gray-500">
                 Don't have an account?{' '}
-                <Button variant="link" className="p-0 h-auto" onClick={() => toast.info('Registration coming soon!')}>
+                <Link to="/register" className="text-primary hover:underline">
                   Create an account
-                </Button>
+                </Link>
               </div>
             </CardFooter>
           </Card>
