@@ -1,4 +1,3 @@
-
 // Define MongoDB-like operators for querying
 export interface MongoOperators {
   $gt?: any;
@@ -98,6 +97,23 @@ export interface CommunityUser {
   interests: string[];
   status: 'active' | 'blocked' | 'pending';
   joinDate: Date;
+  reputation: number;
+  visitedCountries?: Array<{ 
+    name: string;
+    year: number;
+  }>;
+  wishlistDestinations?: string[];
+  badges?: Array<{
+    name: string;
+    description: string;
+    dateEarned?: Date;
+    icon: string;
+  }>;
+  socialProfiles?: {
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+  };
 }
 
 export interface TravelGroup {
