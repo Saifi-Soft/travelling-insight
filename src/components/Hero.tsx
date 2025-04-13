@@ -10,7 +10,7 @@ const Hero = () => {
       <div className="container-custom relative z-10">
         <div className="flex flex-col items-center justify-center text-center space-y-8 animate-fade-in">
           <div className="space-y-4">
-            <h1 className="font-bold text-4xl md:text-5xl lg:text-6xl tracking-tighter max-w-3xl">
+            <h1 className="font-bold text-4xl md:text-5xl lg:text-6xl tracking-tighter max-w-3xl text-slate-700">
               Discover the World Through Travelers' Eyes
             </h1>
             <p className="text-lg md:text-xl max-w-2xl mx-auto text-muted-foreground">
@@ -19,10 +19,15 @@ const Hero = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+            <Button size="lg" className="bg-custom-green hover:bg-custom-green/90" asChild>
               <Link to="/blog">Start Exploring</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10" asChild>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-custom-green text-custom-green hover:bg-custom-green/10" 
+              asChild
+            >
               <Link to="/community">Join Community</Link>
             </Button>
           </div>

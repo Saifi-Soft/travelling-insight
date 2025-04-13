@@ -13,7 +13,6 @@ const Navbar = () => {
   const isDarkMode = theme === 'dark';
   const location = useLocation();
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -29,7 +28,6 @@ const Navbar = () => {
     };
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
@@ -50,12 +48,10 @@ const Navbar = () => {
     <nav className={`sticky top-0 z-50 transition-all duration-300 bg-[#065f46] text-[#f8fafc]`}>
       <div className="container-custom py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">NomadJourney</span>
+            <span className="text-2xl font-bold text-[#f0fdf4]">NomadJourney</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
@@ -107,7 +103,6 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Search, Dark Mode, and User Icons */}
           <div className="hidden md:flex items-center space-x-2">
             <Button variant="ghost" size="icon" onClick={openSearch} className="hover:bg-primary/10">
               <Search className="h-5 w-5" />
@@ -123,7 +118,6 @@ const Navbar = () => {
             </Button>
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <Button 
               variant="ghost" 
@@ -146,7 +140,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 animate-fade-in">
             <div className="flex flex-col space-y-4">
@@ -219,7 +212,6 @@ const Navbar = () => {
         )}
       </div>
       
-      {/* Search Modal */}
       <SearchModal isOpen={isSearchOpen} onClose={closeSearch} />
     </nav>
   );

@@ -101,7 +101,11 @@ export default {
 				},
 				'custom-green': {
 					DEFAULT: '#065f46',
-					foreground: '#ecfdf5'
+					light: '#f0fdf4',
+					foreground: '#065f46'
+				},
+				'slate': {
+					700: '#334155'
 				}
 			},
 			fontFamily: {
