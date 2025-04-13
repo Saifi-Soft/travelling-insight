@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Heart, Users, MapPin } from 'lucide-react';
 import { generateIntelligentMatches } from '@/utils/arrayUtils';
-import { travelMatchesApi } from '@/api/communityApiService';
+import { travelMatchesApi, TravelMatch } from '@/api/communityApiService';
 
 interface IntelligentMatchingProps {
   userPreferences: {
@@ -21,7 +21,7 @@ interface IntelligentMatchingProps {
 
 const IntelligentMatching = ({ userPreferences, userId }: IntelligentMatchingProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useState<TravelMatch[]>([]);
   
   const findMatches = async () => {
     if (!userPreferences.destinations.length) {

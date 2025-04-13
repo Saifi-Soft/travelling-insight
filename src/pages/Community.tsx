@@ -11,7 +11,7 @@ import HeaderAd from '@/components/ads/HeaderAd';
 import FooterAd from '@/components/ads/FooterAd';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
-import { mongoApiService } from '@/api/mongoApiService';
+import { communityPaymentApi } from '@/api/communityApiService';
 
 const Community = () => {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ const Community = () => {
   // Function to check if user has an active subscription
   const checkSubscriptionStatus = async (userId: string) => {
     try {
-      const subscriptionData = await mongoApiService.getSubscriptionByUserId(userId);
+      const subscriptionData = await communityPaymentApi.getSubscription(userId);
       setIsSubscribed(subscriptionData && subscriptionData.status === 'active');
     } catch (error) {
       console.error('Error checking subscription status:', error);

@@ -10,6 +10,7 @@ import HeaderAd from '@/components/ads/HeaderAd';
 import FooterAd from '@/components/ads/FooterAd';
 import { postsApi, categoriesApi, topicsApi } from '@/api/mongoApiService';
 import { Loader2 } from 'lucide-react';
+import { Post, Category } from '@/types/common';
 
 const Blog = () => {
   const [searchParams] = useSearchParams();
@@ -49,13 +50,13 @@ const Blog = () => {
   }, [isTrending]);
   
   // Transform categories data to include "All" as first option
-  const categories = ["All", ...categoriesData.map(category => category.name)];
+  const categories = ["All", ...(categoriesData as Category[]).map(category => category.name)];
   
   // Use trending posts if the trending parameter is set, otherwise use all posts
   const postsToDisplay = isTrending ? trendingPosts : posts;
   
   // Filter posts based on category and search query
-  const filteredPosts = postsToDisplay.filter(post => {
+  const filteredPosts = (postsToDisplay as Post[]).filter(post => {
     const matchesCategory = activeCategory === "All" || post.category === activeCategory;
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
