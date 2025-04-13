@@ -15,17 +15,21 @@ const Index = () => {
       <main className="flex-grow">
         <Hero />
         
-        {/* First ad placed after hero section */}
-        <div className="py-6 bg-gray-50">
-          <HeaderAd className="max-w-5xl mx-auto" />
+        {/* First ad placed after hero section with visual enhancement */}
+        <div className="py-6 bg-gradient-to-b from-primary/5 to-background">
+          <div className="container mx-auto px-4">
+            <HeaderAd className="max-w-5xl mx-auto rounded-lg overflow-hidden shadow-md" />
+          </div>
         </div>
         
         <FeaturedPosts />
         <TrendingTopics />
         
-        {/* Second ad placed at the bottom of content */}
-        <div className="py-6 bg-gray-50 mt-12">
-          <FooterAd className="max-w-5xl mx-auto" />
+        {/* Second ad placed at the bottom of content with visual enhancement */}
+        <div className="py-6 bg-gradient-to-t from-gray-100 to-background mt-12">
+          <div className="container mx-auto px-4">
+            <FooterAd className="max-w-5xl mx-auto rounded-lg overflow-hidden shadow-md" />
+          </div>
         </div>
       </main>
       
