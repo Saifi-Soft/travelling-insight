@@ -1,4 +1,3 @@
-
 import React, { useContext } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,10 @@ interface ThemePreset {
     footer: string;
     header: string;
     card: string;
+    text: string;
+    link: string;
+    button: string;
+    accent: string;
   };
   darkTheme: {
     background: string;
@@ -33,6 +36,10 @@ interface ThemePreset {
     footer: string;
     header: string;
     card: string;
+    text: string;
+    link: string;
+    button: string;
+    accent: string;
   };
 }
 
@@ -48,6 +55,10 @@ const themePresets: ThemePreset[] = [
       footer: '#065f46',
       header: '#ffffff',
       card: '#f8f9fa',
+      text: '#333333',
+      link: '#065f46',
+      button: '#065f46',
+      accent: '#10B981',
     },
     darkTheme: {
       background: '#1A1F2C',
@@ -56,6 +67,10 @@ const themePresets: ThemePreset[] = [
       footer: '#222222',
       header: '#222222',
       card: '#2D3748',
+      text: '#f8f9fa',
+      link: '#10B981',
+      button: '#10B981',
+      accent: '#8B5CF6',
     }
   },
   {
@@ -69,6 +84,10 @@ const themePresets: ThemePreset[] = [
       footer: '#0c4a6e',
       header: '#f0f9ff',
       card: '#f0f9ff',
+      text: '#333333',
+      link: '#0EA5E9',
+      button: '#0EA5E9',
+      accent: '#38bdf8',
     },
     darkTheme: {
       background: '#0f172a',
@@ -77,6 +96,10 @@ const themePresets: ThemePreset[] = [
       footer: '#1e3a5f',
       header: '#1e3a5f',
       card: '#1e293b',
+      text: '#e2e8f0',
+      link: '#38bdf8',
+      button: '#38bdf8',
+      accent: '#6366f1',
     }
   },
   {
@@ -90,6 +113,10 @@ const themePresets: ThemePreset[] = [
       footer: '#9a3412',
       header: '#fff7ed',
       card: '#ffedd5',
+      text: '#422006',
+      link: '#ea580c',
+      button: '#ea580c',
+      accent: '#f97316',
     },
     darkTheme: {
       background: '#27272a',
@@ -98,6 +125,10 @@ const themePresets: ThemePreset[] = [
       footer: '#7c2d12',
       header: '#7c2d12',
       card: '#3f3f46',
+      text: '#fafafa',
+      link: '#f97316',
+      button: '#f97316',
+      accent: '#7c2d12',
     }
   },
   {
@@ -111,6 +142,10 @@ const themePresets: ThemePreset[] = [
       footer: '#7e22ce',
       header: '#faf5ff',
       card: '#f3e8ff',
+      text: '#3b0764',
+      link: '#9333ea',
+      button: '#9333ea',
+      accent: '#a855f7',
     },
     darkTheme: {
       background: '#1c1033',
@@ -119,6 +154,10 @@ const themePresets: ThemePreset[] = [
       footer: '#6b21a8',
       header: '#6b21a8',
       card: '#3b0764',
+      text: '#e9d5ff',
+      link: '#a855f7',
+      button: '#a855f7',
+      accent: '#3b0764',
     }
   },
   {
@@ -132,6 +171,10 @@ const themePresets: ThemePreset[] = [
       footer: '#15803d',
       header: '#f0fdf4',
       card: '#dcfce7',
+      text: '#14532d',
+      link: '#16a34a',
+      button: '#16a34a',
+      accent: '#22c55e',
     },
     darkTheme: {
       background: '#0f1f0f',
@@ -140,6 +183,10 @@ const themePresets: ThemePreset[] = [
       footer: '#166534',
       header: '#166534',
       card: '#14532d',
+      text: '#dcfce7',
+      link: '#22c55e',
+      button: '#22c55e',
+      accent: '#14532d',
     }
   },
   {
@@ -153,6 +200,10 @@ const themePresets: ThemePreset[] = [
       footer: '#be123c',
       header: '#fff1f2',
       card: '#ffe4e6',
+      text: '#881337',
+      link: '#e11d48',
+      button: '#e11d48',
+      accent: '#f43f5e',
     },
     darkTheme: {
       background: '#1c1033',
@@ -161,6 +212,10 @@ const themePresets: ThemePreset[] = [
       footer: '#9f1239',
       header: '#9f1239',
       card: '#881337',
+      text: '#fecdd3',
+      link: '#f43f5e',
+      button: '#f43f5e',
+      accent: '#881337',
     }
   },
   {
@@ -174,6 +229,10 @@ const themePresets: ThemePreset[] = [
       footer: '#3730a3',
       header: '#eef2ff',
       card: '#e0e7ff',
+      text: '#1e1b4b',
+      link: '#4338ca',
+      button: '#4338ca',
+      accent: '#6366f1',
     },
     darkTheme: {
       background: '#0f172a',
@@ -182,6 +241,10 @@ const themePresets: ThemePreset[] = [
       footer: '#312e81',
       header: '#312e81',
       card: '#1e1b4b',
+      text: '#e0e7ff',
+      link: '#6366f1',
+      button: '#6366f1',
+      accent: '#1e1b4b',
     }
   },
   {
@@ -195,6 +258,10 @@ const themePresets: ThemePreset[] = [
       footer: '#78350f',
       header: '#fef3c7',
       card: '#fef3c7',
+      text: '#44403c',
+      link: '#92400e',
+      button: '#92400e',
+      accent: '#d97706',
     },
     darkTheme: {
       background: '#1c1917',
@@ -203,6 +270,10 @@ const themePresets: ThemePreset[] = [
       footer: '#78350f',
       header: '#78350f',
       card: '#44403c',
+      text: '#e7e5e4',
+      link: '#d97706',
+      button: '#d97706',
+      accent: '#44403c',
     }
   },
   {
@@ -216,6 +287,10 @@ const themePresets: ThemePreset[] = [
       footer: '#475569',
       header: '#f1f5f9',
       card: '#f1f5f9',
+      text: '#334155',
+      link: '#64748b',
+      button: '#64748b',
+      accent: '#94a3b8',
     },
     darkTheme: {
       background: '#0f172a',
@@ -224,6 +299,10 @@ const themePresets: ThemePreset[] = [
       footer: '#334155',
       header: '#334155',
       card: '#1e293b',
+      text: '#e2e8f0',
+      link: '#94a3b8',
+      button: '#94a3b8',
+      accent: '#334155',
     }
   },
   {
@@ -237,6 +316,10 @@ const themePresets: ThemePreset[] = [
       footer: '#1d4ed8',
       header: '#eff6ff',
       card: '#dbeafe',
+      text: '#18181b',
+      link: '#3b82f6',
+      button: '#3b82f6',
+      accent: '#8b5cf6',
     },
     darkTheme: {
       background: '#09090b',
@@ -245,6 +328,10 @@ const themePresets: ThemePreset[] = [
       footer: '#4c1d95',
       header: '#4c1d95',
       card: '#18181b',
+      text: '#e4e4e7',
+      link: '#8b5cf6',
+      button: '#8b5cf6',
+      accent: '#18181b',
     }
   }
 ];
@@ -283,12 +370,12 @@ const PresetThemes = () => {
           {themePresets.map((preset) => (
             <div key={preset.id} className="border rounded-lg overflow-hidden">
               <div className="flex h-24">
-                <div className="w-1/2 p-3" style={{ backgroundColor: preset.lightTheme.background, color: preset.lightTheme.foreground }}>
+                <div className="w-1/2 p-3" style={{ backgroundColor: preset.lightTheme.background, color: preset.lightTheme.text || preset.lightTheme.foreground }}>
                   <div className="h-6 mb-2" style={{ backgroundColor: preset.lightTheme.header }}></div>
                   <div className="h-4 w-1/2 mb-1" style={{ backgroundColor: preset.lightTheme.card }}></div>
                   <div className="h-3 w-full" style={{ backgroundColor: preset.lightTheme.primary }}></div>
                 </div>
-                <div className="w-1/2 p-3" style={{ backgroundColor: preset.darkTheme.background, color: preset.darkTheme.foreground }}>
+                <div className="w-1/2 p-3" style={{ backgroundColor: preset.darkTheme.background, color: preset.darkTheme.text || preset.darkTheme.foreground }}>
                   <div className="h-6 mb-2" style={{ backgroundColor: preset.darkTheme.header }}></div>
                   <div className="h-4 w-1/2 mb-1" style={{ backgroundColor: preset.darkTheme.card }}></div>
                   <div className="h-3 w-full" style={{ backgroundColor: preset.darkTheme.primary }}></div>

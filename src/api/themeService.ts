@@ -53,15 +53,23 @@ export async function getThemeSettings(userId: string) {
           footer: '#065f46', // custom-green
           header: '#ffffff',
           card: '#f8f9fa',
+          text: '#333333',
+          link: '#065f46',
+          button: '#065f46',
+          accent: '#10B981',
         },
         // Default dark theme colors - restored to original values
         darkThemeColors: {
-          background: '#1A1F2C',  // Dark purple for dark mode
-          foreground: '#f8f9fa',  // Light text for dark mode
-          primary: '#10B981',     // Emerald green for primary actions in dark mode
-          footer: '#222222',      // Dark footer
-          header: '#222222',      // Dark header
-          card: '#2D3748',        // Dark card background
+          background: '#1A1F2C',
+          foreground: '#f8f9fa',
+          primary: '#10B981',
+          footer: '#222222',
+          header: '#222222',
+          card: '#2D3748',
+          text: '#f8f9fa',
+          link: '#10B981',
+          button: '#10B981',
+          accent: '#8B5CF6',
         }
       };
     }
@@ -78,6 +86,10 @@ export async function getThemeSettings(userId: string) {
         footer: '#065f46',
         header: '#ffffff',
         card: '#f8f9fa',
+        text: '#333333',
+        link: '#065f46',
+        button: '#065f46',
+        accent: '#10B981',
       },
       // Default dark theme colors - restored to original values
       darkThemeColors: {
@@ -87,7 +99,72 @@ export async function getThemeSettings(userId: string) {
         footer: '#222222',
         header: '#222222',
         card: '#2D3748',
+        text: '#f8f9fa',
+        link: '#10B981',
+        button: '#10B981',
+        accent: '#8B5CF6',
       }
+    };
+  }
+}
+
+export async function saveAccessibilitySettings(userId: string, settings: {
+  reducedMotion: boolean;
+  highContrast: boolean;
+  largeText: boolean;
+}) {
+  try {
+    const existingSettings = await mongoApiService.queryDocuments('accessibilitySettings', { userId });
+    
+    if (existingSettings.length > 0) {
+      await mongoApiService.updateDocument(
+        'accessibilitySettings',
+        existingSettings[0].id,
+        { 
+          ...settings, 
+          updatedAt: new Date().toISOString() 
+        }
+      );
+    } else {
+      await mongoApiService.insertDocument(
+        'accessibilitySettings', 
+        {
+          userId,
+          ...settings,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      );
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving accessibility settings:', error);
+    return { success: false, error };
+  }
+}
+
+export async function getAccessibilitySettings(userId: string) {
+  try {
+    const settings = await mongoApiService.queryDocuments('accessibilitySettings', { userId });
+    
+    if (settings.length > 0) {
+      return settings[0];
+    } else {
+      // Return default settings if not found
+      return {
+        reducedMotion: false,
+        highContrast: false,
+        largeText: false
+      };
+    }
+  } catch (error) {
+    console.error('Error getting accessibility settings:', error);
+    // Return default settings in case of error
+    return {
+      reducedMotion: false,
+      highContrast: false,
+      largeText: false
     };
   }
 }

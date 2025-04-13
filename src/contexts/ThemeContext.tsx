@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getThemeSettings, saveThemeSettings } from '@/api/themeService';
 import { useSession } from '@/hooks/useSession';
@@ -11,6 +12,10 @@ interface ThemeColors {
   footer: string;
   header: string;
   card: string;
+  text?: string;
+  link?: string;
+  button?: string;
+  accent?: string;
 }
 
 interface ThemeContextType {
@@ -30,6 +35,10 @@ const defaultLightColors: ThemeColors = {
   footer: '#065f46', // custom-green
   header: '#ffffff',
   card: '#f8f9fa',
+  text: '#333333',
+  link: '#065f46',
+  button: '#065f46',
+  accent: '#10B981',
 };
 
 // Original dark mode colors - ensure these are not modified by light mode changes
@@ -40,6 +49,10 @@ const defaultDarkColors: ThemeColors = {
   footer: '#222222',      // Dark footer
   header: '#222222',      // Dark header
   card: '#2D3748',        // Dark card background
+  text: '#f8f9fa',
+  link: '#10B981',
+  button: '#10B981',
+  accent: '#8B5CF6',
 };
 
 // Create a context with default values
