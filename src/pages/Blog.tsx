@@ -8,6 +8,7 @@ import BlogHeader from '@/components/BlogHeader';
 import BlogContent from '@/components/BlogContent';
 import HeaderAd from '@/components/ads/HeaderAd';
 import FooterAd from '@/components/ads/FooterAd';
+import SidebarAd from '@/components/ads/SidebarAd';
 import { Loader2 } from 'lucide-react';
 import { Post, Category, Topic } from '@/types/common';
 
@@ -96,14 +97,18 @@ const Blog = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <HeaderAd />
+        <div className="py-4 bg-gray-50">
+          <HeaderAd className="max-w-5xl mx-auto" />
+        </div>
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="mt-4 text-lg text-gray-600">Loading content...</p>
           </div>
         </main>
-        <FooterAd />
+        <div className="py-4 bg-gray-50">
+          <FooterAd className="max-w-5xl mx-auto" />
+        </div>
         <Footer />
       </div>
     );
@@ -112,7 +117,9 @@ const Blog = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <HeaderAd />
+      <div className="py-4 bg-gray-50">
+        <HeaderAd className="max-w-5xl mx-auto" />
+      </div>
       
       <main className="flex-grow">
         <BlogHeader 
@@ -127,17 +134,26 @@ const Blog = () => {
         <div className="container mx-auto px-4 mt-8">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Main content */}
-            <div className="w-full">
+            <div className="w-full lg:w-2/3">
               <BlogContent 
                 filteredPosts={filteredPosts} 
                 isLoading={isLoading}
               />
             </div>
+            
+            {/* Sidebar for additional ad */}
+            <div className="w-full lg:w-1/3 space-y-8">
+              <div className="sticky top-4">
+                <SidebarAd />
+              </div>
+            </div>
           </div>
         </div>
       </main>
       
-      <FooterAd />
+      <div className="py-4 bg-gray-50">
+        <FooterAd className="max-w-5xl mx-auto" />
+      </div>
       <Footer />
     </div>
   );

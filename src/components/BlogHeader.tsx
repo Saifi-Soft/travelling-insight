@@ -22,9 +22,10 @@ const BlogHeader = ({
 }: BlogHeaderProps) => {
   return (
     <>
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 text-white py-16">
-        <div className="container-custom">
+      {/* Hero Banner with improved background */}
+      <div className="bg-[url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center relative text-white py-20">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70"></div>
+        <div className="container-custom relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl font-bold mb-4">
               {isTrending ? "Trending Articles" : "Travel Blog"}

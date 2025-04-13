@@ -1,3 +1,4 @@
+
 import { mongoApiService } from './mongoApiService';
 import { CommunityUser, TravelGroup, CommunityEvent, TravelMatch } from '@/types/common';
 
@@ -188,7 +189,12 @@ export const travelMatchesApi = {
 export const communityPaymentApi = {
   getSubscription: async (userId: string) => {
     try {
-      return await mongoApiService.getSubscriptionByUserId(userId);
+      // Find subscription by userId
+      const subscriptions = await mongoApiService.queryDocuments('subscriptions', { userId });
+      if (subscriptions && subscriptions.length > 0) {
+        return subscriptions[0];
+      }
+      return null;
     } catch (error) {
       console.error(`Error getting subscription for user ${userId}:`, error);
       return null;
@@ -199,7 +205,7 @@ export const communityPaymentApi = {
     try {
       const subscription = {
         userId,
-        plan,
+        planType: plan,
         ...subscriptionDetails,
         createdAt: new Date()
       };
