@@ -28,7 +28,7 @@ import AdminSettings from './pages/AdminSettings';
 import AdminAds from './pages/AdminAds';
 import AdminHashtags from './pages/AdminHashtags';
 import { communityApi } from './api/communityApiService';
-
+import { toast } from 'sonner';
 // Import the Index component instead of Home
 import Index from './pages/Index';
 
@@ -147,7 +147,9 @@ const CommunityRouter: React.FC = () => {
     const checkSubscription = async () => {
       if (session.user?.id) {
         try {
+          console.log("Checking subscription for user:", session.user.id);
           const subscriptionData = await communityApi.payments.getSubscription(session.user.id);
+          console.log("Subscription data:", subscriptionData);
           setIsSubscribed(subscriptionData && subscriptionData.status === 'active');
         } catch (error) {
           console.error('Error checking subscription status:', error);
@@ -164,32 +166,78 @@ const CommunityRouter: React.FC = () => {
   }
   
   if (session.isAuthenticated && isSubscribed) {
+    console.log("User is authenticated and subscribed, redirecting to community-hub");
     return <Navigate to="/community-hub" replace />;
   }
   
+  console.log("User is not authenticated or not subscribed, showing Community page");
   return <Community />;
 };
 
 // Authentication guard for community hub
 const CommunityAuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session } = useSession();
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const checkSubscription = async () => {
-      if (session.user?.id) {
-        try {
-          const subscriptionData = await communityApi.payments.getSubscription(session.user.id);
-          setIsSubscribed(subscriptionData && subscriptionData.status === 'active');
-        } catch (error) {
-          console.error('Error checking subscription status:', error);
-        }
+    const checkSubscriptionWithRetry = async () => {
+      if (!session.user?.id) {
+        setIsLoading(false);
+        return;
       }
+      
+      try {
+        console.log("CommunityAuthGuard: Checking subscription for user:", session.user.id);
+        const subscriptionData = await communityApi.payments.getSubscription(session.user.id);
+        console.log("CommunityAuthGuard: Subscription data:", subscriptionData);
+        
+        // Check if subscription is active
+        if (subscriptionData && subscriptionData.status === 'active') {
+          console.log("CommunityAuthGuard: User has active subscription");
+          setIsSubscribed(true);
+          
+          // Create any missing database entries for demo if needed
+          const userId = localStorage.getItem('community_user_id');
+          if (userId) {
+            // Check if user exists in MongoDB
+            const mongoApiService = (await import('@/api/mongoApiService')).mongoApiService;
+            const users = await mongoApiService.queryDocuments('subscriptions', { userId });
+            
+            if (users.length === 0) {
+              // Create demo subscription in MongoDB if it doesn't exist
+              await mongoApiService.insertDocument('subscriptions', {
+                userId: session.user.id,
+                planType: 'monthly',
+                status: 'active',
+                paymentMethod: {
+                  method: 'credit_card',
+                  cardLastFour: '4242',
+                  expiryDate: '12/25'
+                },
+                startDate: new Date(),
+                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+                amount: 9.99,
+                autoRenew: true,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              });
+              console.log("CommunityAuthGuard: Created demo subscription in MongoDB");
+            }
+          }
+        } else {
+          console.log("CommunityAuthGuard: User does not have active subscription");
+          setIsSubscribed(false);
+        }
+      } catch (error) {
+        console.error('CommunityAuthGuard: Error checking subscription status:', error);
+        setIsSubscribed(false);
+      }
+      
       setIsLoading(false);
     };
     
-    checkSubscription();
+    checkSubscriptionWithRetry();
   }, [session.user?.id]);
   
   if (isLoading) {
@@ -197,13 +245,18 @@ const CommunityAuthGuard: React.FC<{ children: React.ReactNode }> = ({ children 
   }
 
   if (!session.isAuthenticated) {
+    console.log("CommunityAuthGuard: User is not authenticated, redirecting to login");
+    toast.error("Please login to access the community hub");
     return <Navigate to="/login" replace />;
   }
   
-  if (!isSubscribed) {
+  if (isSubscribed === false) {
+    console.log("CommunityAuthGuard: User is not subscribed, redirecting to community page");
+    toast.error("You need an active subscription to access the community hub");
     return <Navigate to="/community" replace />;
   }
 
+  console.log("CommunityAuthGuard: User is authenticated and subscribed, showing community hub");
   return <>{children}</>;
 };
 

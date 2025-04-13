@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CommunityPosts from '@/components/community/CommunityPosts';
 import UserProfile from '@/components/community/UserProfile';
+import CommunityEvents from '@/components/community/CommunityEvents';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Bookmark, Users, Calendar, Compass, Settings } from 'lucide-react';
 
@@ -66,14 +67,7 @@ const CommunityHub = () => {
                   </TabsContent>
                   
                   <TabsContent value="events">
-                    <div className="bg-white rounded-lg p-8 text-center">
-                      <h2 className="text-2xl font-bold mb-2">Travel Events</h2>
-                      <p className="text-gray-500">Discover and join upcoming travel events</p>
-                      <div className="mt-6 p-12 border rounded-lg">
-                        <Calendar className="mx-auto h-12 w-12 text-gray-300" />
-                        <p className="mt-4 text-gray-500">Event content coming soon!</p>
-                      </div>
-                    </div>
+                    <CommunityEvents />
                   </TabsContent>
                   
                   <TabsContent value="discover">
