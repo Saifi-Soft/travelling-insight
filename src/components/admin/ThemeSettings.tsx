@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
 
+type ThemeColorKey = 'background' | 'foreground' | 'primary' | 'footer' | 'header' | 'card';
+
 const ThemeSettings = () => {
   const { 
     theme, 
@@ -18,24 +19,22 @@ const ThemeSettings = () => {
     updateThemeColor 
   } = useTheme();
   
-  // Local state to track color changes before applying
   const [lightColors, setLightColors] = useState({ ...lightThemeColors });
   const [darkColors, setDarkColors] = useState({ ...darkThemeColors });
 
-  // Update local state when theme context changes
   useEffect(() => {
     setLightColors({ ...lightThemeColors });
     setDarkColors({ ...darkThemeColors });
   }, [lightThemeColors, darkThemeColors]);
 
-  const handleLightColorChange = (colorType, value) => {
+  const handleLightColorChange = (colorType: ThemeColorKey, value: string) => {
     setLightColors(prev => ({
       ...prev,
       [colorType]: value
     }));
   };
 
-  const handleDarkColorChange = (colorType, value) => {
+  const handleDarkColorChange = (colorType: ThemeColorKey, value: string) => {
     setDarkColors(prev => ({
       ...prev,
       [colorType]: value
@@ -44,19 +43,19 @@ const ThemeSettings = () => {
 
   const applyLightThemeChanges = () => {
     Object.entries(lightColors).forEach(([key, value]) => {
-      updateThemeColor(key, value, 'light');
+      updateThemeColor(key as ThemeColorKey, value, 'light');
     });
     toast.success('Light theme colors updated');
   };
 
   const applyDarkThemeChanges = () => {
     Object.entries(darkColors).forEach(([key, value]) => {
-      updateThemeColor(key, value, 'dark');
+      updateThemeColor(key as ThemeColorKey, value, 'dark');
     });
     toast.success('Dark theme colors updated');
   };
 
-  const resetToDefaults = (mode) => {
+  const resetToDefaults = (mode: 'light' | 'dark') => {
     if (mode === 'light') {
       const defaultLightColors = {
         background: '#ffffff',
@@ -69,7 +68,7 @@ const ThemeSettings = () => {
       
       setLightColors(defaultLightColors);
       Object.entries(defaultLightColors).forEach(([key, value]) => {
-        updateThemeColor(key, value, 'light');
+        updateThemeColor(key as ThemeColorKey, value, 'light');
       });
       toast.success('Light theme reset to defaults');
     } else {
@@ -84,7 +83,7 @@ const ThemeSettings = () => {
       
       setDarkColors(defaultDarkColors);
       Object.entries(defaultDarkColors).forEach(([key, value]) => {
-        updateThemeColor(key, value, 'dark');
+        updateThemeColor(key as ThemeColorKey, value, 'dark');
       });
       toast.success('Dark theme reset to defaults');
     }
@@ -123,13 +122,13 @@ const ThemeSettings = () => {
                         id={`light-${key}`}
                         type="text"
                         value={value}
-                        onChange={(e) => handleLightColorChange(key, e.target.value)}
+                        onChange={(e) => handleLightColorChange(key as ThemeColorKey, e.target.value)}
                       />
                       <Input
                         type="color"
                         value={value}
                         className="w-10 h-10 p-1"
-                        onChange={(e) => handleLightColorChange(key, e.target.value)}
+                        onChange={(e) => handleLightColorChange(key as ThemeColorKey, e.target.value)}
                       />
                     </div>
                   </div>
@@ -167,13 +166,13 @@ const ThemeSettings = () => {
                         id={`dark-${key}`}
                         type="text"
                         value={value}
-                        onChange={(e) => handleDarkColorChange(key, e.target.value)}
+                        onChange={(e) => handleDarkColorChange(key as ThemeColorKey, e.target.value)}
                       />
                       <Input
                         type="color"
                         value={value}
                         className="w-10 h-10 p-1"
-                        onChange={(e) => handleDarkColorChange(key, e.target.value)}
+                        onChange={(e) => handleDarkColorChange(key as ThemeColorKey, e.target.value)}
                       />
                     </div>
                   </div>
