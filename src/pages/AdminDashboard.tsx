@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -196,11 +196,11 @@ const AdminDashboard = () => {
         </div>
         
         {/* Dashboard Tabs */}
-        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="bg-white border border-gray-200 p-1 rounded-md">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="posts">Content</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="ads">Ads</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
             <TabsTrigger value="community">Community</TabsTrigger>
@@ -216,7 +216,7 @@ const AdminDashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[400px] flex items-center justify-center">
+                  <div className="h-[400px]">
                     <AnalyticsDashboard />
                   </div>
                 </CardContent>
@@ -239,7 +239,7 @@ const AdminDashboard = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="posts" className="mt-0">
+            <TabsContent value="content" className="mt-0">
               <Card className="bg-white">
                 <CardHeader>
                   <CardTitle>Content Management</CardTitle>
@@ -360,9 +360,9 @@ const SubscriptionManagement = () => {
                       {sub.status}
                     </span>
                   </td>
-                  <td className="px-4 py-2">{new Date(sub.startDate).toLocaleDateString()}</td>
-                  <td className="px-4 py-2">{new Date(sub.endDate).toLocaleDateString()}</td>
-                  <td className="px-4 py-2">${sub.amount}</td>
+                  <td className="px-4 py-2">{sub.startDate ? new Date(sub.startDate).toLocaleDateString() : '-'}</td>
+                  <td className="px-4 py-2">{sub.endDate ? new Date(sub.endDate).toLocaleDateString() : '-'}</td>
+                  <td className="px-4 py-2">${sub.amount || 0}</td>
                   <td className="px-4 py-2">
                     <Button variant="outline" size="sm">View</Button>
                   </td>
@@ -430,7 +430,7 @@ const CommunityManagement = () => {
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-4 py-2">{new Date(user.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-2">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
                   <td className="px-4 py-2">{user.subscriptionTier || 'None'}</td>
                   <td className="px-4 py-2">
                     <div className="flex space-x-2">

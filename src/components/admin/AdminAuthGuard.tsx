@@ -15,19 +15,26 @@ const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const authStatus = localStorage.getItem('adminAuth') === 'true';
-      setIsAuthenticated(authStatus);
-      
-      if (!authStatus) {
-        toast({
-          title: "Authentication required",
-          description: "Please login to access the admin area",
-          variant: "destructive",
-        });
+    const checkAuth = async () => {
+      try {
+        // Check if the user is authenticated
+        const authStatus = localStorage.getItem('adminAuth') === 'true';
+        setIsAuthenticated(authStatus);
+        
+        if (!authStatus) {
+          toast({
+            title: "Authentication required",
+            description: "Please login to access the admin area",
+            variant: "destructive",
+          });
+          navigate('/admin/login');
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
         navigate('/admin/login');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     
     checkAuth();
