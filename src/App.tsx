@@ -48,7 +48,7 @@ const App: React.FC = () => {
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/travel/planner" element={<TravelPlanner />} />
             <Route path="/community" element={<CommunityRouter />} />
-            <Route path="/community-hub" element={<CommunityAuthGuard><CommunityHub /></CommunityAuthGuard>} />
+            <Route path="/community-hub" element={<CommunityHub />} /> {/* Removed CommunityAuthGuard wrapper */}
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
@@ -174,7 +174,7 @@ const CommunityRouter: React.FC = () => {
   return <Community />;
 };
 
-// Authentication guard for community hub
+// Authentication guard for community hub - NOT USED ANYMORE
 const CommunityAuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session } = useSession();
   const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
