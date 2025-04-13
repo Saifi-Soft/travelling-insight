@@ -1,64 +1,36 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { topicsApi } from '@/api/mongoApiService';
-import { Topic } from '@/types/common';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Edit, Trash2, Plus, Loader2, Search } from 'lucide-react';
+import { topicsApi } from '@/api/mongoApiService';
+import { Loader2, Plus, Trash, Pencil, Save, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+interface Hashtag {
+  id?: string;
+  name: string;
+  slug: string;
+  count?: number;
+}
 
 const HashtagsManagement = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentTopic, setCurrentTopic] = useState<Topic | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [formData, setFormData] = useState<Partial<Topic>>({
-    name: '',
-    slug: '',
-  });
-
+  const [newHashtag, setNewHashtag] = useState('');
+  const [editingHashtag, setEditingHashtag] = useState<Hashtag | null>(null);
+  const [editedName, setEditedName] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Fetch all topics
-  const { data: topics = [], isLoading } = useQuery({
+  
+  // Fetch all hashtags (topics)
+  const { data: hashtags = [], isLoading: isLoadingHashtags } = useQuery({
     queryKey: ['topics'],
     queryFn: topicsApi.getAll,
   });
-
-  // Create topic mutation
+  
+  // Create hashtag mutation
   const createMutation = useMutation({
     mutationFn: topicsApi.create,
     onSuccess: () => {
@@ -67,8 +39,7 @@ const HashtagsManagement = () => {
         title: "Success",
         description: "Hashtag created successfully",
       });
-      setIsDialogOpen(false);
-      resetForm();
+      setNewHashtag('');
     },
     onError: (error) => {
       toast({
@@ -78,19 +49,18 @@ const HashtagsManagement = () => {
       });
     },
   });
-
-  // Update topic mutation
+  
+  // Update hashtag mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, topic }: { id: string; topic: Partial<Topic> }) => 
-      topicsApi.update(id, topic),
+    mutationFn: ({ id, hashtag }: { id: string; hashtag: Partial<Hashtag> }) => topicsApi.update(id, hashtag),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topics'] });
       toast({
         title: "Success",
         description: "Hashtag updated successfully",
       });
-      setIsDialogOpen(false);
-      resetForm();
+      setEditingHashtag(null);
+      setEditedName('');
     },
     onError: (error) => {
       toast({
@@ -100,8 +70,8 @@ const HashtagsManagement = () => {
       });
     },
   });
-
-  // Delete topic mutation
+  
+  // Delete hashtag mutation
   const deleteMutation = useMutation({
     mutationFn: topicsApi.delete,
     onSuccess: () => {
@@ -119,226 +89,174 @@ const HashtagsManagement = () => {
       });
     },
   });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    // Auto-generate slug from name if it's the name field changing
-    if (name === 'name') {
-      const slug = value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      setFormData(prev => ({ ...prev, slug }));
-    }
+  
+  // Generate slug from name
+  const generateSlug = (name: string) => {
+    return name.toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-');
   };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      slug: '',
-    });
-    setCurrentTopic(null);
-  };
-
-  const handleOpenDialog = (topic?: Topic) => {
-    if (topic) {
-      setCurrentTopic(topic);
-      setFormData({
-        name: topic.name,
-        slug: topic.slug
-      });
-    } else {
-      resetForm();
-    }
-    setIsDialogOpen(true);
-  };
-
+  
+  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.name || !formData.slug) {
-      toast({
-        title: "Validation Error",
-        description: "Name and slug are required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (currentTopic) {
-      updateMutation.mutate({
-        id: currentTopic.id,
-        topic: formData,
-      });
-    } else {
-      createMutation.mutate(formData as Omit<Topic, 'id'>);
-    }
+    
+    if (!newHashtag.trim()) return;
+    
+    const hashtag: Hashtag = {
+      name: newHashtag.trim(),
+      slug: generateSlug(newHashtag.trim()),
+      count: 0
+    };
+    
+    createMutation.mutate(hashtag);
   };
-
+  
+  // Handle edit form submission
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingHashtag || !editedName.trim()) return;
+    
+    const updatedHashtag: Partial<Hashtag> = {
+      name: editedName.trim(),
+      slug: generateSlug(editedName.trim())
+    };
+    
+    updateMutation.mutate({ id: editingHashtag.id!, hashtag: updatedHashtag });
+  };
+  
+  // Handle deletion
   const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+    if (window.confirm("Are you sure you want to delete this hashtag?")) {
+      deleteMutation.mutate(id);
+    }
   };
-
-  // Filter topics based on search
-  const filteredTopics = topics.filter(topic =>
-    topic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    topic.slug.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
+  
+  // Start editing
+  const handleEdit = (hashtag: Hashtag) => {
+    setEditingHashtag(hashtag);
+    setEditedName(hashtag.name);
+  };
+  
+  // Cancel editing
+  const handleCancelEdit = () => {
+    setEditingHashtag(null);
+    setEditedName('');
+  };
+  
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Hashtags Management</CardTitle>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="mr-2 h-4 w-4" /> Add Hashtag
-        </Button>
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage Hashtags</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search hashtags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+        <form onSubmit={handleSubmit} className="flex items-end gap-4 mb-6">
+          <div className="flex-1">
+            <Label htmlFor="new-hashtag" className="mb-2 block">New Hashtag</Label>
+            <Input 
+              id="new-hashtag" 
+              value={newHashtag} 
+              onChange={(e) => setNewHashtag(e.target.value)} 
+              placeholder="Enter hashtag name" 
             />
           </div>
-        </div>
+          <Button 
+            type="submit" 
+            disabled={!newHashtag.trim() || createMutation.isPending}
+            className="flex items-center gap-2"
+          >
+            {createMutation.isPending ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Adding...</>
+            ) : (
+              <><Plus className="h-4 w-4" /> Add</>
+            )}
+          </Button>
+        </form>
         
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+        {isLoadingHashtags ? (
+          <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Slug</TableHead>
-                  <TableHead>Posts Count</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTopics.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
-                      No hashtags found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredTopics.map((topic) => (
-                    <TableRow key={topic.id}>
-                      <TableCell className="font-medium">#{topic.name}</TableCell>
-                      <TableCell>{topic.slug}</TableCell>
-                      <TableCell>{topic.count || 0}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">Existing Hashtags</h3>
+            
+            {hashtags.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">No hashtags found. Add your first one!</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {hashtags.map((hashtag) => (
+                  <div 
+                    key={hashtag.id} 
+                    className="border rounded-lg p-4 flex justify-between items-center"
+                  >
+                    {editingHashtag?.id === hashtag.id ? (
+                      <form onSubmit={handleEditSubmit} className="flex-1 flex gap-2">
+                        <Input 
+                          value={editedName} 
+                          onChange={(e) => setEditedName(e.target.value)}
+                          autoFocus
+                          className="flex-1"
+                        />
+                        <div className="flex gap-1">
+                          <Button 
+                            type="submit" 
+                            size="sm"
                             variant="outline"
-                            size="icon"
-                            onClick={() => handleOpenDialog(topic)}
+                            disabled={updateMutation.isPending || !editedName.trim()}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Save className="h-4 w-4" />
                           </Button>
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently delete the hashtag "#{topic.name}". This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(topic.id)}
-                                  className="bg-destructive text-destructive-foreground"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <Button 
+                            type="button" 
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleCancelEdit}
+                            disabled={updateMutation.isPending}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                      </form>
+                    ) : (
+                      <>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{hashtag.name}</span>
+                          <span className="text-xs text-muted-foreground">#{hashtag.slug}</span>
+                          {typeof hashtag.count === 'number' && (
+                            <Badge variant="secondary" className="mt-1 w-fit">
+                              {hashtag.count} {hashtag.count === 1 ? 'post' : 'posts'}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => handleEdit(hashtag)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(hashtag.id!)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
-
-        {/* Topic/Hashtag Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {currentTopic ? 'Edit Hashtag' : 'Add New Hashtag'}
-              </DialogTitle>
-              <DialogDescription>
-                {currentTopic
-                  ? 'Update the details for this hashtag.'
-                  : 'Create a new hashtag for your blog posts.'}
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-              <div className="grid gap-2">
-                <label htmlFor="name">Name</label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name || ''}
-                  onChange={handleInputChange}
-                  placeholder="Hashtag name (without #)"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <label htmlFor="slug">Slug</label>
-                <Input
-                  id="slug"
-                  name="slug"
-                  value={formData.slug || ''}
-                  onChange={handleInputChange}
-                  placeholder="hashtag-slug"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                >
-                  {(createMutation.isPending || updateMutation.isPending) && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {currentTopic ? 'Update' : 'Create'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
       </CardContent>
     </Card>
   );

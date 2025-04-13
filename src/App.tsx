@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -35,9 +36,7 @@ import AdminHashtags from './pages/AdminHashtags';
 // MongoDB initialization
 import { mongoApiService } from './api/mongoApiService';
 import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './api/sampleData';
-import { toast } from '@/components/ui/use-toast';
 import { Toaster } from '@/components/ui/toaster';
-import { Post, Category, Topic } from '@/types/common';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -115,9 +114,6 @@ const initializeCollectionsWithSampleData = async (
 // Initialize MongoDB with sample ad placements
 const initAdPlacements = async () => {
   try {
-    const { connectToDatabase } = await import('./api/mongodb');
-    const { collections } = await connectToDatabase();
-    
     const MOCK_ADS = [
       {
         name: 'Header Banner',
@@ -166,13 +162,13 @@ const initAdPlacements = async () => {
     ];
 
     // Check if ads collection has data
-    if (collections && collections.ads) {
-      const existingAds = await collections.ads.find({}).toArray();
-
-      if (existingAds.length === 0) {
-        await collections.ads.insertMany(MOCK_ADS);
-        console.log('Ad placements initialized with sample data');
+    const existingAds = await mongoApiService.queryDocuments('ads', {});
+    
+    if (existingAds.length === 0) {
+      for (const ad of MOCK_ADS) {
+        await mongoApiService.insertDocument('ads', ad);
       }
+      console.log('Ad placements initialized with sample data');
     }
   } catch (error) {
     console.error('Error initializing ad placements:', error);
@@ -193,11 +189,6 @@ const App = () => {
         console.log('MongoDB initialized successfully (browser compatible version)');
       } catch (error) {
         console.error('Error initializing MongoDB:', error);
-        toast({
-          title: "Database Error",
-          description: "Failed to initialize database. Please check your connection.",
-          variant: "destructive"
-        });
       }
     };
 
@@ -238,7 +229,7 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             
             {/* Admin Routes with Authentication Flow */}
-            <Route path="/admin" element={<Admin />} /> {/* This redirects to login */}
+            <Route path="/admin" element={<Admin />} /> {/* This redirects to login if not authenticated */}
             <Route path="/admin/login" element={<AdminLogin />} /> {/* Login page */}
             
             {/* Protected Admin Routes */}

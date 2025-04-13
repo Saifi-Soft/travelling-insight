@@ -6,8 +6,15 @@ const AdminPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Immediately redirect to login page
-    navigate('/admin/login');
+    // Check if the user is already logged in
+    const isAuthenticated = localStorage.getItem('adminAuth') === 'true';
+    
+    // If authenticated, redirect to dashboard, otherwise to login
+    if (isAuthenticated) {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/admin/login');
+    }
   }, [navigate]);
 
   // This component doesn't render anything as it just redirects

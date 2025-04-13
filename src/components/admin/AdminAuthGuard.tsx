@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -10,6 +10,7 @@ interface AdminAuthGuardProps {
 
 const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -21,11 +22,16 @@ const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
         const authStatus = localStorage.getItem('adminAuth') === 'true';
         
         if (!authStatus) {
+          // Store the attempted URL to redirect back after login
+          const currentPath = location.pathname + location.search;
+          sessionStorage.setItem('adminRedirectUrl', currentPath);
+          
           toast({
             title: "Authentication required",
             description: "Please login to access the admin area",
             variant: "destructive",
           });
+          
           navigate('/admin/login');
           return;
         }
@@ -40,7 +46,7 @@ const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
     };
     
     checkAuth();
-  }, [navigate, toast]);
+  }, [navigate, location, toast]);
 
   if (loading) {
     return (

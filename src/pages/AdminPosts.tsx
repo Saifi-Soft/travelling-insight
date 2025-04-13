@@ -6,6 +6,7 @@ import HashtagsManagement from '@/components/admin/HashtagsManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { topicsApi } from '@/api/mongoApiService';
+import { Helmet } from 'react-helmet';
 
 const AdminPosts = () => {
   const [activeTab, setActiveTab] = useState('posts');
@@ -18,6 +19,9 @@ const AdminPosts = () => {
 
   return (
     <AdminLayout activeItem="posts">
+      <Helmet>
+        <title>Manage Content - Admin Dashboard</title>
+      </Helmet>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Manage Content</h1>

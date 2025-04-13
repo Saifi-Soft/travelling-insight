@@ -6,21 +6,32 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { mongoApiService } from '@/api/mongoApiService';
+import { Loader2, ShieldAlert } from 'lucide-react';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialChecking, setInitialChecking] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
   // Check if user is already logged in
   useEffect(() => {
-    const checkAuth = () => {
-      const authStatus = localStorage.getItem('adminAuth') === 'true';
-      if (authStatus) {
-        navigate('/admin/dashboard');
+    const checkAuth = async () => {
+      try {
+        const authStatus = localStorage.getItem('adminAuth') === 'true';
+        if (authStatus) {
+          // Redirect to the original requested URL or dashboard
+          const redirectUrl = sessionStorage.getItem('adminRedirectUrl') || '/admin/dashboard';
+          sessionStorage.removeItem('adminRedirectUrl'); // Clear after use
+          navigate(redirectUrl);
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+      } finally {
+        setInitialChecking(false);
       }
     };
     checkAuth();
@@ -54,7 +65,11 @@ const AdminLogin = () => {
             title: "Login successful",
             description: "Welcome to the admin dashboard",
           });
-          navigate('/admin/dashboard');
+          
+          // Redirect to the original requested URL or dashboard
+          const redirectUrl = sessionStorage.getItem('adminRedirectUrl') || '/admin/dashboard';
+          sessionStorage.removeItem('adminRedirectUrl'); // Clear after use
+          navigate(redirectUrl);
         } else {
           toast({
             title: "Login failed",
@@ -67,7 +82,7 @@ const AdminLogin = () => {
         const adminUser = adminUsers[0];
         if (adminUser && adminUser.passwordHash === password) { // In real app, compare hashed passwords
           // Update last login time
-          await mongoApiService.updateDocument('adminUsers', adminUser._id, {
+          await mongoApiService.updateDocument('adminUsers', adminUser._id || adminUser.id, {
             lastLogin: new Date()
           });
           
@@ -76,7 +91,11 @@ const AdminLogin = () => {
             title: "Login successful",
             description: "Welcome back to the admin dashboard",
           });
-          navigate('/admin/dashboard');
+          
+          // Redirect to the original requested URL or dashboard
+          const redirectUrl = sessionStorage.getItem('adminRedirectUrl') || '/admin/dashboard';
+          sessionStorage.removeItem('adminRedirectUrl'); // Clear after use
+          navigate(redirectUrl);
         } else {
           toast({
             title: "Login failed",
@@ -97,11 +116,22 @@ const AdminLogin = () => {
     }
   };
 
+  if (initialChecking) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardContent className="pt-6 px-8 pb-8">
           <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <ShieldAlert className="h-12 w-12 text-primary" />
+            </div>
             <h1 className="text-3xl font-bold">Admin Login</h1>
             <p className="text-muted-foreground mt-2">Enter your credentials to access the admin dashboard</p>
           </div>
@@ -118,6 +148,7 @@ const AdminLogin = () => {
                 className="w-full"
                 placeholder="admin"
                 autoComplete="username"
+                disabled={loading}
               />
             </div>
             
@@ -132,7 +163,11 @@ const AdminLogin = () => {
                 className="w-full"
                 placeholder="••••••••"
                 autoComplete="current-password"
+                disabled={loading}
               />
+              <div className="text-xs text-muted-foreground mt-1">
+                Default credentials: username: admin, password: password
+              </div>
             </div>
             
             <Button 
@@ -140,7 +175,12 @@ const AdminLogin = () => {
               className="w-full bg-blue-600 hover:bg-blue-700" 
               disabled={loading}
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                  Logging in...
+                </>
+              ) : "Login"}
             </Button>
           </form>
         </CardContent>

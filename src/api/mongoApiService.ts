@@ -1,17 +1,18 @@
-
 import { MongoOperators } from '@/types/common';
 import { toast } from 'sonner';
 
 // Type definitions for our API functions
 export interface Topic {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   slug: string;
   count?: number;
 }
 
 export interface Category {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   slug: string;
   icon: string;
@@ -20,7 +21,8 @@ export interface Category {
 }
 
 export interface Post {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   excerpt: string;
   content?: string;
@@ -39,7 +41,8 @@ export interface Post {
 }
 
 export interface Comment {
-  id: string;
+  id?: string;
+  _id?: string;
   postId: string;
   author: {
     name: string;
@@ -61,7 +64,8 @@ const collections: Record<string, any[]> = {
   subscriptions: [],
   travelGroups: [],
   travelMatches: [],
-  communityEvents: []
+  communityEvents: [],
+  adminUsers: []
 };
 
 // Generate a mock ObjectId
@@ -81,11 +85,15 @@ class MongoApiService {
         collections[collectionName] = [];
       }
       
+      // Generate an ID if one doesn't exist
+      const id = document.id || generateObjectId();
+      
       const newDocument = {
         ...document,
-        id: generateObjectId(),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        id: id,
+        _id: id, // Keep both id and _id for compatibility
+        createdAt: document.createdAt || new Date(),
+        updatedAt: document.updatedAt || new Date()
       };
       
       collections[collectionName].push(newDocument);
@@ -104,7 +112,7 @@ class MongoApiService {
         return null;
       }
       
-      const document = collections[collectionName].find(doc => doc.id === id);
+      const document = collections[collectionName].find(doc => doc.id === id || doc._id === id);
       console.log(`[MongoDB] Retrieved document from ${collectionName}:`, document);
       return document || null;
     } catch (error) {
@@ -120,7 +128,7 @@ class MongoApiService {
         return null;
       }
       
-      const index = collections[collectionName].findIndex(doc => doc.id === id);
+      const index = collections[collectionName].findIndex(doc => doc.id === id || doc._id === id);
       if (index === -1) {
         return null;
       }
@@ -148,7 +156,7 @@ class MongoApiService {
       }
       
       const initialLength = collections[collectionName].length;
-      collections[collectionName] = collections[collectionName].filter(doc => doc.id !== id);
+      collections[collectionName] = collections[collectionName].filter(doc => doc.id !== id && doc._id !== id);
       
       const success = collections[collectionName].length < initialLength;
       console.log(`[MongoDB] Deleted document from ${collectionName}:`, success);
@@ -163,7 +171,7 @@ class MongoApiService {
   async queryDocuments(collectionName: string, filter: Record<string, any>): Promise<any[]> {
     try {
       if (!collections[collectionName]) {
-        return [];
+        collections[collectionName] = []; // Initialize collection if it doesn't exist
       }
       
       // Simple filtering (not supporting complex MongoDB queries)
@@ -245,6 +253,16 @@ class MongoApiService {
         }
       }
       
+      // Handle $exists operator
+      if ('$exists' in operators) {
+        const shouldExist = operators.$exists;
+        const doesExist = fieldValue !== undefined && fieldValue !== null;
+        
+        if (shouldExist !== doesExist) {
+          return false;
+        }
+      }
+      
       return true;
     } catch (error) {
       console.error('[MongoDB] Error handling operators:', error);
@@ -266,6 +284,8 @@ export const initializeCollectionsWithSampleData = async (
     if (collections.posts.length === 0 && mockPosts.length > 0) {
       collections.posts = mockPosts.map(post => ({
         ...post,
+        id: post.id || generateObjectId(),
+        _id: post.id || generateObjectId(), // Keep both id and _id for compatibility
         createdAt: new Date(),
         updatedAt: new Date()
       }));
@@ -276,6 +296,8 @@ export const initializeCollectionsWithSampleData = async (
     if (collections.categories.length === 0 && mockCategories.length > 0) {
       collections.categories = mockCategories.map(category => ({
         ...category,
+        id: category.id || generateObjectId(),
+        _id: category.id || generateObjectId(), // Keep both id and _id for compatibility
         createdAt: new Date(),
         updatedAt: new Date()
       }));
@@ -286,6 +308,8 @@ export const initializeCollectionsWithSampleData = async (
     if (collections.topics.length === 0 && mockTopics.length > 0) {
       collections.topics = mockTopics.map(topic => ({
         ...topic,
+        id: topic.id || generateObjectId(),
+        _id: topic.id || generateObjectId(), // Keep both id and _id for compatibility
         createdAt: new Date(),
         updatedAt: new Date()
       }));
