@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,10 +8,51 @@ import UserProfile from '@/components/community/UserProfile';
 import CommunityEvents from '@/components/community/CommunityEvents';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Bookmark, Users, Calendar, Compass, Settings } from 'lucide-react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSession } from '@/hooks/useSession';
+import { toast } from 'sonner';
+import { communityApi } from '@/api/communityApiService';
 
 const queryClient = new QueryClient();
 
 const CommunityHub = () => {
+  const { session } = useSession();
+  const navigate = useNavigate();
+
+  // Check authentication and subscription status
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        if (!session.isAuthenticated) {
+          toast.error("Please login to access the community hub");
+          navigate('/login');
+          return;
+        }
+
+        // Check subscription status
+        if (session.user?.id) {
+          const subscriptionData = await communityApi.payments.getSubscription(session.user.id);
+          if (!subscriptionData || subscriptionData.status !== 'active') {
+            toast.error("You need an active subscription to access the community hub");
+            navigate('/community');
+          }
+        }
+      } catch (error) {
+        console.error("Error checking access:", error);
+        toast.error("Error checking subscription status");
+        navigate('/community');
+      }
+    };
+
+    checkAccess();
+  }, [session, navigate]);
+
+  // If not authenticated, don't render anything (will redirect)
+  if (!session.isAuthenticated) {
+    return null;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col">
