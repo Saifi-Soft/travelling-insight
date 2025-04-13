@@ -11,24 +11,52 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const topicsApi = {
   getTrending: async (): Promise<Topic[]> => {
-    return await mongoApiService.queryDocuments('topics', {});
+    try {
+      console.log('Fetching trending topics...');
+      const topics = await mongoApiService.queryDocuments('topics', {});
+      console.log('Fetched topics:', topics);
+      return topics;
+    } catch (error) {
+      console.error('Error fetching trending topics:', error);
+      return [];
+    }
   }
 };
 
 const categoriesApi = {
   getAll: async (): Promise<Category[]> => {
-    return await mongoApiService.queryDocuments('categories', {});
+    try {
+      console.log('Fetching categories...');
+      const categories = await mongoApiService.queryDocuments('categories', {});
+      console.log('Fetched categories:', categories);
+      return categories;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
   }
 };
 
 const postsApi = {
   getTrending: async (): Promise<Post[]> => {
-    return await mongoApiService.queryDocuments('posts', {});
+    try {
+      console.log('Fetching trending posts...');
+      const posts = await mongoApiService.queryDocuments('posts', {});
+      console.log('Fetched posts:', posts);
+      return posts;
+    } catch (error) {
+      console.error('Error fetching trending posts:', error);
+      return [];
+    }
   },
   trackClick: async (id: string): Promise<void> => {
-    const post = await mongoApiService.getDocumentById('posts', id);
-    if (post) {
-      await mongoApiService.updateDocument('posts', id, { clicks: (post.clicks || 0) + 1 });
+    try {
+      const post = await mongoApiService.getDocumentById('posts', id);
+      if (post) {
+        await mongoApiService.updateDocument('posts', id, { clicks: (post.clicks || 0) + 1 });
+      }
+    } catch (error) {
+      console.error('Error tracking article click:', error);
     }
   }
 };
@@ -170,6 +198,7 @@ const TrendingTopics = () => {
     placeholderData: TRENDING_HASHTAGS,
     staleTime: 1000 * 60 * 5, // 5 minutes cache
     gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
+    retry: 3
   });
 
   const { 
@@ -181,6 +210,7 @@ const TrendingTopics = () => {
     placeholderData: CATEGORIES,
     staleTime: 1000 * 60 * 15, // 15 minutes cache
     gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
+    retry: 3
   });
 
   const { 
@@ -192,6 +222,7 @@ const TrendingTopics = () => {
     placeholderData: TRENDING_ARTICLES,
     staleTime: 1000 * 60 * 5, // 5 minutes cache
     gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
+    retry: 3
   });
 
   const trackArticleClick = async (articleId: string) => {
@@ -207,6 +238,12 @@ const TrendingTopics = () => {
   const displayHashtags = trendingHashtags || TRENDING_HASHTAGS;
   const displayCategories = categories || CATEGORIES;
   const displayArticles = trendingArticles || TRENDING_ARTICLES;
+
+  console.log('Rendering with data:', {
+    hashtags: displayHashtags?.length,
+    categories: displayCategories?.length,
+    articles: displayArticles?.length
+  });
 
   return (
     <section className="section">
@@ -226,7 +263,7 @@ const TrendingTopics = () => {
                       <Skeleton key={i} className="h-8 w-24 rounded-full" />
                     ))}
                   </div>
-                ) : (
+                ) : displayHashtags && displayHashtags.length > 0 ? (
                   <div className="flex flex-wrap gap-3">
                     {displayHashtags.map((tag) => (
                       <Link to={`/tags/${tag.slug}`} key={tag.id}>
@@ -243,6 +280,8 @@ const TrendingTopics = () => {
                       </Link>
                     ))}
                   </div>
+                ) : (
+                  <div className="py-4 text-center text-muted-foreground">No hashtags available</div>
                 )}
               </CardContent>
             </Card>
@@ -273,7 +312,7 @@ const TrendingTopics = () => {
                       </div>
                     </div>
                   ))
-                ) : (
+                ) : displayArticles && displayArticles.length > 0 ? (
                   displayArticles.slice(0, 3).map((relatedPost) => (
                     <Link 
                       to={`/blog/${relatedPost.id}`} 
@@ -298,6 +337,8 @@ const TrendingTopics = () => {
                       </div>
                     </Link>
                   ))
+                ) : (
+                  <div className="py-4 text-center text-muted-foreground">No articles available</div>
                 )}
               </CardContent>
             </Card>
@@ -321,7 +362,7 @@ const TrendingTopics = () => {
                     </CardContent>
                   </Card>
                 ))
-              ) : (
+              ) : displayCategories && displayCategories.length > 0 ? (
                 displayCategories.map((category) => (
                   <Link 
                     to={`/categories/${category.slug}`} 
@@ -348,6 +389,8 @@ const TrendingTopics = () => {
                     </Card>
                   </Link>
                 ))
+              ) : (
+                <div className="md:col-span-4 py-8 text-center text-muted-foreground">No categories available</div>
               )}
             </div>
           </div>
