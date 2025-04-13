@@ -42,6 +42,10 @@
     --color-footer: #065f46;
     --color-header: #ffffff;
     --color-card: #f8f9fa;
+    
+    /* Custom button colors */
+    --custom-blue: #3B82F6;
+    --custom-purple: #9b87f5;
   }
  
   .dark {
@@ -80,6 +84,10 @@
     --color-footer: #065f46;
     --color-header: #111827;
     --color-card: #374151;
+    
+    /* Custom button colors */
+    --custom-blue: #60A5FA;
+    --custom-purple: #A78BFA;
   }
 }
 
@@ -104,6 +112,34 @@
 @layer components {
   .container-custom {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Consistent section spacing */
+  section {
+    @apply py-16;
+  }
+  
+  /* Consistent heading spacing */
+  h1, h2, h3, h4, h5, h6 {
+    @apply mb-4;
+  }
+  
+  /* Consistent card spacing */
+  .card-content {
+    @apply p-6;
+  }
+  
+  /* Consistent button styling */
+  .btn-view-all {
+    @apply inline-flex items-center justify-center rounded-md border border-custom-green text-custom-green hover:bg-custom-green/10 px-4 py-2 text-sm font-medium transition-colors;
+  }
+  
+  .btn-load-more {
+    @apply inline-flex items-center justify-center rounded-md border border-blue-500 text-blue-500 hover:bg-blue-50 px-4 py-2 text-sm font-medium transition-colors;
+  }
+  
+  .btn-subscribe {
+    @apply inline-flex items-center justify-center rounded-full bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90 px-6 py-3 text-sm font-medium transition-colors;
   }
   
   .animate-fade-in {
@@ -192,6 +228,15 @@
   
   .btn-ghost-custom {
     @apply text-custom-green hover:bg-custom-green/10 transition-colors;
+  }
+  
+  /* Badge styles */
+  .badge-category {
+    @apply px-3 py-1.5 rounded-md text-white;
+  }
+  
+  .badge-tag {
+    @apply bg-custom-green/10 text-custom-green border border-custom-green/30 px-3 py-1.5 rounded-full;
   }
 }
 

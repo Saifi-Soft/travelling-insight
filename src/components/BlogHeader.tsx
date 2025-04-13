@@ -23,7 +23,7 @@ const BlogHeader = ({
   return (
     <>
       {/* Hero Banner with improved background and reduced opacity */}
-      <div className="bg-[url('https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center relative text-white py-20">
+      <div className="bg-[url('https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center relative text-white py-20 mb-8">
         <div className="absolute inset-0 bg-gradient-to-r from-custom-green/30 to-custom-green/20"></div>
         <div className="container-custom relative z-10">
           <div className="max-w-3xl mx-auto text-center">
@@ -40,7 +40,7 @@ const BlogHeader = ({
       </div>
       
       {/* Search and Filter */}
-      <div className="container-custom py-8">
+      <div className="container-custom pb-8">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="relative w-full md:w-1/3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-custom-green" />
@@ -63,7 +63,11 @@ const BlogHeader = ({
               <Badge 
                 key={category} 
                 variant={activeCategory === category ? "default" : "outline"}
-                className={`cursor-pointer ${activeCategory === category ? "" : "hover:bg-custom-green/10"}`}
+                className={`cursor-pointer py-1.5 px-3 ${
+                  category === "Culture" ? "bg-[#9b87f5] hover:bg-[#9b87f5]/90 text-white" : 
+                  category === "Beaches" ? "bg-blue-600 hover:bg-blue-700 text-white" : 
+                  activeCategory === category ? "" : "hover:bg-custom-green/10"
+                }`}
                 onClick={() => setActiveCategory(category)}
               >
                 {category}

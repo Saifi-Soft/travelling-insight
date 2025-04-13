@@ -18,7 +18,7 @@ const PostSidebar = ({ author, relatedPosts, popularTags }: PostSidebarProps) =>
       
       {/* Related Articles */}
       <div className="mb-8">
-        <h3 className="text-xl font-bold mb-4 text-custom-green">Related Articles</h3>
+        <h3 className="text-xl font-bold mb-6 text-custom-green">Related Articles</h3>
         <div className="space-y-6">
           {relatedPosts.map((relatedPost) => (
             <Link 
@@ -48,14 +48,17 @@ const PostSidebar = ({ author, relatedPosts, popularTags }: PostSidebarProps) =>
       
       {/* Popular Tags */}
       <div>
-        <h3 className="text-xl font-bold mb-4 text-custom-green">Popular Tags</h3>
+        <h3 className="text-xl font-bold mb-6 text-custom-green">Popular Tags</h3>
         <div className="flex flex-wrap gap-2">
           {popularTags.map((tag) => (
             <Link 
               to={`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}`} 
               key={tag}
             >
-              <Badge variant="outline" className="text-sm py-1 px-3 text-custom-green border-custom-green/30 hover:bg-custom-green/10">
+              <Badge 
+                variant="tag" 
+                className="text-sm py-1.5 px-3 cursor-pointer"
+              >
                 {tag}
               </Badge>
             </Link>

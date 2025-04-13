@@ -10,7 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-custom-green text-custom-green-light hover:bg-custom-green/90",
+        default: "bg-custom-green text-white hover:bg-custom-green/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
@@ -19,12 +19,16 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent text-custom-green hover:text-custom-green",
         link: "text-custom-green underline-offset-4 hover:underline",
+        blue: "bg-blue-500 text-white hover:bg-blue-600",
+        purple: "bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90",
+        subscribe: "bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90 rounded-full",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        xl: "h-12 rounded-md px-10 text-base",
       },
     },
     defaultVariants: {

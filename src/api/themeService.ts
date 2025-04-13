@@ -21,13 +21,14 @@ export async function saveThemeSettings(userId: string, theme: any) {
     if (existingSettings) {
       await collections[COLLECTIONS.USER_SETTINGS]?.updateOne(
         { userId },
-        { $set: { theme } }
+        { $set: { theme, updatedAt: new Date().toISOString() } }
       );
     } else {
       await collections[COLLECTIONS.USER_SETTINGS]?.insertOne({
         userId,
         theme,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       });
     }
     

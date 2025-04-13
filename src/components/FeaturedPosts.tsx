@@ -17,7 +17,7 @@ const FeaturedPosts = () => {
   });
 
   return (
-    <section className="section bg-gradient-to-b from-custom-green/10 to-background">
+    <section className="py-16 bg-gradient-to-b from-custom-green/10 to-background">
       <div className="container-custom">
         <div className="flex flex-col items-center text-center mb-12">
           <span className="bg-custom-green/20 text-custom-green px-4 py-1 rounded-full text-sm font-medium mb-3">Discover</span>
@@ -119,8 +119,8 @@ const FeaturedPosts = () => {
         
         <div className="mt-12 text-center">
           <Link to="/blog">
-            <Button variant="outline" className="border-custom-green text-custom-green hover:bg-custom-green/10 group">
-              View All Articles
+            <Button variant="outline" className="border-custom-green text-custom-green hover:bg-custom-green/10 group flex items-center">
+              <span>View All Articles</span>
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
