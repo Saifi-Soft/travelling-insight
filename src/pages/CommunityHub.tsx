@@ -17,6 +17,7 @@ import { communityApi } from '@/api/communityApiService';
 import { mongoApiService } from '@/api/mongoApiService';
 import CommunityPosts from '@/components/community/CommunityPosts';
 import DiscoverContent from '@/components/community/DiscoverContent';
+import CreatePost from '@/components/community/CreatePost';
 
 const CommunityHub = () => {
   const [activeTab, setActiveTab] = useState('feed');
@@ -74,6 +75,7 @@ const CommunityHub = () => {
                 {[
                   { name: 'Feed', icon: Home, tab: 'feed' },
                   { name: 'Discover', icon: Compass, tab: 'discover' },
+                  { name: 'Create Post', icon: PlusSquare, tab: 'create' },
                   { name: 'Messages', icon: MessageCircle, tab: 'messages' },
                   { name: 'Profile', icon: User, tab: 'profile' },
                 ].map((item) => (
@@ -91,13 +93,6 @@ const CommunityHub = () => {
                   </button>
                 ))}
               </nav>
-
-              <Button 
-                variant="default" 
-                className="w-full mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                <PlusSquare className="mr-2" /> Create Post
-              </Button>
             </div>
           </div>
 
@@ -106,6 +101,7 @@ const CommunityHub = () => {
             <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 rounded-xl p-6">
               {activeTab === 'feed' && <CommunityPosts />}
               {activeTab === 'discover' && <DiscoverContent />}
+              {activeTab === 'create' && <CreatePost />}
               {activeTab === 'messages' && <div>Messages Coming Soon</div>}
               {activeTab === 'profile' && <div>Profile Coming Soon</div>}
             </div>
@@ -117,22 +113,19 @@ const CommunityHub = () => {
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-slate-900/80 backdrop-blur-lg border-t border-slate-700 py-3 z-50">
         <div className="flex justify-around">
           {[
-            { icon: Home, tab: 'feed' },
-            { icon: Compass, tab: 'discover' },
-            { icon: PlusSquare, tab: 'create', special: true },
-            { icon: Heart, tab: 'activity' },
-            { icon: User, tab: 'profile' },
+            { icon: Home, tab: 'feed', isActive: activeTab === 'feed' },
+            { icon: Compass, tab: 'discover', isActive: activeTab === 'discover' },
+            { icon: PlusSquare, tab: 'create', isActive: activeTab === 'create' },
+            { icon: MessageCircle, tab: 'messages', isActive: activeTab === 'messages' },
+            { icon: User, tab: 'profile', isActive: activeTab === 'profile' },
           ].map((item) => (
             <button
               key={item.tab}
-              onClick={() => item.special 
-                ? toast.info('Create post feature coming soon!') 
-                : setActiveTab(item.tab)
-              }
+              onClick={() => setActiveTab(item.tab)}
               className={`rounded-full p-2 transition-colors ${
-                item.special 
+                item.tab === 'create' 
                   ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' 
-                  : activeTab === item.tab 
+                  : item.isActive
                     ? 'text-purple-400' 
                     : 'text-slate-400 hover:text-slate-200'
               }`}

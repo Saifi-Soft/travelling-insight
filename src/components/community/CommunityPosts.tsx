@@ -1,13 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
-import { ThumbsUp, MessageCircle, Share2, Image, MapPin } from 'lucide-react';
+import { ThumbsUp, MessageCircle, Share2, MapPin } from 'lucide-react';
 import { communityPostsApi } from '@/api/communityPostsService';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -25,7 +24,6 @@ interface PostProps {
 }
 
 const CommunityPosts = () => {
-  const [newPostContent, setNewPostContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -36,23 +34,6 @@ const CommunityPosts = () => {
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ['communityPosts'],
     queryFn: communityPostsApi.getAllPosts,
-  });
-
-  // Create a new post
-  const createPostMutation = useMutation({
-    mutationFn: (postData: Omit<PostProps, 'createdAt' | 'likes' | 'comments'>) => 
-      communityPostsApi.createPost(postData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['communityPosts'] });
-      setNewPostContent('');
-      toast.success('Post created successfully!');
-      setIsSubmitting(false);
-    },
-    onError: (error) => {
-      console.error('Error creating post:', error);
-      toast.error('Failed to create post. Please try again.');
-      setIsSubmitting(false);
-    }
   });
 
   // Like a post
@@ -73,23 +54,6 @@ const CommunityPosts = () => {
     }
   });
 
-  const handleSubmitPost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPostContent.trim()) {
-      toast.error('Post content cannot be empty');
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    createPostMutation.mutate({
-      userId,
-      userName,
-      content: newPostContent,
-      images: []
-    });
-  };
-
   const handleLikePost = (postId: string) => {
     if (!userId) {
       toast.error('You must be logged in to like posts');
@@ -101,48 +65,6 @@ const CommunityPosts = () => {
 
   return (
     <div className="space-y-6">
-      {/* Create new post section */}
-      <Card>
-        <CardHeader className="pb-3">
-          <h3 className="text-lg font-semibold">Create a Post</h3>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmitPost}>
-            <div className="flex items-start gap-3">
-              <Avatar className="h-10 w-10">
-                <div className="bg-primary text-white h-full w-full flex items-center justify-center rounded-full">
-                  {userName.charAt(0)}
-                </div>
-              </Avatar>
-              <div className="flex-1">
-                <Textarea 
-                  placeholder="What's on your mind?" 
-                  className="min-h-[100px]"
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
-            </div>
-            <div className="flex justify-between items-center mt-4">
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" type="button">
-                  <Image className="h-4 w-4 mr-2" />
-                  Photo
-                </Button>
-                <Button variant="outline" size="sm" type="button">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Location
-                </Button>
-              </div>
-              <Button type="submit" disabled={isSubmitting || !newPostContent.trim()}>
-                {isSubmitting ? 'Posting...' : 'Post'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
       {/* Posts feed */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Community Posts</h2>
