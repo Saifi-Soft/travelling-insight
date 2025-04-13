@@ -196,110 +196,112 @@ const AdminDashboard = () => {
         </div>
         
         {/* Dashboard Tabs */}
-        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-white border border-gray-200 p-1 rounded-md">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="ads">Ads</TabsTrigger>
-            <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-            <TabsTrigger value="community">Community</TabsTrigger>
-          </TabsList>
-          
-          <div className="mt-6">
-            <TabsContent value="overview" className="mt-0">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>Dashboard Overview</CardTitle>
-                  <CardDescription>
-                    Summary of your blog performance and key metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[400px]">
-                    <AnalyticsDashboard />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+        <div className="w-full">
+          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="bg-white border border-gray-200 p-1 rounded-md">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="content">Content</TabsTrigger>
+              <TabsTrigger value="ads">Ads</TabsTrigger>
+              <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+              <TabsTrigger value="community">Community</TabsTrigger>
+            </TabsList>
             
-            <TabsContent value="analytics" className="mt-0">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>Detailed Analytics</CardTitle>
-                  <CardDescription>
-                    Complete analytics and performance data
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="min-h-[400px]">
-                    <AnalyticsDashboard />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="content" className="mt-0">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>Content Management</CardTitle>
-                  <CardDescription>
-                    Manage posts, categories, and topics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <PostsManagement />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="ads" className="mt-0">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>Ad Management</CardTitle>
-                  <CardDescription>
-                    Manage ad placements and campaigns
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <AdsManagement />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="subscriptions" className="mt-0">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>Subscription Management</CardTitle>
-                  <CardDescription>
-                    Manage subscription plans and subscribers
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="min-h-[400px]">
-                    <SubscriptionManagement />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="community" className="mt-0">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>Community Management</CardTitle>
-                  <CardDescription>
-                    Manage community users, groups, and events
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="min-h-[400px]">
-                    <CommunityManagement />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </div>
-        </Tabs>
+            <div className="mt-6">
+              <TabsContent value="overview" className="mt-0">
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Dashboard Overview</CardTitle>
+                    <CardDescription>
+                      Summary of your blog performance and key metrics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[400px]">
+                      <AnalyticsDashboard />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="analytics" className="mt-0">
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Detailed Analytics</CardTitle>
+                    <CardDescription>
+                      Complete analytics and performance data
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="min-h-[400px]">
+                      <AnalyticsDashboard />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="content" className="mt-0">
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Content Management</CardTitle>
+                    <CardDescription>
+                      Manage posts, categories, and topics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <PostsManagement />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="ads" className="mt-0">
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Ad Management</CardTitle>
+                    <CardDescription>
+                      Manage ad placements and campaigns
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <AdsManagement />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="subscriptions" className="mt-0">
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Subscription Management</CardTitle>
+                    <CardDescription>
+                      Manage subscription plans and subscribers
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="min-h-[400px]">
+                      <SubscriptionManagement />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="community" className="mt-0">
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Community Management</CardTitle>
+                    <CardDescription>
+                      Manage community users, groups, and events
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="min-h-[400px]">
+                      <CommunityManagement />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
       </div>
     </AdminLayout>
   );

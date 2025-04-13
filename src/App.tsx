@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -236,9 +237,9 @@ const App = () => {
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/login" element={<Login />} />
             
-            {/* Admin Routes - Updated for proper authentication flow */}
-            <Route path="/admin" element={<Admin />} /> {/* This now redirects to login */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+            {/* Admin Routes - Properly configured for authentication flow */}
+            <Route path="/admin" element={<Admin />} /> {/* This now redirects to login first */}
+            <Route path="/admin/login" element={<AdminLogin />} /> {/* This handles login and checks if already logged in */}
             <Route path="/admin/dashboard" element={<AdminAuthGuard><AdminDashboard /></AdminAuthGuard>} />
             <Route path="/admin/posts" element={<AdminAuthGuard><AdminPosts /></AdminAuthGuard>} />
             <Route path="/admin/posts/create" element={<AdminAuthGuard><AdminCreatePost /></AdminAuthGuard>} />

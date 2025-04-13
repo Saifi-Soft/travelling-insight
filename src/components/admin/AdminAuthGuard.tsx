@@ -19,7 +19,6 @@ const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
       try {
         // Check if the user is authenticated
         const authStatus = localStorage.getItem('adminAuth') === 'true';
-        setIsAuthenticated(authStatus);
         
         if (!authStatus) {
           toast({
@@ -28,7 +27,10 @@ const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
             variant: "destructive",
           });
           navigate('/admin/login');
+          return;
         }
+        
+        setIsAuthenticated(true);
       } catch (error) {
         console.error("Auth check error:", error);
         navigate('/admin/login');

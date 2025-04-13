@@ -15,10 +15,13 @@ const AdminLogin = () => {
 
   // Check if user is already logged in
   useEffect(() => {
-    const authStatus = localStorage.getItem('adminAuth') === 'true';
-    if (authStatus) {
-      navigate('/admin/dashboard');
-    }
+    const checkAuth = () => {
+      const authStatus = localStorage.getItem('adminAuth') === 'true';
+      if (authStatus) {
+        navigate('/admin/dashboard');
+      }
+    };
+    checkAuth();
   }, [navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
