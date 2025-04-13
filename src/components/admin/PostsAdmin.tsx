@@ -25,7 +25,8 @@ const PostsAdmin = () => {
       // Ensure each post has an id (required by Post type in common.d.ts)
       return fetchedPosts.map(post => ({
         ...post,
-        id: post.id || post._id || '', // Ensure id is never undefined
+        // We need to check for the post's id property directly since _id doesn't exist in the Post type
+        id: post.id || (post as any)._id || '', // Use type assertion to access _id
       })) as Post[];
     },
   });
