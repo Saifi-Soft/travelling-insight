@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from "sonner";
 import Navbar from '@/components/Navbar';
@@ -101,12 +100,9 @@ const DESTINATIONS: Destination[] = [
 ];
 
 const Destinations = () => {
-  // Get the featured destinations
   const featuredDestinations = DESTINATIONS.filter(dest => dest.featured);
-  // Get the rest of the destinations
   const otherDestinations = DESTINATIONS.filter(dest => !dest.featured);
-  
-  // Function to handle button clicks that aren't fully implemented yet
+
   const handleFeatureNotAvailable = (featureName: string) => {
     toast(`The "${featureName}" feature will be available soon!`, {
       description: "We're working hard to bring this functionality to you.",
@@ -117,7 +113,6 @@ const Destinations = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        {/* Hero Section */}
         <section className="relative py-24 overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1121&q=80')] bg-cover bg-center opacity-20"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background"></div>
@@ -154,14 +149,12 @@ const Destinations = () => {
           </div>
         </section>
         
-        {/* First ad placed right after the hero section */}
         <div className="py-6 bg-gradient-to-b from-muted/30 to-background">
           <div className="container mx-auto">
             <HeaderAd className="max-w-5xl mx-auto" />
           </div>
         </div>
         
-        {/* Featured Destinations */}
         <section className="py-16 bg-muted/30">
           <div className="container-custom">
             <div className="flex flex-col items-center text-center mb-12">
@@ -212,7 +205,6 @@ const Destinations = () => {
           </div>
         </section>
         
-        {/* All Destinations */}
         <section className="py-16">
           <div className="container-custom">
             <div className="flex flex-col items-center text-center mb-12">
@@ -259,14 +251,12 @@ const Destinations = () => {
           </div>
         </section>
         
-        {/* Second ad placed before CTA section */}
         <div className="py-6 bg-gradient-to-t from-custom-green/10 to-background mb-8">
           <div className="container mx-auto">
             <FooterAd className="max-w-5xl mx-auto" />
           </div>
         </div>
         
-        {/* CTA Section */}
         <section className="py-16 bg-custom-green/10">
           <div className="container-custom">
             <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -280,9 +270,9 @@ const Destinations = () => {
                 <Button 
                   size="lg" 
                   className="bg-custom-green hover:bg-custom-green/90 text-custom-green-light"
-                  onClick={() => handleFeatureNotAvailable("Get Travel Advice")}
+                  asChild
                 >
-                  <Info className="mr-2 h-5 w-5" /> Get Travel Advice
+                  <Link to="/travel/planner">Plan Your Trip</Link>
                 </Button>
               </div>
             </div>
