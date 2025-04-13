@@ -32,12 +32,12 @@ const defaultLightColors: ThemeColors = {
 };
 
 const defaultDarkColors: ThemeColors = {
-  background: '#1f2937',
-  foreground: '#f8f9fa',
-  primary: '#065f46', // custom-green
-  footer: '#065f46', // custom-green
-  header: '#111827',
-  card: '#374151',
+  background: '#1A1F2C',  // Dark purple for dark mode
+  foreground: '#f8f9fa',  // Light text for dark mode
+  primary: '#10B981',     // Emerald green for primary actions in dark mode
+  footer: '#222222',      // Dark footer
+  header: '#222222',      // Dark header
+  card: '#2D3748',        // Dark card background
 };
 
 // Create a context with a default undefined value
@@ -62,7 +62,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedLightColors) {
       try {
         const parsedLightColors = JSON.parse(savedLightColors);
-        // Ensure custom green color is always maintained
+        // Preserve custom green for light mode
         parsedLightColors.primary = '#065f46';
         parsedLightColors.footer = '#065f46';
         setLightThemeColors(parsedLightColors);
@@ -76,9 +76,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedDarkColors) {
       try {
         const parsedDarkColors = JSON.parse(savedDarkColors);
-        // Ensure custom green color is always maintained
-        parsedDarkColors.primary = '#065f46';
-        parsedDarkColors.footer = '#065f46';
+        // Allow dark mode to have different colors
         setDarkThemeColors(parsedDarkColors);
       } catch (e) {
         console.error("Error parsing dark theme colors:", e);
@@ -93,13 +91,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedTheme === 'dark' || 
           (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         const parsedDarkColors = savedDarkColors ? JSON.parse(savedDarkColors) : defaultDarkColors;
-        // Ensure custom green color
-        parsedDarkColors.primary = '#065f46';
-        parsedDarkColors.footer = '#065f46';
         setThemeColors(parsedDarkColors);
       } else {
         const parsedLightColors = savedLightColors ? JSON.parse(savedLightColors) : defaultLightColors;
-        // Ensure custom green color
+        // Preserve custom green for light mode
         parsedLightColors.primary = '#065f46';
         parsedLightColors.footer = '#065f46';
         setThemeColors(parsedLightColors);
@@ -170,12 +165,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Update theme color for specific mode (light/dark)
   const updateThemeColor = (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => {
-    // For primary and footer, always enforce custom-green color
-    if (colorType === 'primary' || colorType === 'footer') {
-      value = '#065f46';
-    }
-    
     if (mode === 'light') {
+      // For light mode, enforce custom-green color for primary and footer
+      if (colorType === 'primary' || colorType === 'footer') {
+        value = '#065f46';
+      }
+      
       setLightThemeColors(prev => ({
         ...prev,
         [colorType]: value
@@ -190,6 +185,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         document.documentElement.style.setProperty(`--color-${colorType}`, value);
       }
     } else {
+      // For dark mode, allow any color
       setDarkThemeColors(prev => ({
         ...prev,
         [colorType]: value

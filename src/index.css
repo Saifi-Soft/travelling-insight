@@ -78,12 +78,12 @@
     --ring: 224.3 76.5% 48%;
 
     /* Custom theme variables for dark mode */
-    --color-background: #1f2937;
+    --color-background: #1A1F2C;
     --color-foreground: #f8f9fa;
-    --color-primary: #065f46;
-    --color-footer: #065f46;
-    --color-header: #111827;
-    --color-card: #374151;
+    --color-primary: #10B981;
+    --color-footer: #222222;
+    --color-header: #222222;
+    --color-card: #2D3748;
     
     /* Custom button colors */
     --custom-blue: #60A5FA;

@@ -1,3 +1,4 @@
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -32,6 +33,7 @@ const postsApi = {
   }
 };
 
+// Fallback data
 const TRENDING_HASHTAGS: Topic[] = [
   { id: "1", name: "SoloTravel", count: 1243, slug: "solo-travel" },
   { id: "2", name: "VanLife", count: 986, slug: "van-life" },
@@ -165,7 +167,9 @@ const TrendingTopics = () => {
   } = useQuery({
     queryKey: ['trendingHashtags'],
     queryFn: topicsApi.getTrending,
-    placeholderData: () => TRENDING_HASHTAGS,
+    placeholderData: TRENDING_HASHTAGS,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
   });
 
   const { 
@@ -174,7 +178,9 @@ const TrendingTopics = () => {
   } = useQuery({
     queryKey: ['categories'],
     queryFn: categoriesApi.getAll,
-    placeholderData: () => CATEGORIES,
+    placeholderData: CATEGORIES,
+    staleTime: 1000 * 60 * 15, // 15 minutes cache
+    gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
   });
 
   const { 
@@ -183,7 +189,9 @@ const TrendingTopics = () => {
   } = useQuery({
     queryKey: ['trendingArticles'],
     queryFn: postsApi.getTrending,
-    placeholderData: () => TRENDING_ARTICLES,
+    placeholderData: TRENDING_ARTICLES,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
   });
 
   const trackArticleClick = async (articleId: string) => {
@@ -195,17 +203,22 @@ const TrendingTopics = () => {
     }
   };
 
+  // Setup initial data to avoid layout shifts
+  const displayHashtags = trendingHashtags || TRENDING_HASHTAGS;
+  const displayCategories = categories || CATEGORIES;
+  const displayArticles = trendingArticles || TRENDING_ARTICLES;
+
   return (
     <section className="section">
       <div className="container-custom">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
             <div className="flex items-center mb-6">
-              <TrendingUp className="h-6 w-6 text-custom-green mr-2" />
-              <h2 className="text-2xl font-bold text-custom-green">Trending Hashtags</h2>
+              <TrendingUp className="h-6 w-6 text-theme-primary mr-2" />
+              <h2 className="text-2xl font-bold text-theme-primary">Trending Hashtags</h2>
             </div>
             
-            <Card className="overflow-hidden border-custom-green/10 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80">
+            <Card className="overflow-hidden border-theme-primary/10 shadow-lg bg-theme-card/80 backdrop-blur-sm">
               <CardContent className="p-6">
                 {isHashtagsLoading ? (
                   <div className="flex flex-wrap gap-3">
@@ -215,15 +228,15 @@ const TrendingTopics = () => {
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-3">
-                    {trendingHashtags?.map((tag) => (
+                    {displayHashtags.map((tag) => (
                       <Link to={`/tags/${tag.slug}`} key={tag.id}>
                         <Badge 
                           variant="outline" 
-                          className="text-sm py-2 px-3 border-custom-green/30 hover:bg-custom-green/10 
-                          transition-colors hover:border-custom-green/50 flex items-center gap-1.5"
+                          className="text-sm py-2 px-3 border-theme-primary/30 hover:bg-theme-primary/10 
+                          transition-colors hover:border-theme-primary/50 flex items-center gap-1.5"
                         >
-                          <span className="text-custom-green font-medium">#{tag.name}</span>
-                          <span className="ml-1.5 bg-custom-green/20 text-custom-green px-1.5 py-0.5 rounded-md text-xs">
+                          <span className="text-theme-primary font-medium">#{tag.name}</span>
+                          <span className="ml-1.5 bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded-md text-xs">
                             {tag.count}
                           </span>
                         </Badge>
@@ -238,17 +251,17 @@ const TrendingTopics = () => {
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
-                <Flame className="h-6 w-6 text-custom-green mr-2" />
-                <h2 className="text-2xl font-bold text-custom-green">Trending Articles</h2>
+                <Flame className="h-6 w-6 text-theme-primary mr-2" />
+                <h2 className="text-2xl font-bold text-theme-primary">Trending Articles</h2>
               </div>
-              <Button variant="ghost" size="sm" className="text-custom-green flex items-center gap-1" asChild>
+              <Button variant="ghost" size="sm" className="text-theme-primary flex items-center gap-1" asChild>
                 <Link to="/blog?trending=true">
                   View All <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
             </div>
             
-            <Card className="overflow-hidden border-custom-green/10 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80">
+            <Card className="overflow-hidden border-theme-primary/10 shadow-lg bg-theme-card/80 backdrop-blur-sm">
               <CardContent className="p-6 space-y-4">
                 {isArticlesLoading ? (
                   Array(3).fill(0).map((_, i) => (
@@ -261,7 +274,7 @@ const TrendingTopics = () => {
                     </div>
                   ))
                 ) : (
-                  trendingArticles?.slice(0, 3).map((relatedPost) => (
+                  displayArticles.slice(0, 3).map((relatedPost) => (
                     <Link 
                       to={`/blog/${relatedPost.id}`} 
                       key={relatedPost.id}
@@ -276,7 +289,7 @@ const TrendingTopics = () => {
                         />
                       </div>
                       <div>
-                        <h3 className="font-medium text-sm line-clamp-2 group-hover:text-custom-green transition-colors">
+                        <h3 className="font-medium text-sm line-clamp-2 group-hover:text-theme-primary transition-colors">
                           {relatedPost.title}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -292,8 +305,8 @@ const TrendingTopics = () => {
           
           <div className="md:col-span-2 mt-6">
             <div className="flex items-center mb-6">
-              <Globe className="h-6 w-6 text-custom-green mr-2" />
-              <h2 className="text-2xl font-bold text-custom-green">Explore Categories</h2>
+              <Globe className="h-6 w-6 text-theme-primary mr-2" />
+              <h2 className="text-2xl font-bold text-theme-primary">Explore Categories</h2>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -309,13 +322,13 @@ const TrendingTopics = () => {
                   </Card>
                 ))
               ) : (
-                categories?.map((category) => (
+                displayCategories.map((category) => (
                   <Link 
                     to={`/categories/${category.slug}`} 
                     key={category.id}
                     className="group"
                   >
-                    <Card className="overflow-hidden border-custom-green/10 hover:border-custom-green/30 transition-colors h-full shadow-md">
+                    <Card className="overflow-hidden border-theme-primary/10 hover:border-theme-primary/30 transition-colors h-full shadow-md">
                       <div className="h-32 overflow-hidden">
                         <img 
                           src={category.image}
@@ -325,7 +338,7 @@ const TrendingTopics = () => {
                       </div>
                       <CardContent className="p-4 flex flex-col items-center text-center">
                         <div className="text-2xl mb-2">{category.icon}</div>
-                        <h3 className="font-medium group-hover:text-custom-green transition-colors">
+                        <h3 className="font-medium group-hover:text-theme-primary transition-colors">
                           {category.name}
                         </h3>
                         <p className="text-xs text-muted-foreground">

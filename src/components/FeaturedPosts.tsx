@@ -8,128 +8,6 @@ import { postsApi } from '@/api/apiService';
 import { Post } from '@/types/common';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const FeaturedPosts = () => {
-  const { data: featuredPosts, isLoading, error } = useQuery({
-    queryKey: ['featuredPosts'],
-    queryFn: postsApi.getFeatured,
-    // Use hardcoded data as fallback if API call fails
-    placeholderData: FEATURED_POSTS,
-  });
-
-  return (
-    <section className="py-16 bg-gradient-to-b from-custom-green/10 to-background">
-      <div className="container-custom">
-        <div className="flex flex-col items-center text-center mb-12">
-          <span className="bg-custom-green/20 text-custom-green px-4 py-1 rounded-full text-sm font-medium mb-3">Discover</span>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-primary">Featured Articles</h2>
-          <p className="text-muted-foreground max-w-2xl">
-            Explore our handpicked selection of inspiring travel stories, guides, and adventures from around the world
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {isLoading ? (
-            // Skeleton loader while fetching data
-            Array(3).fill(0).map((_, index) => (
-              <Card key={index} className="overflow-hidden border-none shadow-lg h-full">
-                <div className="h-60">
-                  <Skeleton className="h-full w-full" />
-                </div>
-                <CardContent className="pt-6">
-                  <Skeleton className="h-6 w-full mb-2" />
-                  <Skeleton className="h-4 w-full mb-1" />
-                  <Skeleton className="h-4 w-3/4 mb-4" />
-                  <div className="flex items-center space-x-3 mb-4">
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t border-border pt-4">
-                  <div className="flex items-center justify-between w-full">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                </CardFooter>
-              </Card>
-            ))
-          ) : error ? (
-            <div className="col-span-3 text-center text-red-500">
-              Failed to load featured posts. Please try again later.
-            </div>
-          ) : (
-            featuredPosts?.map((post) => (
-              <Link to={`/blog/${post.id}`} key={post.id} className="group">
-                <Card className="overflow-hidden border-none shadow-lg h-full card-hover bg-white dark:bg-zinc-900">
-                  <div className="relative h-60 overflow-hidden">
-                    <img 
-                      src={post.coverImage} 
-                      alt={post.title}
-                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-4 left-4 bg-custom-green text-white text-xs font-medium px-3 py-1.5 rounded-full">
-                      {post.category}
-                    </div>
-                  </div>
-                  
-                  <CardContent className="pt-6">
-                    <div className="mb-4">
-                      <h3 className="text-xl font-semibold line-clamp-2 mb-2 group-hover:text-custom-green transition-colors">
-                        {post.title}
-                      </h3>
-                      <p className="text-muted-foreground line-clamp-3">
-                        {post.excerpt}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 mb-4">
-                      <img 
-                        src={post.author.avatar} 
-                        alt={post.author.name}
-                        className="w-8 h-8 rounded-full object-cover ring-2 ring-custom-green/20"
-                      />
-                      <div>
-                        <p className="text-sm font-medium">{post.author.name}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="border-t border-border pt-4 text-sm text-muted-foreground">
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4 text-custom-green" />
-                        <span>{post.date} • {post.readTime}</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center space-x-1">
-                          <Heart className="h-4 w-4 text-custom-green" />
-                          <span>{post.likes}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <MessageSquare className="h-4 w-4 text-custom-green" />
-                          <span>{post.comments}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </Link>
-            ))
-          )}
-        </div>
-        
-        <div className="mt-12 text-center">
-          <Link to="/blog">
-            <Button variant="outline" className="border-custom-green text-custom-green hover:bg-custom-green/10 group flex items-center">
-              <span>View All Articles</span>
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-};
-
 // Fallback data in case API fails
 const FEATURED_POSTS: Post[] = [
   {
@@ -178,5 +56,128 @@ const FEATURED_POSTS: Post[] = [
     comments: 83
   }
 ];
+
+const FeaturedPosts = () => {
+  const { data: featuredPosts, isLoading } = useQuery({
+    queryKey: ['featuredPosts'],
+    queryFn: postsApi.getFeatured,
+    placeholderData: FEATURED_POSTS,
+    staleTime: 1000 * 60 * 10, // 10 minutes cache
+    gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
+    refetchOnWindowFocus: false
+  });
+
+  // Always have data to render, use placeholder data before real data loads
+  const postsToDisplay = featuredPosts || FEATURED_POSTS;
+
+  return (
+    <section className="py-16 bg-gradient-to-b from-theme-primary/10 to-background">
+      <div className="container-custom">
+        <div className="flex flex-col items-center text-center mb-12">
+          <span className="bg-theme-primary/20 text-theme-primary px-4 py-1 rounded-full text-sm font-medium mb-3">Discover</span>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-primary">Featured Articles</h2>
+          <p className="text-muted-foreground max-w-2xl">
+            Explore our handpicked selection of inspiring travel stories, guides, and adventures from around the world
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {isLoading ? (
+            // Skeleton loader while fetching data
+            Array(3).fill(0).map((_, index) => (
+              <Card key={index} className="overflow-hidden border-none shadow-lg h-full card-hover bg-theme-card">
+                <div className="h-60">
+                  <Skeleton className="h-full w-full" />
+                </div>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-6 w-full mb-2" />
+                  <Skeleton className="h-4 w-full mb-1" />
+                  <Skeleton className="h-4 w-3/4 mb-4" />
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </CardContent>
+                <CardFooter className="border-t border-border pt-4">
+                  <div className="flex items-center justify-between w-full">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                </CardFooter>
+              </Card>
+            ))
+          ) : (
+            postsToDisplay.map((post) => (
+              <Link to={`/blog/${post.id}`} key={post.id} className="group">
+                <Card className="overflow-hidden border-none shadow-lg h-full card-hover bg-theme-card">
+                  <div className="relative h-60 overflow-hidden">
+                    <img 
+                      src={post.coverImage} 
+                      alt={post.title}
+                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-4 left-4 bg-theme-primary text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                      {post.category}
+                    </div>
+                  </div>
+                  
+                  <CardContent className="pt-6">
+                    <div className="mb-4">
+                      <h3 className="text-xl font-semibold line-clamp-2 mb-2 group-hover:text-theme-primary transition-colors">
+                        {post.title}
+                      </h3>
+                      <p className="text-muted-foreground line-clamp-3">
+                        {post.excerpt}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 mb-4">
+                      <img 
+                        src={post.author.avatar} 
+                        alt={post.author.name}
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-theme-primary/20"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{post.author.name}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                  
+                  <CardFooter className="border-t border-border pt-4 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-4 w-4 text-theme-primary" />
+                        <span>{post.date} • {post.readTime}</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-1">
+                          <Heart className="h-4 w-4 text-theme-primary" />
+                          <span>{post.likes}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <MessageSquare className="h-4 w-4 text-theme-primary" />
+                          <span>{post.comments}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardFooter>
+                </Card>
+              </Link>
+            ))
+          )}
+        </div>
+        
+        <div className="mt-12 text-center">
+          <Link to="/blog">
+            <Button variant="outline" className="border-theme-primary text-theme-primary hover:bg-theme-primary/10 group flex items-center">
+              <span>View All Articles</span>
+              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
 
 export default FeaturedPosts;

@@ -7,17 +7,7 @@ export async function saveThemeSettings(userId: string, theme: any) {
     const { collections } = await connectToDatabase();
     const existingSettings = await collections[COLLECTIONS.USER_SETTINGS]?.findOne({ userId });
     
-    // Ensure theme colors are consistent with the custom green
-    if (theme.lightThemeColors) {
-      theme.lightThemeColors.primary = '#065f46';
-      theme.lightThemeColors.footer = '#065f46';
-    }
-    
-    if (theme.darkThemeColors) {
-      theme.darkThemeColors.primary = '#065f46';
-      theme.darkThemeColors.footer = '#065f46';
-    }
-    
+    // Preserve color scheme settings for both light and dark modes separately
     if (existingSettings) {
       await collections[COLLECTIONS.USER_SETTINGS]?.updateOne(
         { userId },
@@ -45,17 +35,6 @@ export async function getThemeSettings(userId: string) {
     const settings = await collections[COLLECTIONS.USER_SETTINGS]?.findOne({ userId });
     
     if (settings?.theme) {
-      // Ensure consistency when retrieving theme settings
-      if (settings.theme.lightThemeColors) {
-        settings.theme.lightThemeColors.primary = '#065f46';
-        settings.theme.lightThemeColors.footer = '#065f46';
-      }
-      
-      if (settings.theme.darkThemeColors) {
-        settings.theme.darkThemeColors.primary = '#065f46';
-        settings.theme.darkThemeColors.footer = '#065f46';
-      }
-      
       return settings.theme;
     } else {
       // Return default theme settings if not found
@@ -70,12 +49,12 @@ export async function getThemeSettings(userId: string) {
           card: '#f8f9fa',
         },
         darkThemeColors: {
-          background: '#1f2937',
-          foreground: '#f8f9fa',
-          primary: '#065f46', // custom-green
-          footer: '#065f46', // custom-green
-          header: '#111827',
-          card: '#374151',
+          background: '#1A1F2C',  // Dark purple for dark mode
+          foreground: '#f8f9fa',  // Light text for dark mode
+          primary: '#10B981',     // Emerald green for primary actions in dark mode
+          footer: '#222222',      // Dark footer
+          header: '#222222',      // Dark header
+          card: '#2D3748',        // Dark card background
         }
       };
     }
