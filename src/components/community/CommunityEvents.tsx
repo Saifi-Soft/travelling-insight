@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, MapPin, Users } from 'lucide-react';
@@ -170,7 +171,7 @@ const CommunityEvents = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {upcomingEvents.map((event, index) => (
-            <EventCard key={event.id || index} event={event} />
+            <EventCard key={event._id || event.id || index} event={event} />
           ))}
         </div>
       )}
@@ -202,7 +203,12 @@ const EventCard = ({ event }: { event: CommunityEvent }) => {
         return;
       }
       
-      const isAttending = event.attendees?.some(attendee => attendee.id === userId);
+      const isAttending = event.attendees?.some(attendee => {
+        if (typeof attendee === 'string') {
+          return attendee === userId;
+        }
+        return attendee.id === userId;
+      });
       
       if (isAttending) {
         toast.info("You're already attending this event");
@@ -211,8 +217,11 @@ const EventCard = ({ event }: { event: CommunityEvent }) => {
       
       const updatedAttendees = [...(event.attendees || []), { id: userId, name: userName }];
       
-      if (event.id) {
-        await mongoApiService.updateDocument('communityEvents', event.id, {
+      // Use either _id or id property, whichever is available
+      const eventId = event._id || event.id;
+      
+      if (eventId) {
+        await mongoApiService.updateDocument('communityEvents', eventId, {
           attendees: updatedAttendees
         });
         toast.success("You're now attending this event!");

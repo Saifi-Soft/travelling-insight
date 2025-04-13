@@ -1,3 +1,4 @@
+
 // Define MongoDB-like operators for querying
 export interface MongoOperators {
   $gt?: any;
@@ -129,19 +130,21 @@ export interface TravelGroup {
 }
 
 export interface CommunityEvent {
-  id: string;
+  id?: string; // Make id optional as MongoDB provides _id
+  _id?: string; // Add _id for MongoDB compatibility
   title: string;
   description: string;
-  type: string;
-  host: string;
-  date: Date;
+  type?: string; // Make type optional
+  host?: string; // Make host optional
+  date: string | Date; // Allow both string and Date types
   location: {
-    type: 'online' | 'physical';
+    type: 'online' | 'physical' | string;
     details: string;
   };
-  attendees: string[];
+  attendees: Array<string | {id: string, name: string}>; // Allow both string and object types for attendees
   status: 'upcoming' | 'ongoing' | 'completed' | 'canceled';
-  createdAt: Date;
+  createdAt: string | Date; // Allow both string and Date types
+  organizer?: {id: string, name: string}; // Add organizer field
 }
 
 // Travel match interface for the intelligent matching feature
