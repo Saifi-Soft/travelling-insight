@@ -33,6 +33,7 @@ const defaultLightColors: ThemeColors = {
   card: '#f8f9fa',
 };
 
+// Restore original dark mode colors
 const defaultDarkColors: ThemeColors = {
   background: '#1A1F2C',  // Dark purple for dark mode
   foreground: '#f8f9fa',  // Light text for dark mode
@@ -151,7 +152,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Save theme settings to MongoDB and localStorage
-  const saveThemeSettings = async (
+  const saveToDb = async (
     newTheme: Theme = theme, 
     newLightColors: ThemeColors = lightThemeColors, 
     newDarkColors: ThemeColors = darkThemeColors
@@ -197,7 +198,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     
     // Save settings
-    saveThemeSettings();
+    saveToDb();
     
   }, [theme, lightThemeColors, darkThemeColors, themeColors, session?.user?.id]);
 
@@ -231,7 +232,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Update theme color for specific mode (light/dark)
   const updateThemeColor = (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => {
     if (mode === 'light') {
-      // For light mode, don't enforce custom-green for primary and footer anymore
       setLightThemeColors(prev => ({
         ...prev,
         [colorType]: value
@@ -245,7 +245,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }));
       }
     } else {
-      // For dark mode, allow any color
       setDarkThemeColors(prev => ({
         ...prev,
         [colorType]: value
@@ -261,22 +260,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     // Save updated theme settings
-    const updatedThemeSettings = {
-      theme,
-      lightThemeColors: mode === 'light' ? {
-        ...lightThemeColors,
-        [colorType]: value
-      } : lightThemeColors,
-      darkThemeColors: mode === 'dark' ? {
-        ...darkThemeColors,
-        [colorType]: value
-      } : darkThemeColors
-    };
+    const updatedLightThemeColors = mode === 'light' ? {
+      ...lightThemeColors,
+      [colorType]: value
+    } : lightThemeColors;
     
-    saveThemeSettings(theme, 
-      updatedThemeSettings.lightThemeColors, 
-      updatedThemeSettings.darkThemeColors
-    );
+    const updatedDarkThemeColors = mode === 'dark' ? {
+      ...darkThemeColors,
+      [colorType]: value
+    } : darkThemeColors;
+    
+    saveToDb(theme, updatedLightThemeColors, updatedDarkThemeColors);
   };
 
   return (

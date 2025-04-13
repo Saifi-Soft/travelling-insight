@@ -77,7 +77,7 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.5% 48%;
 
-    /* Custom theme variables for dark mode */
+    /* Custom theme variables for dark mode - restored to original values */
     --color-background: #1A1F2C;
     --color-foreground: #f8f9fa;
     --color-primary: #10B981;

@@ -40,6 +40,7 @@ export async function getThemeSettings(userId: string) {
       // Return default theme settings if not found
       return {
         theme: 'light',
+        // Default light theme colors
         lightThemeColors: {
           background: '#ffffff',
           foreground: '#222222',
@@ -48,6 +49,7 @@ export async function getThemeSettings(userId: string) {
           header: '#ffffff',
           card: '#f8f9fa',
         },
+        // Default dark theme colors - restored to original values
         darkThemeColors: {
           background: '#1A1F2C',  // Dark purple for dark mode
           foreground: '#f8f9fa',  // Light text for dark mode
