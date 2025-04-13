@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,121 +8,11 @@ import UserProfile from '@/components/community/UserProfile';
 import CommunityEvents from '@/components/community/CommunityEvents';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Bookmark, Users, Calendar, Compass, Settings } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useSession } from '@/hooks/useSession';
-import { toast } from 'sonner';
-import { communityApi } from '@/api/communityApiService';
-import { mongoApiService } from '@/api/mongoApiService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const queryClient = new QueryClient();
 
 const CommunityHub = () => {
-  const { session } = useSession();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasAccess, setHasAccess] = useState(false);
-
-  // Check authentication and subscription status
-  useEffect(() => {
-    const checkAccess = async () => {
-      setIsLoading(true);
-      try {
-        console.log("Community Hub: Checking access", session);
-        
-        if (!session.isAuthenticated) {
-          console.log("Community Hub: User not authenticated");
-          toast.error("Please login to access the community hub");
-          navigate('/login');
-          return;
-        }
-
-        // Check if user exists in MongoDB subscriptions collection
-        const userId = session.user?.id || localStorage.getItem('userId');
-        console.log("Community Hub: Checking subscription for user:", userId);
-        
-        if (!userId) {
-          console.log("Community Hub: No user ID found");
-          toast.error("User ID not found. Please login again.");
-          navigate('/login');
-          return;
-        }
-
-        // First try to get subscription from MongoDB
-        const subscriptions = await mongoApiService.queryDocuments('subscriptions', { userId });
-        console.log("Community Hub: MongoDB subscriptions:", subscriptions);
-        
-        if (subscriptions && subscriptions.length > 0 && subscriptions[0].status === 'active') {
-          console.log("Community Hub: User has active subscription in MongoDB");
-          setHasAccess(true);
-        } else {
-          // Fallback to API check
-          const subscriptionData = await communityApi.payments.getSubscription(userId);
-          console.log("Community Hub: API subscription data:", subscriptionData);
-          
-          if (subscriptionData && subscriptionData.status === 'active') {
-            console.log("Community Hub: User has active subscription via API");
-            setHasAccess(true);
-            
-            // Create MongoDB subscription record if it doesn't exist
-            if (!subscriptions || subscriptions.length === 0) {
-              try {
-                await mongoApiService.insertDocument('subscriptions', {
-                  userId: userId,
-                  planType: 'monthly',
-                  status: 'active',
-                  paymentMethod: {
-                    method: 'credit_card',
-                    cardLastFour: '4242',
-                    expiryDate: '12/25'
-                  },
-                  startDate: new Date(),
-                  endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-                  amount: 9.99,
-                  autoRenew: true,
-                  createdAt: new Date(),
-                  updatedAt: new Date()
-                });
-                console.log("Community Hub: Created demo subscription in MongoDB");
-              } catch (error) {
-                console.error("Error creating subscription:", error);
-              }
-            }
-          } else {
-            console.log("Community Hub: User does not have active subscription");
-            toast.error("You need an active subscription to access the community hub");
-            navigate('/community');
-          }
-        }
-      } catch (error) {
-        console.error("Error checking access:", error);
-        toast.error("Error checking subscription status");
-        navigate('/community');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAccess();
-  }, [session, navigate]);
-
-  // If loading, show loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="animate-pulse text-xl">Loading community hub...</div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // If user doesn't have access, redirect (handled in useEffect)
-  if (!hasAccess && !isLoading) {
-    return null;
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col">
