@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { mongoApiService } from '@/api/mongoApiService';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoCircle } from 'lucide-react';
+import { InfoIcon } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -109,7 +109,7 @@ const Login = () => {
             <CardContent>
               <Alert className="mb-4 bg-blue-50 text-blue-800 border-blue-200">
                 <div className="flex items-start gap-3">
-                  <InfoCircle className="h-5 w-5 mt-0.5" />
+                  <InfoIcon className="h-5 w-5 mt-0.5" />
                   <AlertDescription className="text-sm text-left">
                     <strong>Demo credentials:</strong><br />
                     Email: demo@example.com<br />
