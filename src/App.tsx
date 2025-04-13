@@ -1,10 +1,10 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useSession, SessionProvider } from './hooks/useSession';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import Home from './pages/Home';
 import Blog from './pages/Blog';
 import Post from './pages/Post';
 import Destinations from './pages/Destinations';
@@ -27,6 +27,9 @@ import AdminSettings from './pages/AdminSettings';
 import AdminAds from './pages/AdminAds';
 import AdminHashtags from './pages/AdminHashtags';
 
+// Import the Index component instead of Home
+import Index from './pages/Index';
+
 // Add the import for AdminAppearance
 import AdminAppearance from './pages/AdminAppearance';
 
@@ -37,7 +40,7 @@ const App: React.FC = () => {
         <Router>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Index />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/post/:slug" element={<Post />} />
             <Route path="/destinations" element={<Destinations />} />
@@ -80,7 +83,7 @@ const App: React.FC = () => {
               path="/admin/categories" 
               element={
                 <AdminAuthGuard>
-                  <AdminCategories />}
+                  <AdminCategories />
                 </AdminAuthGuard>
               } 
             />
