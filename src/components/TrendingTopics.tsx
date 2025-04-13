@@ -8,14 +8,22 @@ import { Topic, Category, Post } from '@/types/common';
 import { Button } from '@/components/ui/button';
 import { mongoApiService } from '@/api/mongoApiService';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 const topicsApi = {
   getTrending: async (): Promise<Topic[]> => {
     try {
       console.log('Fetching trending topics...');
       const topics = await mongoApiService.queryDocuments('topics', {});
-      console.log('Fetched topics:', topics);
-      return topics;
+      // Filter topics that have associated posts
+      const posts = await mongoApiService.queryDocuments('posts', {});
+      
+      const topicsWithPosts = topics.filter(topic => {
+        return posts.some(post => post.topics && post.topics.includes(topic.name));
+      });
+      
+      console.log('Fetched topics with posts:', topicsWithPosts);
+      return topicsWithPosts;
     } catch (error) {
       console.error('Error fetching trending topics:', error);
       return [];
@@ -28,8 +36,15 @@ const categoriesApi = {
     try {
       console.log('Fetching categories...');
       const categories = await mongoApiService.queryDocuments('categories', {});
-      console.log('Fetched categories:', categories);
-      return categories;
+      // Filter categories that have associated posts
+      const posts = await mongoApiService.queryDocuments('posts', {});
+      
+      const categoriesWithPosts = categories.filter(category => {
+        return posts.some(post => post.category === category.name);
+      });
+      
+      console.log('Fetched categories with posts:', categoriesWithPosts);
+      return categoriesWithPosts;
     } catch (error) {
       console.error('Error fetching categories:', error);
       return [];
@@ -234,16 +249,24 @@ const TrendingTopics = () => {
     }
   };
 
+  const handleBadgeClick = (tag: Topic) => {
+    if (!tag.slug) {
+      toast.error("This topic doesn't have associated content yet");
+      return;
+    }
+  };
+
+  const handleCategoryClick = (category: Category) => {
+    if (!category.slug) {
+      toast.error("This category doesn't have associated content yet");
+      return;
+    }
+  };
+
   // Setup initial data to avoid layout shifts
   const displayHashtags = trendingHashtags || TRENDING_HASHTAGS;
   const displayCategories = categories || CATEGORIES;
   const displayArticles = trendingArticles || TRENDING_ARTICLES;
-
-  console.log('Rendering with data:', {
-    hashtags: displayHashtags?.length,
-    categories: displayCategories?.length,
-    articles: displayArticles?.length
-  });
 
   return (
     <section className="section">
@@ -266,7 +289,11 @@ const TrendingTopics = () => {
                 ) : displayHashtags && displayHashtags.length > 0 ? (
                   <div className="flex flex-wrap gap-3">
                     {displayHashtags.map((tag) => (
-                      <Link to={`/tags/${tag.slug}`} key={tag.id}>
+                      <Link 
+                        to={`/blog?tag=${tag.slug}`} 
+                        key={tag.id}
+                        onClick={() => handleBadgeClick(tag)}
+                      >
                         <Badge 
                           variant="outline" 
                           className="text-sm py-2 px-3 border-theme-primary/30 hover:bg-theme-primary/10 
@@ -313,26 +340,26 @@ const TrendingTopics = () => {
                     </div>
                   ))
                 ) : displayArticles && displayArticles.length > 0 ? (
-                  displayArticles.slice(0, 3).map((relatedPost) => (
+                  displayArticles.slice(0, 3).map((article) => (
                     <Link 
-                      to={`/blog/${relatedPost.id}`} 
-                      key={relatedPost.id}
+                      to={`/blog/${article.id}`} 
+                      key={article.id}
                       className="flex gap-4 group hover:bg-muted/50 p-2 rounded-md transition-colors"
-                      onClick={() => trackArticleClick(relatedPost.id)}
+                      onClick={() => trackArticleClick(article.id)}
                     >
                       <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                         <img 
-                          src={relatedPost.coverImage} 
-                          alt={relatedPost.title}
+                          src={article.coverImage} 
+                          alt={article.title}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div>
                         <h3 className="font-medium text-sm line-clamp-2 group-hover:text-theme-primary transition-colors">
-                          {relatedPost.title}
+                          {article.title}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {relatedPost.likes}k reads • {relatedPost.date}
+                          {article.likes}k reads • {article.date}
                         </p>
                       </div>
                     </Link>
@@ -365,9 +392,10 @@ const TrendingTopics = () => {
               ) : displayCategories && displayCategories.length > 0 ? (
                 displayCategories.map((category) => (
                   <Link 
-                    to={`/categories/${category.slug}`} 
+                    to={`/blog?category=${category.slug}`} 
                     key={category.id}
                     className="group"
+                    onClick={() => handleCategoryClick(category)}
                   >
                     <Card className="overflow-hidden border-theme-primary/10 hover:border-theme-primary/30 transition-colors h-full shadow-md">
                       <div className="h-32 overflow-hidden">

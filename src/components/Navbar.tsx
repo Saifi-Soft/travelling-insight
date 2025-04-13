@@ -111,12 +111,11 @@ const Navbar = () => {
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="hover:bg-theme-primary/10">
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-theme-primary/10">
-              <User className="h-5 w-5" />
-            </Button>
-            <Button variant="default" className="bg-theme-primary text-white hover:bg-theme-primary/90 ml-2 rounded-full px-6">
-              Sign In
-            </Button>
+            <Link to="/login">
+              <Button variant="default" className="bg-theme-primary text-white hover:bg-theme-primary/90 ml-2 rounded-full px-6">
+                Sign In
+              </Button>
+            </Link>
           </div>
 
           <div className="md:hidden flex items-center">
@@ -191,9 +190,11 @@ const Navbar = () => {
                   <Search className="h-4 w-4 mr-2" />
                   Search
                 </Button>
-                <Button variant="default" size="sm" className="w-1/2 bg-theme-primary text-white rounded-full">
-                  Sign In
-                </Button>
+                <Link to="/login" className="w-1/2">
+                  <Button variant="default" size="sm" className="w-full bg-theme-primary text-white rounded-full">
+                    Sign In
+                  </Button>
+                </Link>
               </div>
               <Button variant="ghost" size="sm" className="mt-2 w-full justify-center" onClick={toggleTheme}>
                 {isDarkMode ? (

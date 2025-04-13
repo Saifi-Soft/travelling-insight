@@ -1,10 +1,12 @@
 
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeaderAd from "@/components/ads/HeaderAd";
 import FooterAd from "@/components/ads/FooterAd";
+import { Home, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
@@ -31,12 +33,28 @@ const NotFound = () => {
             <h1 className="text-6xl font-bold mb-6 text-primary">404</h1>
             <p className="text-2xl text-gray-700 mb-6">Oops! We can't find that page</p>
             <p className="text-gray-600 mb-8">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
-            <a 
-              href="/" 
-              className="inline-block px-6 py-3 bg-primary text-white font-medium rounded-md hover:bg-primary/90 transition-colors"
-            >
-              Return to Homepage
-            </a>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                variant="default"
+                className="bg-primary text-white font-medium rounded-md hover:bg-primary/90 transition-colors flex items-center justify-center"
+                asChild
+              >
+                <Link to="/">
+                  <Home className="mr-2 h-4 w-4" />
+                  Return to Homepage
+                </Link>
+              </Button>
+              
+              <Button 
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary/10 font-medium rounded-md transition-colors flex items-center justify-center"
+                onClick={() => window.history.back()}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Go Back
+              </Button>
+            </div>
           </div>
         </div>
         
