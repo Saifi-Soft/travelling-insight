@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Search, Users, UserPlus, Send, Image, Smile, PaperclipIcon, VideoIcon } from 'lucide-react';
+import { Search, Users, UserPlus, Send, Image, Smile, PaperclipIcon, VideoIcon, MessageSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
@@ -67,25 +67,25 @@ const mockMessages = [
   { 
     id: 'm1', 
     senderId: 'other', 
-    text: 'Hi there! How's your trip planning going?', 
+    text: "Hi there! How's your trip planning going?", 
     time: '10:15 AM'
   },
   { 
     id: 'm2', 
     senderId: 'me', 
-    text: 'It's going well! I've booked my flights to Tokyo already.', 
+    text: "It's going well! I've booked my flights to Tokyo already.", 
     time: '10:18 AM'
   },
   { 
     id: 'm3', 
     senderId: 'other', 
-    text: 'That's great! Are you still planning to visit Kyoto too?', 
+    text: "That's great! Are you still planning to visit Kyoto too?", 
     time: '10:20 AM'
   },
   { 
     id: 'm4', 
     senderId: 'me', 
-    text: 'Yes, I'll be spending 3 days in Kyoto. Do you have any recommendations for places to stay there?', 
+    text: "Yes, I'll be spending 3 days in Kyoto. Do you have any recommendations for places to stay there?", 
     time: '10:22 AM'
   },
   { 
@@ -123,7 +123,7 @@ const MessagesContent = () => {
       const responseMessage = {
         id: `m${Date.now() + 1}`,
         senderId: 'other',
-        text: 'Thanks for the update! I'll send you some recommendations soon.',
+        text: "Thanks for the update! I'll send you some recommendations soon.",
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
