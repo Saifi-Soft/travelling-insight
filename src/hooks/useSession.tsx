@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 
 interface User {
   id: string;
@@ -13,7 +13,14 @@ interface Session {
   isAuthenticated: boolean;
 }
 
-export function useSession() {
+interface SessionContextType {
+  session: Session;
+  setSession: React.Dispatch<React.SetStateAction<Session>>;
+}
+
+const SessionContext = createContext<SessionContextType | undefined>(undefined);
+
+export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session>({
     isAuthenticated: false
   });
@@ -38,5 +45,17 @@ export function useSession() {
     }
   }, []);
   
-  return { session };
+  return (
+    <SessionContext.Provider value={{ session, setSession }}>
+      {children}
+    </SessionContext.Provider>
+  );
+}
+
+export function useSession() {
+  const context = useContext(SessionContext);
+  if (context === undefined) {
+    throw new Error('useSession must be used within a SessionProvider');
+  }
+  return context;
 }
