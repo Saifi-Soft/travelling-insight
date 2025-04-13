@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { mongoApiService } from '@/api/mongoApiService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,16 +21,37 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      // For demo purposes, we'll just simulate a login
-      console.log('Login with:', { email, password });
+      // Check if user exists in MongoDB
+      const users = await mongoApiService.queryDocuments('users', { email: email });
       
-      // Store a fake user ID in localStorage
-      localStorage.setItem('community_user_id', 'user-' + Math.random().toString(36).substr(2, 9));
-      
-      toast.success('Login successful!');
-      setTimeout(() => {
-        navigate('/community');
-      }, 1000);
+      // For demo purposes with MongoDB, we'll just check email (no password hashing for demo)
+      if (users.length > 0) {
+        // Store user ID in localStorage
+        localStorage.setItem('community_user_id', users[0]._id);
+        
+        toast.success('Login successful!');
+        setTimeout(() => {
+          // Return to community page if that's where they came from
+          const previousPage = document.referrer.includes('/community') ? '/community' : '/';
+          navigate(previousPage);
+        }, 1000);
+      } else {
+        // If no user found, create a new one for demo purposes
+        const newUser = await mongoApiService.insertDocument('users', {
+          email,
+          password: 'hashed_would_go_here',
+          createdAt: new Date(),
+        });
+        
+        localStorage.setItem('community_user_id', newUser.insertedId);
+        
+        toast.success('Account created and logged in!');
+        setTimeout(() => {
+          // Return to community page if that's where they came from
+          const previousPage = document.referrer.includes('/community') ? '/community' : '/';
+          navigate(previousPage);
+        }, 1000);
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Login failed. Please try again.');

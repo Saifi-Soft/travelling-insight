@@ -42,21 +42,14 @@ const Community = () => {
   };
 
   // Function to handle clicking on any community feature
-  const handleCommunityFeatureClick = (e: React.MouseEvent) => {
-    // Prevent the default button action and event propagation
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const handleCommunityFeatureClick = () => {
     console.log('Button clicked, checking user status...');
     
     if (!userId) {
-      console.log('No user ID found, redirecting to login');
-      toast.error('Please log in to access community features');
-      navigate('/login');
-      return;
-    }
-    
-    if (!isSubscribed) {
+      // Instead of redirecting to login, show the subscription modal
+      console.log('No user ID found, showing subscription modal');
+      setIsSubscriptionModalOpen(true);
+    } else if (!isSubscribed) {
       console.log('User not subscribed, showing subscription modal');
       setIsSubscriptionModalOpen(true);
     } else {
