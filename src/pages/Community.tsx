@@ -44,6 +44,7 @@ const Community = () => {
   // Function to handle clicking on any community feature
   const handleCommunityFeatureClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default navigation
+    e.stopPropagation(); // Stop event propagation
     
     if (!userId) {
       toast.error('Please log in to access community features');
