@@ -124,7 +124,7 @@ const Destinations = () => {
           
           <div className="container-custom relative z-10">
             <div className="max-w-3xl mx-auto text-center">
-              <Badge variant="outline" className="mb-4 px-3 py-1 border-primary text-primary">
+              <Badge variant="outline" className="mb-4 px-3 py-1 border-custom-green text-custom-green">
                 Travel the World
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
@@ -136,7 +136,7 @@ const Destinations = () => {
               <div className="flex flex-wrap justify-center gap-4">
                 <Button 
                   size="lg" 
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-custom-green text-custom-green-light hover:bg-custom-green/90"
                   onClick={() => handleFeatureNotAvailable("Explore All Destinations")}
                 >
                   Explore All Destinations
@@ -144,7 +144,7 @@ const Destinations = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-primary text-primary hover:bg-primary/10"
+                  className="border-custom-green text-custom-green hover:bg-custom-green/10"
                   onClick={() => handleFeatureNotAvailable("View Travel Guides")}
                 >
                   View Travel Guides
@@ -165,7 +165,7 @@ const Destinations = () => {
         <section className="py-16 bg-muted/30">
           <div className="container-custom">
             <div className="flex flex-col items-center text-center mb-12">
-              <Badge variant="outline" className="mb-4 px-3 py-1 border-primary/50 text-primary">
+              <Badge variant="outline" className="mb-4 px-3 py-1 border-custom-green text-custom-green">
                 Featured
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Must-Visit Destinations</h2>
@@ -200,7 +200,7 @@ const Destinations = () => {
                     <p className="text-muted-foreground mb-4">{destination.description}</p>
                     <div className="flex flex-wrap gap-2">
                       {destination.tags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary" className="bg-secondary/50">
+                        <Badge key={idx} variant="default" className="bg-custom-green text-custom-green-light">
                           {tag}
                         </Badge>
                       ))}
@@ -240,14 +240,14 @@ const Destinations = () => {
                   <CardContent className="p-4">
                     <h3 className="text-lg font-bold mb-1">{destination.name}</h3>
                     <div className="flex items-center mb-2">
-                      <MapPin className="h-3 w-3 text-primary mr-1" />
+                      <MapPin className="h-3 w-3 text-custom-green mr-1" />
                       <span className="text-xs text-muted-foreground">{destination.location}</span>
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-3 mb-3">{destination.description}</p>
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-primary hover:text-primary hover:bg-primary/10 p-0 h-auto"
+                      className="text-custom-green hover:text-custom-green hover:bg-custom-green/10 p-0 h-auto"
                       onClick={() => handleFeatureNotAvailable(`Learn more about ${destination.name}`)}
                     >
                       Learn more <ArrowRight className="ml-1 h-3 w-3" />
@@ -260,14 +260,14 @@ const Destinations = () => {
         </section>
         
         {/* Second ad placed before CTA section */}
-        <div className="py-6 bg-gradient-to-t from-primary/10 to-background mb-8">
+        <div className="py-6 bg-gradient-to-t from-custom-green/10 to-background mb-8">
           <div className="container mx-auto">
             <FooterAd className="max-w-5xl mx-auto" />
           </div>
         </div>
         
         {/* CTA Section */}
-        <section className="py-16 bg-primary/10">
+        <section className="py-16 bg-custom-green/10">
           <div className="container-custom">
             <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="md:w-2/3">
@@ -279,7 +279,7 @@ const Destinations = () => {
               <div className="md:w-1/3 flex justify-center">
                 <Button 
                   size="lg" 
-                  className="bg-accent hover:bg-accent/90 text-white"
+                  className="bg-custom-green hover:bg-custom-green/90 text-custom-green-light"
                   onClick={() => handleFeatureNotAvailable("Get Travel Advice")}
                 >
                   <Info className="mr-2 h-5 w-5" /> Get Travel Advice

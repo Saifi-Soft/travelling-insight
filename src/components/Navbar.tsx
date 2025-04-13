@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Search, User, Sun, Moon, Plane } from 'lucide-react';
@@ -45,58 +46,58 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 bg-[#065f46] text-[#f8fafc]`}>
+    <nav className={`sticky top-0 z-50 transition-all duration-300 bg-custom-green text-custom-green-light`}>
       <div className="container-custom py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-[#f0fdf4]">NomadJourney</span>
+            <span className="text-2xl font-bold text-custom-green-light">NomadJourney</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
-              className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
+              className={`font-medium hover:text-custom-green-light transition-colors relative ${
+                location.pathname === "/" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
               }`}
             >
               Home
             </Link>
             <Link 
               to="/blog" 
-              className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/blog" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
+              className={`font-medium hover:text-custom-green-light transition-colors relative ${
+                location.pathname === "/blog" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
               }`}
             >
               Blog
             </Link>
             <Link 
               to="/destinations" 
-              className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/destinations" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
+              className={`font-medium hover:text-custom-green-light transition-colors relative ${
+                location.pathname === "/destinations" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
               }`}
             >
               Destinations
             </Link>
             <Link 
               to="/travel/planner" 
-              className={`font-medium hover:text-primary transition-colors relative flex items-center ${
-                location.pathname.startsWith("/travel") ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
+              className={`font-medium hover:text-custom-green-light transition-colors relative flex items-center ${
+                location.pathname.startsWith("/travel") ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
               }`}
             >
               <Plane className="h-4 w-4 mr-1" /> Travel
             </Link>
             <Link 
               to="/community" 
-              className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/community" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
+              className={`font-medium hover:text-custom-green-light transition-colors relative ${
+                location.pathname === "/community" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
               }`}
             >
               Community
             </Link>
             <Link 
               to="/about" 
-              className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/about" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
+              className={`font-medium hover:text-custom-green-light transition-colors relative ${
+                location.pathname === "/about" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-custom-green-light" : ""
               }`}
             >
               About
@@ -104,16 +105,16 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={openSearch} className="hover:bg-primary/10">
+            <Button variant="ghost" size="icon" onClick={openSearch} className="hover:bg-custom-green-light/10 text-custom-green-light">
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hover:bg-primary/10">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hover:bg-custom-green-light/10 text-custom-green-light">
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-primary/10">
+            <Button variant="ghost" size="icon" className="hover:bg-custom-green-light/10 text-custom-green-light">
               <User className="h-5 w-5" />
             </Button>
-            <Button variant="default" className="bg-primary text-white hover:bg-primary/90 ml-2 rounded-full px-6">
+            <Button variant="default" className="bg-custom-green-light text-custom-green hover:bg-custom-green-light/90 ml-2 rounded-full px-6">
               Sign In
             </Button>
           </div>
@@ -123,13 +124,13 @@ const Navbar = () => {
               variant="ghost" 
               size="icon" 
               onClick={openSearch}
-              className="mr-2 hover:bg-primary/10"
+              className="mr-2 hover:bg-custom-green-light/10 text-custom-green-light"
             >
               <Search className="h-5 w-5" />
             </Button>
             <button
               onClick={toggleMenu}
-              className="p-2 rounded-md text-gray-600 hover:text-primary"
+              className="p-2 rounded-md text-custom-green-light hover:bg-custom-green-light/10"
             >
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -145,56 +146,56 @@ const Navbar = () => {
             <div className="flex flex-col space-y-4">
               <Link 
                 to="/" 
-                className={`font-medium hover:text-primary transition-colors py-2 ${location.pathname === "/" ? "text-primary" : ""}`}
+                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/" ? "text-custom-green-light" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
               <Link 
                 to="/blog" 
-                className={`font-medium hover:text-primary transition-colors py-2 ${location.pathname === "/blog" ? "text-primary" : ""}`}
+                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/blog" ? "text-custom-green-light" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Blog
               </Link>
               <Link 
                 to="/destinations" 
-                className={`font-medium hover:text-primary transition-colors py-2 ${location.pathname === "/destinations" ? "text-primary" : ""}`}
+                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/destinations" ? "text-custom-green-light" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Destinations
               </Link>
               <Link 
                 to="/travel/planner" 
-                className={`font-medium hover:text-primary transition-colors py-2 flex items-center ${location.pathname.startsWith("/travel") ? "text-primary" : ""}`}
+                className={`font-medium hover:text-custom-green-light transition-colors py-2 flex items-center ${location.pathname.startsWith("/travel") ? "text-custom-green-light" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Plane className="h-4 w-4 mr-1" /> Travel
               </Link>
               <Link 
                 to="/community" 
-                className={`font-medium hover:text-primary transition-colors py-2 ${location.pathname === "/community" ? "text-primary" : ""}`}
+                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/community" ? "text-custom-green-light" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Community
               </Link>
               <Link 
                 to="/about" 
-                className={`font-medium hover:text-primary transition-colors py-2 ${location.pathname === "/about" ? "text-primary" : ""}`}
+                className={`font-medium hover:text-custom-green-light transition-colors py-2 ${location.pathname === "/about" ? "text-custom-green-light" : ""}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
               </Link>
               <div className="flex items-center justify-between pt-4">
-                <Button variant="outline" size="sm" className="w-1/2 mr-2" onClick={() => {openSearch(); setIsMenuOpen(false);}}>
+                <Button variant="outline" size="sm" className="w-1/2 mr-2 border-custom-green-light text-custom-green-light" onClick={() => {openSearch(); setIsMenuOpen(false);}}>
                   <Search className="h-4 w-4 mr-2" />
                   Search
                 </Button>
-                <Button variant="default" size="sm" className="w-1/2 bg-primary rounded-full">
+                <Button variant="default" size="sm" className="w-1/2 bg-custom-green-light text-custom-green rounded-full">
                   Sign In
                 </Button>
               </div>
-              <Button variant="ghost" size="sm" className="mt-2 w-full justify-center" onClick={toggleTheme}>
+              <Button variant="ghost" size="sm" className="mt-2 w-full justify-center text-custom-green-light" onClick={toggleTheme}>
                 {isDarkMode ? (
                   <>
                     <Sun className="h-4 w-4 mr-2" />

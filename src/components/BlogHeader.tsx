@@ -43,7 +43,7 @@ const BlogHeader = ({
       <div className="container-custom py-8">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="relative w-full md:w-1/3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-custom-green" />
             <Input 
               type="search" 
               placeholder="Search articles..." 
