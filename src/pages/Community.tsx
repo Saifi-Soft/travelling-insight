@@ -42,7 +42,7 @@ const Community = () => {
   };
 
   // Function to handle clicking on any community feature
-  const handleCommunityFeatureClick = (e: React.MouseEvent) => {
+  const handleCommunityFeatureClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // Prevent default navigation
     e.stopPropagation(); // Stop event propagation
     
@@ -57,6 +57,8 @@ const Community = () => {
     } else {
       toast.info('You already have access to all community features!');
     }
+    
+    return false; // Extra safeguard to prevent navigation
   };
   
   // Handle successful subscription
@@ -107,6 +109,7 @@ const Community = () => {
                   <Button 
                     className="w-full bg-blue-600 hover:bg-blue-700" 
                     onClick={handleCommunityFeatureClick}
+                    type="button"
                   >
                     Find a Travel Buddy
                   </Button>
@@ -126,6 +129,7 @@ const Community = () => {
                   <Button 
                     className="w-full bg-green-600 hover:bg-green-700"
                     onClick={handleCommunityFeatureClick}
+                    type="button"
                   >
                     Explore Travel Groups
                   </Button>
@@ -145,6 +149,7 @@ const Community = () => {
                   <Button 
                     className="w-full bg-purple-600 hover:bg-purple-700"
                     onClick={handleCommunityFeatureClick}
+                    type="button"
                   >
                     Browse Upcoming Events
                   </Button>
@@ -164,6 +169,7 @@ const Community = () => {
                   <Button 
                     className="w-full bg-amber-600 hover:bg-amber-700"
                     onClick={handleCommunityFeatureClick}
+                    type="button"
                   >
                     View Members
                   </Button>
