@@ -19,9 +19,9 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent text-custom-green hover:text-custom-green",
         link: "text-custom-green underline-offset-4 hover:underline",
-        blue: "bg-blue-500 text-white hover:bg-blue-600",
-        purple: "bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90",
-        subscribe: "bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90 rounded-full",
+        blue: "bg-custom-green text-white hover:bg-custom-green/90",
+        purple: "bg-custom-green text-white hover:bg-custom-green/90",
+        subscribe: "bg-custom-green text-white hover:bg-custom-green/90 rounded-full",
       },
       size: {
         default: "h-10 px-4 py-2",

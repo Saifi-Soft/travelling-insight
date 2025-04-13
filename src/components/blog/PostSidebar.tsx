@@ -17,7 +17,7 @@ const PostSidebar = ({ author, relatedPosts, popularTags }: PostSidebarProps) =>
       <PostAuthor author={author} isSidebar={true} />
       
       {/* Related Articles */}
-      <div className="mb-8">
+      <div className="mb-8 bg-card p-6 rounded-lg shadow-sm">
         <h3 className="text-xl font-bold mb-6 text-custom-green">Related Articles</h3>
         <div className="space-y-6">
           {relatedPosts.map((relatedPost) => (
@@ -47,7 +47,7 @@ const PostSidebar = ({ author, relatedPosts, popularTags }: PostSidebarProps) =>
       </div>
       
       {/* Popular Tags */}
-      <div>
+      <div className="bg-card p-6 rounded-lg shadow-sm">
         <h3 className="text-xl font-bold mb-6 text-custom-green">Popular Tags</h3>
         <div className="flex flex-wrap gap-2">
           {popularTags.map((tag) => (

@@ -1,3 +1,4 @@
+
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MessageSquare } from 'lucide-react';
 import { Post } from '@/types/common';
@@ -18,7 +19,7 @@ const PostHeader = ({ post, commentCount }: PostHeaderProps) => {
       />
       <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-20 text-white">
         <div className="container-custom">
-          <Badge className="bg-primary mb-4">{post.category}</Badge>
+          <Badge className="mb-4">{post.category}</Badge>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 max-w-4xl">
             {post.title}
           </h1>

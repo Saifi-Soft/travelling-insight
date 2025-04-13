@@ -98,7 +98,7 @@ const BlogContent = ({ filteredPosts, isLoading = false }: BlogContentProps) => 
   return (
     <div className="container-custom py-8">
       {/* Tabs for different views */}
-      <div className="mb-6">
+      <div className="mb-8">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">All Articles</h2>
         </div>
@@ -109,7 +109,10 @@ const BlogContent = ({ filteredPosts, isLoading = false }: BlogContentProps) => 
       {/* Load More */}
       {filteredPosts.length > 0 && !isLoading && (
         <div className="mt-12 text-center">
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+          <Button 
+            variant="outline" 
+            className="border-custom-green text-custom-green hover:bg-custom-green/10"
+          >
             Load More
           </Button>
         </div>

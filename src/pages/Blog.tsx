@@ -99,7 +99,7 @@ const Blog = () => {
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+            <Loader2 className="h-12 w-12 animate-spin text-custom-green mx-auto" />
             <p className="mt-4 text-lg text-gray-600">Loading content...</p>
           </div>
         </main>
