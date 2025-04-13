@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
-import { CalendarDays, Globe, MapPin, Users } from 'lucide-react';
+import { CalendarDays, Globe, MapPin, Users, Check, Star, Shield, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SubscriptionModal from '@/components/community/SubscriptionModal';
 import HeaderAd from '@/components/ads/HeaderAd';
@@ -83,6 +83,161 @@ const Community = () => {
                 Connect with fellow travelers, share experiences, and plan your next adventure together!
               </p>
               <HeaderAd className="mt-8" />
+            </div>
+          </div>
+        </div>
+
+        {/* Subscription Features Section */}
+        <div className="bg-gradient-to-br from-purple-50 to-blue-50 py-16">
+          <div className="container mx-auto px-4">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">Premium Community Features</h2>
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                  Subscribe to unlock exclusive benefits and enhance your travel experience with our community
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Feature Card 1 */}
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800">Travel Buddy Matching</h3>
+                  <p className="text-gray-600 mb-4">
+                    Our advanced algorithm matches you with compatible travel companions based on your interests, travel style, and destinations.
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Personality compatibility scoring</span>
+                    </li>
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Verified traveler profiles</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                {/* Feature Card 2 */}
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                    <Globe className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800">Exclusive Groups</h3>
+                  <p className="text-gray-600 mb-4">
+                    Join private groups focused on specialized travel experiences, from adventure hiking to food tourism.
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Access to 50+ specialized groups</span>
+                    </li>
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Group trip planning tools</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                {/* Feature Card 3 */}
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                    <CalendarDays className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800">Premium Events</h3>
+                  <p className="text-gray-600 mb-4">
+                    Participate in exclusive virtual and in-person events with travel experts and fellow enthusiasts.
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Monthly expert workshops</span>
+                    </li>
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Early access to travel meetups</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                {/* Feature Card 4 */}
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                    <MessageSquare className="h-6 w-6 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800">Direct Messaging</h3>
+                  <p className="text-gray-600 mb-4">
+                    Connect privately with other travelers to coordinate trips and share travel tips.
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Unlimited messages</span>
+                    </li>
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Photo and document sharing</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                {/* Feature Card 5 */}
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center mb-4">
+                    <Star className="h-6 w-6 text-pink-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800">Exclusive Content</h3>
+                  <p className="text-gray-600 mb-4">
+                    Access premium guides, itineraries, and travel hacks from seasoned travelers.
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">100+ destination guides</span>
+                    </li>
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Downloadable travel planners</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                {/* Feature Card 6 */}
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                    <Shield className="h-6 w-6 text-indigo-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800">Travel Insurance Discounts</h3>
+                  <p className="text-gray-600 mb-4">
+                    Enjoy exclusive discounts with our partner insurance providers for your journeys.
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Up to 15% off premium plans</span>
+                    </li>
+                    <li className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-gray-700">Priority claims support</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="mt-12 text-center">
+                <Button
+                  onClick={() => setIsSubscriptionModalOpen(true)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 text-lg rounded-md shadow-md hover:shadow-lg transition-all"
+                  type="button"
+                >
+                  Subscribe Now
+                </Button>
+                <p className="mt-3 text-gray-500 text-sm">
+                  Unlock all premium features starting at just $7.99/month
+                </p>
+              </div>
             </div>
           </div>
         </div>
