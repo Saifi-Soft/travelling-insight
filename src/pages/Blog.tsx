@@ -97,18 +97,12 @@ const Blog = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="py-4 bg-gray-50">
-          <HeaderAd className="max-w-5xl mx-auto" />
-        </div>
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="mt-4 text-lg text-gray-600">Loading content...</p>
           </div>
         </main>
-        <div className="py-4 bg-gray-50">
-          <FooterAd className="max-w-5xl mx-auto" />
-        </div>
         <Footer />
       </div>
     );
@@ -117,9 +111,6 @@ const Blog = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="py-4 bg-gray-50">
-        <HeaderAd className="max-w-5xl mx-auto" />
-      </div>
       
       <main className="flex-grow">
         <BlogHeader 
@@ -141,7 +132,7 @@ const Blog = () => {
               />
             </div>
             
-            {/* Sidebar for additional ad */}
+            {/* Sidebar for ad */}
             <div className="w-full lg:w-1/3 space-y-8">
               <div className="sticky top-4">
                 <SidebarAd />
@@ -149,11 +140,13 @@ const Blog = () => {
             </div>
           </div>
         </div>
+        
+        {/* Footer ad at bottom of content */}
+        <div className="container mx-auto px-4 my-12">
+          <FooterAd />
+        </div>
       </main>
       
-      <div className="py-4 bg-gray-50">
-        <FooterAd className="max-w-5xl mx-auto" />
-      </div>
       <Footer />
     </div>
   );
