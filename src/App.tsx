@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { Toaster } from '@/components/ui/toaster';
 import Index from './pages/Index';
 import About from './pages/About';
 import Blog from './pages/Blog';
@@ -36,7 +37,6 @@ import AdminHashtags from './pages/AdminHashtags';
 // MongoDB initialization
 import { mongoApiService } from './api/mongoApiService';
 import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './api/sampleData';
-import { Toaster } from '@/components/ui/toaster';
 import { Post, Category, Topic } from '@/types/common';
 
 // Create a QueryClient instance
@@ -253,8 +253,8 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             
             {/* Admin Routes with Authentication Flow */}
-            <Route path="/admin" element={<Admin />} /> {/* This redirects to login if not authenticated */}
-            <Route path="/admin/login" element={<AdminLogin />} /> {/* Login page */}
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             
             {/* Protected Admin Routes */}
             <Route path="/admin/dashboard" element={<AdminAuthGuard><AdminDashboard /></AdminAuthGuard>} />

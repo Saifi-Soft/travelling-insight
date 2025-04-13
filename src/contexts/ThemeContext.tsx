@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getThemeSettings, saveThemeSettings } from '@/api/themeService';
 import { useSession } from '@/hooks/useSession';
@@ -43,8 +42,16 @@ const defaultDarkColors: ThemeColors = {
   card: '#2D3748',        // Dark card background
 };
 
-// Create a context with a default undefined value
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+// Create a context with default values instead of undefined
+const ThemeContext = createContext<ThemeContextType>({
+  theme: 'light',
+  themeColors: defaultLightColors,
+  lightThemeColors: defaultLightColors,
+  darkThemeColors: defaultDarkColors,
+  toggleTheme: () => {},
+  setTheme: () => {},
+  updateThemeColor: () => {}
+});
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize state for both light and dark theme colors
