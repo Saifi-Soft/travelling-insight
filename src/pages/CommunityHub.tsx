@@ -3,11 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { 
   Home, 
   Search, 
-  PlusSquare, 
-  Heart, 
+  Users, 
+  MessageSquare, 
+  Bell, 
   User, 
   Compass, 
-  MessageCircle 
+  TrendingUp,
+  Globe,
+  MapPin,
+  Activity,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,18 +19,31 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { communityApi } from '@/api/communityApiService';
 import { mongoApiService } from '@/api/mongoApiService';
-import CommunityPosts from '@/components/community/CommunityPosts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import FeedContent from '@/components/community/FeedContent';
 import DiscoverContent from '@/components/community/DiscoverContent';
 import CreatePost from '@/components/community/CreatePost';
+import MessagesContent from '@/components/community/MessagesContent';
+import TravelBuddyFinder from '@/components/community/TravelBuddyFinder';
+import UserProfile from '@/components/community/UserProfile';
 
 const CommunityHub = () => {
   const [activeTab, setActiveTab] = useState('feed');
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const userId = localStorage.getItem('community_user_id');
   const userName = localStorage.getItem('userName') || 'User';
 
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ['communityUser', userId],
     queryFn: () => userId ? communityApi.users.getById(userId) : null,
+    enabled: !!userId,
+  });
+
+  const { data: notificationCount = 0 } = useQuery({
+    queryKey: ['notificationCount', userId],
+    queryFn: () => userId ? communityApi.notifications?.getUnreadCount(userId) || 0 : 0,
     enabled: !!userId,
   });
 
@@ -40,100 +57,297 @@ const CommunityHub = () => {
   useEffect(() => {
     if (!isLoadingUser && isProfileIncomplete) {
       toast.info(
-        "Your profile is incomplete. Complete your profile to connect with fellow travelers!", 
-        { duration: 5000, icon: <User className="text-purple-500" /> }
+        "Complete your profile to connect with fellow travelers!", 
+        { duration: 5000, icon: <User className="text-primary" /> }
       );
     }
   }, [isLoadingUser, isProfileIncomplete]);
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    toast.info(`Searching for: ${searchQuery}`);
+    // Implement actual search functionality
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Left Sidebar Navigation */}
-          <div className="md:col-span-3 lg:col-span-2 hidden md:block">
-            <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 rounded-xl p-4 space-y-4 sticky top-8">
-              <div className="flex items-center space-x-4 mb-6">
-                <Avatar className="w-12 h-12 border-2 border-purple-500">
-                  {userData?.avatar ? (
-                    <AvatarImage src={userData.avatar} alt={userName} />
-                  ) : (
-                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600">
-                      {userName.charAt(0)}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-semibold">{userName}</h3>
-                  <p className="text-sm text-slate-400">
-                    {isProfileIncomplete ? 'Profile Incomplete' : 'Traveler'}
+    <div className="bg-background min-h-screen text-foreground">
+      {/* Top Navigation Bar (Mobile & Desktop) */}
+      <header className="fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+            Travel Community
+          </h1>
+          
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-4">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                type="search"
+                placeholder="Search travelers, destinations, posts..."
+                className="pl-10 w-full bg-secondary/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </form>
+          
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="icon" className="relative hidden md:flex">
+              <Bell className="h-5 w-5" />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {notificationCount > 9 ? '9+' : notificationCount}
+                </span>
+              )}
+            </Button>
+            
+            <Avatar className="h-9 w-9 border-2 border-primary">
+              {userData?.avatar ? (
+                <AvatarImage src={userData.avatar} alt={userName} />
+              ) : (
+                <AvatarFallback className="bg-gradient-to-br from-primary to-purple-500">
+                  {userName.charAt(0)}
+                </AvatarFallback>
+              )}
+            </Avatar>
+          </div>
+        </div>
+      </header>
+      
+      <div className="container mx-auto pt-20 pb-20 px-2 md:px-4 lg:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+          {/* Left Sidebar (Desktop only) */}
+          <div className="hidden md:block md:col-span-3 lg:col-span-2">
+            <div className="sticky top-20 space-y-6">
+              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
+                {/* Profile Summary */}
+                <div className="flex flex-col items-center text-center mb-4">
+                  <Avatar className="h-16 w-16 border-2 border-primary mb-2">
+                    {userData?.avatar ? (
+                      <AvatarImage src={userData.avatar} alt={userName} />
+                    ) : (
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-purple-500">
+                        {userName.charAt(0)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <h3 className="font-semibold">{userName}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {userData?.location || 'Add your location'}
                   </p>
+                  
+                  {isProfileIncomplete && (
+                    <div className="mt-2 w-full bg-secondary rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full" 
+                        style={{ width: userData ? '40%' : '10%' }}
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Main Navigation */}
+                <nav className="space-y-1">
+                  {[
+                    { name: 'Feed', icon: Home, tab: 'feed' },
+                    { name: 'Discover', icon: Compass, tab: 'discover' },
+                    { name: 'Travel Buddies', icon: Users, tab: 'buddies' },
+                    { name: 'Messages', icon: MessageSquare, tab: 'messages' },
+                    { name: 'My Profile', icon: User, tab: 'profile' },
+                  ].map((item) => (
+                    <Button
+                      key={item.name}
+                      variant={activeTab === item.tab ? 'secondary' : 'ghost'}
+                      className={`w-full justify-start ${
+                        activeTab === item.tab ? 'bg-secondary text-primary font-medium' : ''
+                      }`}
+                      onClick={() => setActiveTab(item.tab)}
+                    >
+                      <item.icon className={`mr-2 h-4 w-4 ${activeTab === item.tab ? 'text-primary' : ''}`} />
+                      {item.name}
+                    </Button>
+                  ))}
+                  
+                  <Button 
+                    variant="default" 
+                    className="w-full bg-primary hover:bg-primary/90 mt-2"
+                    onClick={() => setActiveTab('create')}
+                  >
+                    Create Post
+                  </Button>
+                </nav>
+              </div>
+              
+              {/* Travel Stats */}
+              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
+                <h3 className="font-medium mb-2 flex items-center">
+                  <Globe className="h-4 w-4 mr-2" />
+                  Your Travel Stats
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Countries Visited</span>
+                    <span className="font-medium">{userData?.visitedCountries?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Travel Buddies</span>
+                    <span className="font-medium">{userData?.connections?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Trip Plans</span>
+                    <span className="font-medium">{userData?.trips?.length || 0}</span>
+                  </div>
                 </div>
               </div>
-
-              <nav className="space-y-2">
-                {[
-                  { name: 'Feed', icon: Home, tab: 'feed' },
-                  { name: 'Discover', icon: Compass, tab: 'discover' },
-                  { name: 'Create Post', icon: PlusSquare, tab: 'create' },
-                  { name: 'Messages', icon: MessageCircle, tab: 'messages' },
-                  { name: 'Profile', icon: User, tab: 'profile' },
-                ].map((item) => (
-                  <button
-                    key={item.name}
-                    onClick={() => setActiveTab(item.tab)}
-                    className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors ${
-                      activeTab === item.tab 
-                        ? 'bg-purple-500/20 text-purple-300' 
-                        : 'hover:bg-slate-700/50 text-slate-300'
-                    }`}
-                  >
-                    <item.icon size={20} />
-                    <span>{item.name}</span>
-                  </button>
-                ))}
-              </nav>
             </div>
           </div>
-
+          
           {/* Main Content Area */}
-          <div className="md:col-span-9 lg:col-span-10">
-            <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 rounded-xl p-6">
-              {activeTab === 'feed' && <CommunityPosts />}
-              {activeTab === 'discover' && <DiscoverContent />}
-              {activeTab === 'create' && <CreatePost />}
-              {activeTab === 'messages' && <div>Messages Coming Soon</div>}
-              {activeTab === 'profile' && <div>Profile Coming Soon</div>}
+          <main className="md:col-span-9 lg:col-span-7">
+            <div className="bg-card/50 backdrop-blur-sm rounded-xl shadow-sm border border-border overflow-hidden">
+              {/* Mobile Search */}
+              <div className="p-4 border-b border-border md:hidden">
+                <form onSubmit={handleSearch} className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    type="search"
+                    placeholder="Search..."
+                    className="pl-10 w-full bg-secondary/50"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </form>
+              </div>
+              
+              {/* Content Based on Active Tab */}
+              <div className="p-0">
+                {activeTab === 'feed' && <FeedContent />}
+                {activeTab === 'discover' && <DiscoverContent />}
+                {activeTab === 'buddies' && <TravelBuddyFinder />}
+                {activeTab === 'messages' && <MessagesContent />}
+                {activeTab === 'create' && <CreatePost />}
+                {activeTab === 'profile' && <UserProfile userId={userId} />}
+              </div>
+            </div>
+          </main>
+          
+          {/* Right Sidebar (Desktop only) */}
+          <div className="hidden lg:block lg:col-span-3">
+            <div className="sticky top-20 space-y-6">
+              {/* Trending Destinations */}
+              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
+                <h3 className="font-medium mb-3 flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Trending Destinations
+                </h3>
+                <div className="space-y-3">
+                  {['Bali, Indonesia', 'Santorini, Greece', 'Kyoto, Japan'].map((destination) => (
+                    <div key={destination} className="flex items-center">
+                      <MapPin className="h-3 w-3 mr-2 text-muted-foreground" />
+                      <span className="text-sm">{destination}</span>
+                    </div>
+                  ))}
+                  <Button variant="link" className="text-xs p-0 h-auto">
+                    See more destinations
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Travel Buddies Suggestions */}
+              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
+                <h3 className="font-medium mb-3 flex items-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  Suggested Travel Buddies
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    { name: 'Emma H.', location: 'Barcelona', match: '92%' },
+                    { name: 'James L.', location: 'Tokyo', match: '85%' },
+                    { name: 'Sophia R.', location: 'New York', match: '78%' }
+                  ].map((buddy) => (
+                    <div key={buddy.name} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarFallback className="bg-secondary text-xs">
+                            {buddy.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">{buddy.name}</p>
+                          <p className="text-xs text-muted-foreground">{buddy.location}</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="h-7 text-xs">
+                        Connect
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="link" className="text-xs p-0 h-auto">
+                    Find more buddies
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Active Trips */}
+              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
+                <h3 className="font-medium mb-3 flex items-center">
+                  <Activity className="h-4 w-4 mr-2" />
+                  Active Trip Requests
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div className="p-2 bg-secondary/50 rounded-lg">
+                    <p className="font-medium">Paris in April</p>
+                    <p className="text-xs text-muted-foreground mb-2">Apr 10-20 • 3 interested</p>
+                    <Button size="sm" variant="outline" className="w-full text-xs h-7">
+                      View Details
+                    </Button>
+                  </div>
+                  <div className="p-2 bg-secondary/50 rounded-lg">
+                    <p className="font-medium">Bangkok Food Tour</p>
+                    <p className="text-xs text-muted-foreground mb-2">May 5-12 • 2 interested</p>
+                    <Button size="sm" variant="outline" className="w-full text-xs h-7">
+                      View Details
+                    </Button>
+                  </div>
+                  <Button variant="link" className="text-xs p-0 h-auto">
+                    See all trip requests
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
+      
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-slate-900/80 backdrop-blur-lg border-t border-slate-700 py-3 z-50">
-        <div className="flex justify-around">
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background/80 backdrop-blur-lg border-t border-border z-10">
+        <div className="flex justify-between px-2">
           {[
-            { icon: Home, tab: 'feed', isActive: activeTab === 'feed' },
-            { icon: Compass, tab: 'discover', isActive: activeTab === 'discover' },
-            { icon: PlusSquare, tab: 'create', isActive: activeTab === 'create' },
-            { icon: MessageCircle, tab: 'messages', isActive: activeTab === 'messages' },
-            { icon: User, tab: 'profile', isActive: activeTab === 'profile' },
+            { icon: Home, tab: 'feed' },
+            { icon: Compass, tab: 'discover' },
+            { icon: Users, tab: 'buddies' },
+            { icon: MessageSquare, tab: 'messages' },
+            { icon: User, tab: 'profile' }
           ].map((item) => (
-            <button
+            <Button
               key={item.tab}
+              variant="ghost"
+              size="icon"
+              className={`py-3 ${activeTab === item.tab ? 'text-primary' : 'text-muted-foreground'}`}
               onClick={() => setActiveTab(item.tab)}
-              className={`rounded-full p-2 transition-colors ${
-                item.tab === 'create' 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' 
-                  : item.isActive
-                    ? 'text-purple-400' 
-                    : 'text-slate-400 hover:text-slate-200'
-              }`}
             >
-              <item.icon size={24} />
-            </button>
+              <item.icon className={`h-5 w-5 ${activeTab === item.tab ? 'fill-primary/10' : ''}`} />
+            </Button>
           ))}
         </div>
+        
+        {/* Floating Action Button for Create Post */}
+        <Button
+          onClick={() => setActiveTab('create')}
+          className="absolute -top-6 left-1/2 transform -translate-x-1/2 rounded-full w-12 h-12 bg-primary hover:bg-primary/90 shadow-lg flex items-center justify-center"
+        >
+          <span className="text-2xl font-light">+</span>
+        </Button>
       </div>
     </div>
   );

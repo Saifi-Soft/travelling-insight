@@ -1,429 +1,351 @@
 
 import React, { useState } from 'react';
-import { Search, Globe, Compass, MapPin, Users, Tag, BookOpen } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
-import { mongoApiService } from '@/api/mongoApiService';
-import { communityApi } from '@/api/communityApiService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { Globe, MapPin, Users, Search, UserPlus, Bookmark, TrendingUp } from 'lucide-react';
+import { mongoApiService } from '@/api/mongoApiService';
 
-interface DiscoverUser {
-  _id: string;
+interface TrendingLocation {
+  _id?: string;
+  name: string;
+  country: string;
+  image: string;
+  popularity: number;
+  activities: string[];
+}
+
+interface TravelGroup {
+  _id?: string;
+  name: string;
+  description: string;
+  image?: string;
+  members: number;
+  destination?: string;
+  interests: string[];
+}
+
+interface TravelerProfile {
+  _id?: string;
+  userId: string;
   name: string;
   avatar?: string;
-  bio?: string;
-  travelStyles?: string[];
-  visitedCountries?: string[];
+  bio: string;
+  location: string;
+  visitedCountries: string[];
+  plannedTrips?: {
+    destination: string;
+    startDate: string;
+    endDate: string;
+  }[];
+  travelStyles: string[];
 }
 
-interface DiscoverLocation {
-  _id: string;
-  name: string;
-  image: string;
-  description: string;
-  popularity: number;
-}
-
-interface DiscoverGroup {
-  _id: string;
-  name: string;
-  image?: string;
-  description: string;
-  memberCount: number;
-}
-
-const DiscoverContent: React.FC = () => {
+const DiscoverContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'travelers' | 'locations' | 'groups'>('all');
+  const [activeTab, setActiveTab] = useState('travelers');
+  const userId = localStorage.getItem('community_user_id');
 
-  // Fetch users
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['discoverUsers'],
-    queryFn: async () => {
-      try {
-        return await mongoApiService.queryDocuments('communityUsers', {});
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        return [];
-      }
-    },
-  });
-
-  // Fetch popular locations (we'll mock this with MongoDB)
-  const { data: locations = [], isLoading: isLoadingLocations } = useQuery({
-    queryKey: ['discoverLocations'],
-    queryFn: async () => {
-      try {
-        const locations = await mongoApiService.queryDocuments('travelLocations', {});
-        if (locations.length === 0) {
-          // If no locations exist, create some sample data
-          const sampleLocations = [
-            {
-              name: 'Bali, Indonesia',
-              image: 'https://images.unsplash.com/photo-1573790387438-4da905039392',
-              description: 'Tropical paradise with stunning beaches and vibrant culture',
-              popularity: 95
-            },
-            {
-              name: 'Santorini, Greece',
-              image: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e',
-              description: 'Iconic white buildings and breathtaking Mediterranean views',
-              popularity: 92
-            },
-            {
-              name: 'Tokyo, Japan',
-              image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf',
-              description: 'Ultramodern cityscape blended with ancient traditions',
-              popularity: 89
-            }
-          ];
-          
-          for (const location of sampleLocations) {
-            await mongoApiService.insertDocument('travelLocations', location);
-          }
-          
-          return sampleLocations;
-        }
-        return locations;
-      } catch (error) {
-        console.error('Error fetching locations:', error);
-        return [];
-      }
-    },
+  // Fetch trending locations
+  const { data: locations = [], isLoading: isLocationsLoading } = useQuery({
+    queryKey: ['trendingLocations'],
+    queryFn: () => mongoApiService.queryDocuments('trendingLocations', {}),
   });
 
   // Fetch travel groups
-  const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
-    queryKey: ['discoverGroups'],
-    queryFn: async () => {
-      try {
-        const groups = await mongoApiService.queryDocuments('travelGroups', {});
-        if (groups.length === 0) {
-          // If no groups exist, create some sample data
-          const sampleGroups = [
-            {
-              name: 'Solo Backpackers',
-              description: 'Connect with fellow solo travelers around the world',
-              memberCount: 1250,
-              image: 'https://images.unsplash.com/photo-1527631746610-bca00a040d60'
-            },
-            {
-              name: 'Luxury Travel Enthusiasts',
-              description: 'For those who appreciate the finer experiences in travel',
-              memberCount: 854,
-              image: 'https://images.unsplash.com/photo-1568084680786-a84f91d1153c'
-            },
-            {
-              name: 'Adventure Seekers',
-              description: 'Adrenaline junkies and outdoor adventure lovers',
-              memberCount: 2103,
-              image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba'
-            }
-          ];
-          
-          for (const group of sampleGroups) {
-            await mongoApiService.insertDocument('travelGroups', group);
-          }
-          
-          return sampleGroups;
-        }
-        return groups;
-      } catch (error) {
-        console.error('Error fetching groups:', error);
-        return [];
-      }
-    },
+  const { data: groups = [], isLoading: isGroupsLoading } = useQuery({
+    queryKey: ['travelGroups'],
+    queryFn: () => mongoApiService.queryDocuments('travelGroups', {}),
   });
 
-  const filteredData = () => {
-    const query = searchQuery.toLowerCase();
-    
-    let filteredUsers = users.filter((user: DiscoverUser) =>
-      user.name?.toLowerCase().includes(query) || 
-      user.bio?.toLowerCase().includes(query) ||
-      user.travelStyles?.some(style => style.toLowerCase().includes(query))
-    );
-    
-    let filteredLocations = locations.filter((location: DiscoverLocation) =>
-      location.name?.toLowerCase().includes(query) || 
-      location.description?.toLowerCase().includes(query)
-    );
-    
-    let filteredGroups = groups.filter((group: DiscoverGroup) =>
-      group.name?.toLowerCase().includes(query) || 
-      group.description?.toLowerCase().includes(query)
-    );
-    
-    switch (activeFilter) {
-      case 'travelers':
-        return { users: filteredUsers, locations: [], groups: [] };
-      case 'locations':
-        return { users: [], locations: filteredLocations, groups: [] };
-      case 'groups':
-        return { users: [], locations: [], groups: filteredGroups };
-      default:
-        return { users: filteredUsers, locations: filteredLocations, groups: filteredGroups };
-    }
+  // Fetch travelers
+  const { data: travelers = [], isLoading: isTravelersLoading } = useQuery({
+    queryKey: ['travelers'],
+    queryFn: () => mongoApiService.queryDocuments('communityUsers', {}),
+  });
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.info(`Searching for: ${searchQuery}`);
+    // Implement actual search
   };
-  
-  const { users: displayUsers, locations: displayLocations, groups: displayGroups } = filteredData();
-  
-  const isLoading = isLoadingUsers || isLoadingLocations || isLoadingGroups;
+
+  const handleConnect = (travelerId: string) => {
+    toast.success('Connection request sent!');
+    // Implement actual connection logic
+  };
+
+  const handleJoinGroup = (groupId: string) => {
+    toast.success('Request to join group sent!');
+    // Implement actual join group logic
+  };
+
+  const handleSaveLocation = (locationId: string) => {
+    toast.success('Location saved to your wishlist!');
+    // Implement actual save location logic
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Search and Filter Bar */}
-      <div className="relative">
-        <div className="flex items-center border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
-          <div className="p-3 text-slate-400">
-            <Search size={20} />
-          </div>
+    <div className="discover-content">
+      {/* Search Bar */}
+      <div className="p-4 border-b border-border">
+        <form onSubmit={handleSearch} className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            type="text"
-            placeholder="Discover people, places, and groups..."
-            className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+            type="search"
+            placeholder={`Search ${activeTab}...`}
+            className="pl-10 w-full bg-secondary/50"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>
+        </form>
       </div>
 
-      {/* Filter Tabs */}
-      <Tabs defaultValue="all" value={activeFilter} onValueChange={(value) => setActiveFilter(value as any)}>
-        <TabsList className="grid grid-cols-4 bg-slate-800/50">
-          <TabsTrigger value="all" className="data-[state=active]:bg-slate-700">All</TabsTrigger>
-          <TabsTrigger value="travelers" className="data-[state=active]:bg-slate-700">Travelers</TabsTrigger>
-          <TabsTrigger value="locations" className="data-[state=active]:bg-slate-700">Locations</TabsTrigger>
-          <TabsTrigger value="groups" className="data-[state=active]:bg-slate-700">Groups</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {/* Content Sections */}
-      <div className="space-y-8">
-        {/* Travelers Section */}
-        {(activeFilter === 'all' || activeFilter === 'travelers') && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold flex items-center">
-                <Users className="mr-2" size={20} />
-                Travelers to Connect With
-              </h3>
-              {displayUsers.length > 3 && (
-                <Button variant="ghost" size="sm">View All</Button>
-              )}
-            </div>
-            
-            {isLoadingUsers ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="bg-slate-800/50 border-slate-700">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center space-x-3">
-                        <Skeleton className="h-12 w-12 rounded-full" />
-                        <div className="space-y-1">
-                          <Skeleton className="h-5 w-32" />
-                          <Skeleton className="h-4 w-24" />
+      {/* Tabs for different discover sections */}
+      <div className="p-4 pb-0">
+        <Tabs defaultValue="travelers" onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="travelers" className="text-xs sm:text-sm">
+              <Users className="h-4 w-4 mr-2 hidden sm:inline" />
+              Travelers
+            </TabsTrigger>
+            <TabsTrigger value="locations" className="text-xs sm:text-sm">
+              <Globe className="h-4 w-4 mr-2 hidden sm:inline" />
+              Locations
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="text-xs sm:text-sm">
+              <Users className="h-4 w-4 mr-2 hidden sm:inline" />
+              Groups
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Travelers Tab */}
+          <TabsContent value="travelers" className="pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {isTravelersLoading ? (
+                Array(4).fill(0).map((_, i) => (
+                  <Card key={i} className="border border-border overflow-hidden">
+                    <div className="bg-secondary h-20"></div>
+                    <CardContent className="pt-0">
+                      <div className="-mt-10 flex flex-col items-center">
+                        <Skeleton className="h-20 w-20 rounded-full mb-3" />
+                        <Skeleton className="h-5 w-28 mb-1" />
+                        <Skeleton className="h-4 w-20 mb-3" />
+                        <Skeleton className="h-16 w-full mb-3" />
+                        <div className="flex gap-2 mb-3">
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                          <Skeleton className="h-6 w-16 rounded-full" />
                         </div>
+                        <Skeleton className="h-9 w-full" />
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className="h-16 w-full" />
                     </CardContent>
-                    <CardFooter>
-                      <Skeleton className="h-9 w-full" />
-                    </CardFooter>
                   </Card>
-                ))}
-              </div>
-            ) : displayUsers.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {displayUsers.slice(0, 3).map((user: DiscoverUser) => (
-                  <Card key={user._id} className="bg-slate-800/50 border-slate-700">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-12 w-12 border border-slate-600">
-                          {user.avatar ? (
-                            <AvatarImage src={user.avatar} alt={user.name} />
+                ))
+              ) : (
+                travelers.map((traveler: TravelerProfile) => (
+                  <Card key={traveler._id} className="border border-border overflow-hidden bg-card/50">
+                    <div className="bg-gradient-to-r from-primary/20 to-purple-500/20 h-20"></div>
+                    <CardContent className="pt-0">
+                      <div className="-mt-10 flex flex-col items-center">
+                        <Avatar className="h-20 w-20 border-4 border-background mb-3">
+                          {traveler.avatar ? (
+                            <AvatarImage src={traveler.avatar} alt={traveler.name} />
                           ) : (
-                            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600">
-                              {user.name?.charAt(0)}
+                            <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                              {traveler.name.charAt(0)}
                             </AvatarFallback>
                           )}
                         </Avatar>
-                        <div>
-                          <h4 className="font-medium">{user.name}</h4>
-                          {user.travelStyles && user.travelStyles.length > 0 && (
-                            <p className="text-sm text-slate-400">{user.travelStyles[0]} Traveler</p>
+                        <h3 className="font-semibold">{traveler.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-3 flex items-center">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {traveler.location}
+                        </p>
+                        <p className="text-sm text-center mb-3 line-clamp-2">{traveler.bio}</p>
+                        <div className="flex flex-wrap gap-2 mb-4 justify-center">
+                          {traveler.travelStyles?.slice(0, 2).map((style, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {style}
+                            </Badge>
+                          ))}
+                          {(traveler.travelStyles?.length || 0) > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{traveler.travelStyles!.length - 2}
+                            </Badge>
                           )}
                         </div>
+                        <Button 
+                          className="w-full" 
+                          variant={traveler.userId === userId ? "secondary" : "default"}
+                          onClick={() => handleConnect(traveler.userId)}
+                          disabled={traveler.userId === userId}
+                        >
+                          {traveler.userId === userId ? (
+                            "Your Profile"
+                          ) : (
+                            <>
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Connect
+                            </>
+                          )}
+                        </Button>
                       </div>
-                    </CardHeader>
-                    <CardContent className="text-sm text-slate-300">
-                      {user.bio ? (
-                        <p className="line-clamp-2">{user.bio}</p>
-                      ) : (
-                        <p className="italic text-slate-400">No bio available</p>
-                      )}
-                      {user.visitedCountries && user.visitedCountries.length > 0 && (
-                        <p className="mt-2 flex items-center text-slate-400">
-                          <Globe className="mr-1" size={14} />
-                          <span>Visited {user.visitedCountries.length} countries</span>
-                        </p>
-                      )}
                     </CardContent>
-                    <CardFooter>
-                      <Button variant="outline" size="sm" className="w-full">
-                        Connect
-                      </Button>
-                    </CardFooter>
                   </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardContent className="py-8 text-center text-slate-400">
-                  <Users className="mx-auto h-12 w-12 mb-3 opacity-50" />
-                  <p>No travelers found matching your search criteria</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Popular Destinations Section */}
-        {(activeFilter === 'all' || activeFilter === 'locations') && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold flex items-center">
-                <MapPin className="mr-2" size={20} />
-                Popular Destinations
-              </h3>
-              {displayLocations.length > 3 && (
-                <Button variant="ghost" size="sm">Explore All</Button>
+                ))
               )}
             </div>
-            
-            {isLoadingLocations ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="overflow-hidden bg-slate-800/50 border-slate-700">
-                    <Skeleton className="h-40 w-full" />
+          </TabsContent>
+          
+          {/* Locations Tab */}
+          <TabsContent value="locations" className="pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {isLocationsLoading ? (
+                Array(4).fill(0).map((_, i) => (
+                  <Card key={i} className="overflow-hidden">
+                    <Skeleton className="h-48 w-full" />
                     <CardContent className="p-4">
                       <Skeleton className="h-6 w-32 mb-2" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full mt-1" />
+                      <Skeleton className="h-4 w-24 mb-4" />
+                      <div className="flex gap-2 mb-3">
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                      </div>
                     </CardContent>
+                    <CardFooter className="pt-0 px-4 pb-4">
+                      <Skeleton className="h-9 w-full" />
+                    </CardFooter>
                   </Card>
-                ))}
-              </div>
-            ) : displayLocations.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {displayLocations.slice(0, 3).map((location: DiscoverLocation) => (
-                  <Card key={location._id} className="overflow-hidden bg-slate-800/50 border-slate-700">
-                    <div className="h-40 relative">
+                ))
+              ) : (
+                locations.map((location: TrendingLocation) => (
+                  <Card key={location._id} className="overflow-hidden bg-card/50">
+                    <div className="relative h-48 overflow-hidden">
                       <img 
                         src={location.image} 
                         alt={location.name} 
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute top-2 right-2 bg-slate-900/80 text-xs font-medium py-1 px-2 rounded-full flex items-center">
-                        <Compass className="mr-1" size={12} />
-                        {location.popularity}% Popular
+                      <div className="absolute top-2 right-2">
+                        <Badge className="bg-primary/80 hover:bg-primary text-white flex items-center">
+                          <TrendingUp className="h-3 w-3 mr-1" />
+                          Trending
+                        </Badge>
                       </div>
                     </div>
                     <CardContent className="p-4">
-                      <h4 className="font-medium mb-1">{location.name}</h4>
-                      <p className="text-sm text-slate-300 line-clamp-2">{location.description}</p>
+                      <h3 className="font-semibold text-lg">{location.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-3">{location.country}</p>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {location.activities.slice(0, 3).map((activity, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">
+                            {activity}
+                          </Badge>
+                        ))}
+                        {location.activities.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{location.activities.length - 3}
+                          </Badge>
+                        )}
+                      </div>
                     </CardContent>
+                    <CardFooter className="pt-0 px-4 pb-4">
+                      <Button 
+                        className="w-full" 
+                        variant="outline"
+                        onClick={() => handleSaveLocation(location._id || '')}
+                      >
+                        <Bookmark className="h-4 w-4 mr-2" />
+                        Save to Wishlist
+                      </Button>
+                    </CardFooter>
                   </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardContent className="py-8 text-center text-slate-400">
-                  <MapPin className="mx-auto h-12 w-12 mb-3 opacity-50" />
-                  <p>No destinations found matching your search criteria</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Travel Groups Section */}
-        {(activeFilter === 'all' || activeFilter === 'groups') && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold flex items-center">
-                <Users className="mr-2" size={20} />
-                Travel Groups
-              </h3>
-              {displayGroups.length > 2 && (
-                <Button variant="ghost" size="sm">View All</Button>
+                ))
               )}
             </div>
-            
-            {isLoadingGroups ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2].map((i) => (
-                  <Card key={i} className="flex flex-col md:flex-row overflow-hidden bg-slate-800/50 border-slate-700">
-                    <Skeleton className="h-32 w-full md:w-32" />
-                    <div className="p-4 flex-1">
-                      <Skeleton className="h-6 w-32 mb-2" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-2/3 mt-1" />
-                      <div className="flex justify-between items-center mt-3">
-                        <Skeleton className="h-5 w-24" />
-                        <Skeleton className="h-9 w-24" />
+          </TabsContent>
+          
+          {/* Groups Tab */}
+          <TabsContent value="groups" className="pt-4">
+            <div className="grid grid-cols-1 gap-4">
+              {isGroupsLoading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <Card key={i} className="overflow-hidden">
+                    <div className="flex flex-col sm:flex-row">
+                      <Skeleton className="h-32 sm:h-full sm:w-1/3 w-full" />
+                      <div className="p-4 flex-1">
+                        <Skeleton className="h-6 w-32 mb-2" />
+                        <Skeleton className="h-4 w-24 mb-2" />
+                        <Skeleton className="h-16 w-full mb-3" />
+                        <div className="flex gap-2 mb-3">
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                        </div>
+                        <Skeleton className="h-9 w-full sm:w-40" />
                       </div>
                     </div>
                   </Card>
-                ))}
-              </div>
-            ) : displayGroups.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {displayGroups.slice(0, 2).map((group: DiscoverGroup) => (
-                  <Card key={group._id} className="flex flex-col md:flex-row overflow-hidden bg-slate-800/50 border-slate-700">
-                    <div className="h-32 md:w-32 bg-slate-700 relative">
-                      {group.image ? (
+                ))
+              ) : (
+                groups.map((group: TravelGroup) => (
+                  <Card key={group._id} className="overflow-hidden bg-card/50">
+                    <div className="flex flex-col sm:flex-row">
+                      <div className="sm:w-1/3 w-full h-32 sm:h-auto relative">
                         <img 
-                          src={group.image} 
+                          src={group.image || 'https://placehold.co/600x400?text=Group'} 
                           alt={group.name} 
                           className="w-full h-full object-cover"
                         />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-600 to-slate-700">
-                          <Users size={32} />
+                        <div className="absolute bottom-2 left-2">
+                          <Badge className="bg-secondary/80 text-foreground">
+                            <Users className="h-3 w-3 mr-1" />
+                            {group.members} members
+                          </Badge>
                         </div>
-                      )}
-                    </div>
-                    <div className="p-4 flex-1">
-                      <h4 className="font-medium mb-1">{group.name}</h4>
-                      <p className="text-sm text-slate-300 line-clamp-2">{group.description}</p>
-                      <div className="flex justify-between items-center mt-3">
-                        <span className="text-xs text-slate-400 flex items-center">
-                          <Users className="mr-1" size={14} />
-                          {group.memberCount.toLocaleString()} members
-                        </span>
-                        <Button size="sm">Join Group</Button>
+                      </div>
+                      <div className="p-4 flex-1">
+                        <h3 className="font-semibold">{group.name}</h3>
+                        {group.destination && (
+                          <p className="text-sm text-muted-foreground mb-2 flex items-center">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            {group.destination}
+                          </p>
+                        )}
+                        <p className="text-sm mb-3 line-clamp-2">{group.description}</p>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {group.interests?.slice(0, 2).map((interest, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {interest}
+                            </Badge>
+                          ))}
+                          {(group.interests?.length || 0) > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{group.interests!.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => handleJoinGroup(group._id || '')}
+                        >
+                          Request to Join
+                        </Button>
                       </div>
                     </div>
                   </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardContent className="py-8 text-center text-slate-400">
-                  <Tag className="mx-auto h-12 w-12 mb-3 opacity-50" />
-                  <p>No groups found matching your search criteria</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
+                ))
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
