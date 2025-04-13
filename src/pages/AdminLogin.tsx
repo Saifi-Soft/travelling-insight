@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
+import { mongoApiService } from '@/api/mongoApiService';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   // Check if user is already logged in
@@ -24,30 +26,75 @@ const AdminLogin = () => {
     checkAuth();
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // This is a simple mock authentication
-    // In a real app, you would call an API
-    setTimeout(() => {
-      // Hardcoded credentials for demo
-      if (username === 'admin' && password === 'password') {
-        localStorage.setItem('adminAuth', 'true');
-        toast({
-          title: "Login successful",
-          description: "Welcome to the admin dashboard",
-        });
-        navigate('/admin/dashboard'); // Redirect to dashboard after successful login
+    try {
+      // Check if admin collection exists in MongoDB
+      const adminUsers = await mongoApiService.queryDocuments('adminUsers', {
+        username: username
+      });
+
+      // If there's no admin user yet, accept hardcoded credentials
+      if (adminUsers.length === 0) {
+        // Hardcoded credentials for first login
+        if (username === 'admin' && password === 'password') {
+          // Store the first admin in the database
+          await mongoApiService.insertDocument('adminUsers', {
+            username: 'admin',
+            passwordHash: 'password', // In a real app, you'd hash this
+            role: 'superadmin',
+            createdAt: new Date(),
+            lastLogin: new Date()
+          });
+          
+          localStorage.setItem('adminAuth', 'true');
+          toast({
+            title: "Login successful",
+            description: "Welcome to the admin dashboard",
+          });
+          navigate('/admin/dashboard');
+        } else {
+          toast({
+            title: "Login failed",
+            description: "Invalid username or password",
+            variant: "destructive",
+          });
+        }
       } else {
-        toast({
-          title: "Login failed",
-          description: "Invalid username or password",
-          variant: "destructive",
-        });
+        // Verify against stored admin user
+        const adminUser = adminUsers[0];
+        if (adminUser && adminUser.passwordHash === password) { // In real app, compare hashed passwords
+          // Update last login time
+          await mongoApiService.updateDocument('adminUsers', adminUser._id, {
+            lastLogin: new Date()
+          });
+          
+          localStorage.setItem('adminAuth', 'true');
+          toast({
+            title: "Login successful",
+            description: "Welcome back to the admin dashboard",
+          });
+          navigate('/admin/dashboard');
+        } else {
+          toast({
+            title: "Login failed",
+            description: "Invalid username or password",
+            variant: "destructive",
+          });
+        }
       }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Login error",
+        description: "An error occurred during login. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

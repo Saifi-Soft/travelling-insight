@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -59,7 +58,7 @@ declare global {
   }
 }
 
-// Initialize ads for all pages - Modified to prevent duplicate ad initialization
+// Initialize ads for all pages
 const initializePageAds = () => {
   try {
     // Only initialize ads if they haven't been pushed yet
@@ -222,6 +221,7 @@ const App = () => {
         <Toaster />
         <BrowserRouter>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
             <Route path="/blog" element={<Blog />} />
@@ -237,9 +237,11 @@ const App = () => {
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/login" element={<Login />} />
             
-            {/* Admin Routes - Properly configured for authentication flow */}
-            <Route path="/admin" element={<Admin />} /> {/* This now redirects to login first */}
-            <Route path="/admin/login" element={<AdminLogin />} /> {/* This handles login and checks if already logged in */}
+            {/* Admin Routes with Authentication Flow */}
+            <Route path="/admin" element={<Admin />} /> {/* This redirects to login */}
+            <Route path="/admin/login" element={<AdminLogin />} /> {/* Login page */}
+            
+            {/* Protected Admin Routes */}
             <Route path="/admin/dashboard" element={<AdminAuthGuard><AdminDashboard /></AdminAuthGuard>} />
             <Route path="/admin/posts" element={<AdminAuthGuard><AdminPosts /></AdminAuthGuard>} />
             <Route path="/admin/posts/create" element={<AdminAuthGuard><AdminCreatePost /></AdminAuthGuard>} />
