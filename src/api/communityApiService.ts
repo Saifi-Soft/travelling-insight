@@ -1,4 +1,3 @@
-
 import { mongoApiService } from './mongoApiService';
 import { CommunityUser, TravelGroup, CommunityEvent, TravelMatch } from '@/types/common';
 
@@ -36,6 +35,15 @@ export const communityUsersApi = {
       return await mongoApiService.updateDocument('communityUsers', id, user);
     } catch (error) {
       console.error(`Error updating community user with ID ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  updateStatus: async (id: string, status: 'active' | 'blocked' | 'pending'): Promise<CommunityUser | null> => {
+    try {
+      return await mongoApiService.updateDocument('communityUsers', id, { status });
+    } catch (error) {
+      console.error(`Error updating user status with ID ${id}:`, error);
       throw error;
     }
   },
@@ -146,7 +154,7 @@ export const communityEventsApi = {
   }
 };
 
-// Define travel matches API for the intelligent matching feature
+// Define travel matches API
 export const travelMatchesApi = {
   findPotentialMatches: async (userId: string, preferences: any): Promise<TravelMatch[]> => {
     try {
@@ -176,10 +184,50 @@ export const travelMatchesApi = {
   }
 };
 
+// Define community payment API
+export const communityPaymentApi = {
+  getSubscription: async (userId: string) => {
+    try {
+      return await mongoApiService.getSubscriptionByUserId(userId);
+    } catch (error) {
+      console.error(`Error getting subscription for user ${userId}:`, error);
+      return null;
+    }
+  },
+
+  createSubscription: async (userId: string, plan: 'monthly' | 'annual', subscriptionDetails: any) => {
+    try {
+      const subscription = {
+        userId,
+        plan,
+        ...subscriptionDetails,
+        createdAt: new Date()
+      };
+      return await mongoApiService.insertDocument('subscriptions', subscription);
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      throw error;
+    }
+  },
+
+  cancelSubscription: async (subscriptionId: string) => {
+    try {
+      return await mongoApiService.updateDocument('subscriptions', subscriptionId, { 
+        status: 'cancelled',
+        cancelledAt: new Date()
+      });
+    } catch (error) {
+      console.error(`Error cancelling subscription ${subscriptionId}:`, error);
+      throw error;
+    }
+  }
+};
+
 // Combined community API for convenience
 export const communityApi = {
   users: communityUsersApi,
   groups: travelGroupsApi,
   events: communityEventsApi,
-  matches: travelMatchesApi
+  matches: travelMatchesApi,
+  payments: communityPaymentApi
 };

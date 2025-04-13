@@ -98,14 +98,14 @@ const MOCK_POSTS: Post[] = [
 ];
 
 const MOCK_CATEGORIES: Category[] = [
-  { id: "1", name: "Beaches", slug: "beaches", icon: "🏖️", count: 12 },
-  { id: "2", name: "Mountains", slug: "mountains", icon: "🏔️", count: 8 },
-  { id: "3", name: "Urban", slug: "urban", icon: "🏙️", count: 15 },
-  { id: "4", name: "Food & Drink", slug: "food-drink", icon: "🍴", count: 20 },
-  { id: "5", name: "Culture", slug: "culture", icon: "🏛️", count: 13 },
-  { id: "6", name: "Budget", slug: "budget", icon: "💰", count: 7 },
-  { id: "7", name: "Sustainable", slug: "sustainable", icon: "♻️", count: 9 },
-  { id: "8", name: "Adventure", slug: "adventure", icon: "🧗", count: 18 }
+  { id: "1", name: "Beaches", slug: "beaches", icon: "🏖️", count: 12, image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" },
+  { id: "2", name: "Mountains", slug: "mountains", icon: "🏔️", count: 8, image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b" },
+  { id: "3", name: "Urban", slug: "urban", icon: "🏙️", count: 15, image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df" },
+  { id: "4", name: "Food & Drink", slug: "food-drink", icon: "🍴", count: 20, image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0" },
+  { id: "5", name: "Culture", slug: "culture", icon: "🏛️", count: 13, image: "https://images.unsplash.com/photo-1551009175-15bdf9dcb580" },
+  { id: "6", name: "Budget", slug: "budget", icon: "💰", count: 7, image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8" },
+  { id: "7", name: "Sustainable", slug: "sustainable", icon: "♻️", count: 9, image: "https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5" },
+  { id: "8", name: "Adventure", slug: "adventure", icon: "🧗", count: 18, image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f" }
 ];
 
 const MOCK_TOPICS: Topic[] = [

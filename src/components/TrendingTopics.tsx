@@ -1,3 +1,4 @@
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -6,6 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Topic, Category, Post } from '@/types/common';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { mongoApiService } from '@/api/mongoApiService';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const topicsApi = {
   getTrending: async (): Promise<Topic[]> => {
