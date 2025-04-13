@@ -1,11 +1,10 @@
-
 import { connectToDatabase, COLLECTIONS, ObjectId, formatMongoData } from './mongodb';
 
 export interface AdPlacement {
   id?: string;
   name: string;
   slot: string;
-  type: 'header' | 'footer' | 'sidebar' | 'in-content' | 'between-posts' | 'custom';
+  type: 'header' | 'footer' | 'sidebar' | 'in-content' | 'between-posts' | 'popup' | 'vertical' | 'custom';
   format: 'auto' | 'rectangle' | 'horizontal' | 'vertical';
   location: string;
   isEnabled: boolean;
@@ -55,6 +54,28 @@ const MOCK_ADS: AdPlacement[] = [
     type: 'between-posts',
     format: 'auto',
     location: 'blog',
+    isEnabled: true,
+    responsive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    name: 'Vertical Side Ad',
+    slot: '1231231231',
+    type: 'vertical',
+    format: 'vertical',
+    location: 'travel',
+    isEnabled: true,
+    responsive: false,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    name: 'Popup Ad',
+    slot: '3213213211',
+    type: 'popup',
+    format: 'rectangle',
+    location: 'all-pages',
     isEnabled: true,
     responsive: true,
     createdAt: new Date(),

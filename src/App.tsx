@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -153,6 +154,29 @@ const initAdPlacements = async () => {
         slot: '5566778899',
         type: 'footer',
         format: 'horizontal',
+        location: 'all-pages',
+        isEnabled: true,
+        responsive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      // Add new ad types for vertical and popup ads
+      {
+        name: 'Vertical Side Ad',
+        slot: '1231231231',
+        type: 'vertical',
+        format: 'vertical',
+        location: 'travel',
+        isEnabled: true,
+        responsive: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Popup Ad',
+        slot: '3213213211',
+        type: 'popup',
+        format: 'rectangle',
         location: 'all-pages',
         isEnabled: true,
         responsive: true,

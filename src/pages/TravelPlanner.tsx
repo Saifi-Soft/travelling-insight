@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,8 +9,9 @@ import { Separator } from '@/components/ui/separator';
 import TravelSearch from '@/components/travel/TravelSearch';
 import { Plane, Hotel, MapPin, CalendarClock, HelpingHand, Briefcase, PackageCheck, Globe, Star, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import HeaderAd from '@/components/ads/HeaderAd';
-import FooterAd from '@/components/ads/FooterAd';
+import BetweenPostsAd from '@/components/ads/BetweenPostsAd';
+import VerticalAd from '@/components/ads/VerticalAd';
+import PopupAd from '@/components/ads/PopupAd';
 
 const TravelPlanner = () => {
   const navigate = useNavigate();
@@ -52,11 +53,6 @@ const TravelPlanner = () => {
               </p>
             </div>
           </div>
-        </div>
-
-        {/* First ad placed strategically after hero section */}
-        <div className="py-6 bg-gray-50">
-          <HeaderAd className="max-w-5xl mx-auto" />
         </div>
 
         {/* Travel Planner Steps */}
@@ -158,6 +154,9 @@ const TravelPlanner = () => {
           </Card>
         </div>
 
+        {/* First Advertisement - After the main planning section */}
+        <BetweenPostsAd />
+
         {/* How It Works Section */}
         <div className="bg-secondary/30 py-16">
           <div className="container-custom">
@@ -242,10 +241,8 @@ const TravelPlanner = () => {
           </div>
         </div>
 
-        {/* Second ad placed strategically before testimonials */}
-        <div className="py-6 bg-gray-50 mb-8">
-          <FooterAd className="max-w-5xl mx-auto" />
-        </div>
+        {/* Second Advertisement - Before testimonials */}
+        <BetweenPostsAd variant="compact" />
 
         {/* Testimonials */}
         <div className="bg-gradient-to-r from-primary/5 to-primary/10 py-16">
@@ -320,6 +317,12 @@ const TravelPlanner = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Vertical Ad */}
+      <VerticalAd position="right" />
+      
+      {/* Popup Ad - shown after 5 seconds with auto-close after 10 seconds */}
+      <PopupAd delay={5000} duration={10000} />
     </div>
   );
 };
