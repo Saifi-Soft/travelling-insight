@@ -38,8 +38,8 @@
     /* Custom theme variables for light mode */
     --color-background: #ffffff;
     --color-foreground: #222222;
-    --color-primary: #3b82f6;
-    --color-footer: #3b82f6;
+    --color-primary: #065f46;
+    --color-footer: #065f46;
     --color-header: #ffffff;
     --color-card: #f8f9fa;
   }
@@ -76,8 +76,8 @@
     /* Custom theme variables for dark mode */
     --color-background: #1f2937;
     --color-foreground: #f8f9fa;
-    --color-primary: #3b82f6;
-    --color-footer: #1e3a8a;
+    --color-primary: #065f46;
+    --color-footer: #065f46;
     --color-header: #111827;
     --color-card: #374151;
   }

@@ -25,8 +25,8 @@ interface ThemeContextType {
 const defaultLightColors: ThemeColors = {
   background: '#ffffff',
   foreground: '#222222',
-  primary: '#3b82f6', // blue-500
-  footer: '#3b82f6', // blue-500
+  primary: '#065f46', // custom-green
+  footer: '#065f46', // custom-green
   header: '#ffffff',
   card: '#f8f9fa',
 };
@@ -34,8 +34,8 @@ const defaultLightColors: ThemeColors = {
 const defaultDarkColors: ThemeColors = {
   background: '#1f2937',
   foreground: '#f8f9fa',
-  primary: '#3b82f6', // blue-500
-  footer: '#1e3a8a', // blue-900
+  primary: '#065f46', // custom-green
+  footer: '#065f46', // custom-green
   header: '#111827',
   card: '#374151',
 };

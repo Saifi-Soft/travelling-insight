@@ -63,7 +63,7 @@ const BlogHeader = ({
               <Badge 
                 key={category} 
                 variant={activeCategory === category ? "default" : "outline"}
-                className={`cursor-pointer ${activeCategory === category ? "bg-custom-green" : "hover:bg-custom-green/10"}`}
+                className={`cursor-pointer ${activeCategory === category ? "" : "hover:bg-custom-green/10"}`}
                 onClick={() => setActiveCategory(category)}
               >
                 {category}

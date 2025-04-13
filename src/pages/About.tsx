@@ -1,3 +1,4 @@
+
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,10 +21,10 @@ const About = () => {
           
           <div className="container-custom relative z-10">
             <div className="max-w-3xl mx-auto text-center">
-              <Badge variant="outline" className="mb-4 px-3 py-1 border-primary text-primary">
+              <Badge variant="outline" className="mb-4 px-3 py-1">
                 Our Story
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-slate-700">
                 About NomadJourney
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-8">
@@ -34,7 +35,7 @@ const About = () => {
         </section>
         
         {/* First Ad placed strategically after hero section - blends with content */}
-        <div className="py-8 bg-gradient-to-b from-primary/5 to-background">
+        <div className="py-8 bg-gradient-to-b from-custom-green/5 to-background">
           <div className="container-custom">
             <HeaderAd className="max-w-5xl mx-auto rounded-lg overflow-hidden shadow-sm" />
           </div>
@@ -45,7 +46,7 @@ const About = () => {
           <div className="container-custom">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
+                <h2 className="text-3xl font-bold mb-6 text-slate-700">Our Mission</h2>
                 <p className="text-lg text-muted-foreground mb-6">
                   At NomadJourney, we believe travel is more than just visiting new places — it's about creating meaningful connections, understanding different cultures, and growing as individuals.
                 </p>
@@ -53,10 +54,10 @@ const About = () => {
                   Our mission is to inspire and empower travelers to explore the world authentically, responsibly, and with purpose. We're dedicated to providing a platform where travel enthusiasts can find inspiration, share experiences, and connect with like-minded explorers.
                 </p>
                 <div className="flex flex-wrap gap-4 mt-8">
-                  <Button variant="default" className="bg-primary">
+                  <Button variant="default">
                     <Users className="mr-2 h-5 w-5" /> Join Our Community
                   </Button>
-                  <Button variant="outline" className="border-primary text-primary">
+                  <Button variant="outline">
                     <Mail className="mr-2 h-5 w-5" /> Contact Us
                   </Button>
                 </div>
@@ -69,7 +70,7 @@ const About = () => {
                 />
                 <div className="absolute -bottom-6 -right-6 bg-background p-4 rounded-lg shadow-lg border border-border hidden md:block">
                   <div className="flex items-center gap-3">
-                    <Globe className="h-10 w-10 text-primary" />
+                    <Globe className="h-10 w-10 text-custom-green" />
                     <div>
                       <p className="font-bold">50+ Countries</p>
                       <p className="text-sm text-muted-foreground">Covered in our guides</p>
@@ -85,7 +86,7 @@ const About = () => {
         <section className="py-16 bg-muted/30">
           <div className="container-custom">
             <div className="max-w-3xl mx-auto text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Our Story</h2>
+              <h2 className="text-3xl font-bold mb-4 text-slate-700">Our Story</h2>
               <p className="text-lg text-muted-foreground">
                 From a small travel blog to a thriving global community
               </p>
@@ -95,8 +96,8 @@ const About = () => {
               <Card className="overflow-hidden border-none shadow-md">
                 <CardContent className="p-0">
                   <div className="grid grid-cols-1 md:grid-cols-12">
-                    <div className="md:col-span-4 bg-primary/10 p-8 flex flex-col justify-center">
-                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary">
+                    <div className="md:col-span-4 bg-custom-green/10 p-8 flex flex-col justify-center">
+                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-custom-green/20 text-custom-green">
                         <Calendar className="h-6 w-6" />
                       </div>
                       <h3 className="text-xl font-bold mb-2">2018</h3>
@@ -114,8 +115,8 @@ const About = () => {
               <Card className="overflow-hidden border-none shadow-md">
                 <CardContent className="p-0">
                   <div className="grid grid-cols-1 md:grid-cols-12">
-                    <div className="md:col-span-4 bg-primary/10 p-8 flex flex-col justify-center">
-                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary">
+                    <div className="md:col-span-4 bg-custom-green/10 p-8 flex flex-col justify-center">
+                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-custom-green/20 text-custom-green">
                         <Calendar className="h-6 w-6" />
                       </div>
                       <h3 className="text-xl font-bold mb-2">2020</h3>
@@ -133,8 +134,8 @@ const About = () => {
               <Card className="overflow-hidden border-none shadow-md">
                 <CardContent className="p-0">
                   <div className="grid grid-cols-1 md:grid-cols-12">
-                    <div className="md:col-span-4 bg-primary/10 p-8 flex flex-col justify-center">
-                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary">
+                    <div className="md:col-span-4 bg-custom-green/10 p-8 flex flex-col justify-center">
+                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-custom-green/20 text-custom-green">
                         <Calendar className="h-6 w-6" />
                       </div>
                       <h3 className="text-xl font-bold mb-2">Today</h3>
@@ -156,7 +157,7 @@ const About = () => {
         <section className="py-16">
           <div className="container-custom">
             <div className="max-w-3xl mx-auto text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Meet Our Team</h2>
+              <h2 className="text-3xl font-bold mb-4 text-slate-700">Meet Our Team</h2>
               <p className="text-lg text-muted-foreground">
                 The passionate travel enthusiasts behind NomadJourney
               </p>
@@ -191,7 +192,7 @@ const About = () => {
               ].map((member, index) => (
                 <Card key={index} className="overflow-hidden border-none shadow-md hover:-translate-y-1 transition-all duration-300">
                   <CardContent className="p-6 flex flex-col items-center text-center">
-                    <div className="mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-primary/20">
+                    <div className="mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-custom-green/20">
                       <img 
                         src={member.image} 
                         alt={member.name}
@@ -199,7 +200,7 @@ const About = () => {
                       />
                     </div>
                     <h3 className="text-xl font-bold mb-1">{member.name}</h3>
-                    <p className="text-primary font-medium mb-3">{member.role}</p>
+                    <p className="text-custom-green font-medium mb-3">{member.role}</p>
                     <div className="flex items-center justify-center text-sm text-muted-foreground">
                       <MapPin className="h-3 w-3 mr-1" />
                       <span>{member.location}</span>
@@ -212,7 +213,7 @@ const About = () => {
         </section>
         
         {/* Second Ad placed before footer - styled to blend with content */}
-        <div className="py-8 bg-gradient-to-t from-theme-footer/10 to-background">
+        <div className="py-8 bg-gradient-to-t from-custom-green/10 to-background">
           <div className="container-custom">
             <FooterAd className="max-w-5xl mx-auto rounded-lg overflow-hidden shadow-sm" />
           </div>
