@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useSession, SessionProvider } from './hooks/useSession';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -27,6 +27,7 @@ import AdminCommunity from './pages/AdminCommunity';
 import AdminSettings from './pages/AdminSettings';
 import AdminAds from './pages/AdminAds';
 import AdminHashtags from './pages/AdminHashtags';
+import { communityApi } from './api/communityApiService';
 
 // Import the Index component instead of Home
 import Index from './pages/Index';
