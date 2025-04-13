@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getThemeSettings, saveThemeSettings } from '@/api/themeService';
 import { useSession } from '@/hooks/useSession';
@@ -199,10 +198,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Apply theme class and set active theme colors
     if (isDark) {
       document.documentElement.classList.add('dark');
-      setThemeColors(darkThemeColors);
+      setThemeColors({...darkThemeColors}); // Use spread to create new object reference
     } else {
       document.documentElement.classList.remove('dark');
-      setThemeColors(lightThemeColors);
+      setThemeColors({...lightThemeColors}); // Use spread to create new object reference
     }
     
     // Apply CSS variables for theme colors
@@ -213,7 +212,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Save settings
     saveToDb();
     
-  }, [theme, lightThemeColors, darkThemeColors, themeColors, session?.user?.id]);
+  }, [theme, lightThemeColors, darkThemeColors, session?.user?.id]);
 
   // Update when system preference changes
   useEffect(() => {
@@ -245,45 +244,39 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Update theme color for specific mode (light/dark)
   const updateThemeColor = (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => {
     if (mode === 'light') {
-      setLightThemeColors(prev => ({
-        ...prev,
+      // Create a new colors object to ensure reactivity
+      const newLightColors = {
+        ...lightThemeColors,
         [colorType]: value
-      }));
+      };
+      
+      setLightThemeColors(newLightColors);
       
       // If currently in light mode, update active colors immediately
       if (theme === 'light' || (theme === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        setThemeColors(prev => ({
-          ...prev,
-          [colorType]: value
-        }));
+        setThemeColors({...newLightColors});
       }
+      
+      // Save updated settings
+      saveToDb(theme, newLightColors, darkThemeColors);
+      
     } else {
-      setDarkThemeColors(prev => ({
-        ...prev,
+      // Create a new colors object to ensure reactivity
+      const newDarkColors = {
+        ...darkThemeColors,
         [colorType]: value
-      }));
+      };
+      
+      setDarkThemeColors(newDarkColors);
       
       // If currently in dark mode, update active colors immediately
       if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        setThemeColors(prev => ({
-          ...prev,
-          [colorType]: value
-        }));
+        setThemeColors({...newDarkColors});
       }
+      
+      // Save updated settings
+      saveToDb(theme, lightThemeColors, newDarkColors);
     }
-    
-    // Save updated theme settings with appropriate colors for each mode
-    const updatedLightThemeColors = mode === 'light' ? {
-      ...lightThemeColors,
-      [colorType]: value
-    } : lightThemeColors;
-    
-    const updatedDarkThemeColors = mode === 'dark' ? {
-      ...darkThemeColors,
-      [colorType]: value
-    } : darkThemeColors;
-    
-    saveToDb(theme, updatedLightThemeColors, updatedDarkThemeColors);
   };
 
   return (

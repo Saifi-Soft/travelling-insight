@@ -1,9 +1,18 @@
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
+
+// Create a context for tab selection
+export const AppearanceTabsContext = React.createContext<{
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+}>({
+  activeTab: 'presets',
+  setActiveTab: () => {},
+});
 
 interface ThemePreset {
   id: string;
@@ -242,8 +251,9 @@ const themePresets: ThemePreset[] = [
 
 const PresetThemes = () => {
   const { setTheme, updateThemeColor } = useTheme();
+  const { setActiveTab } = useContext(AppearanceTabsContext);
   
-  const applyTheme = (preset: ThemePreset) => {
+  const chooseTheme = (preset: ThemePreset) => {
     // Apply light theme colors
     Object.entries(preset.lightTheme).forEach(([key, value]) => {
       updateThemeColor(key as keyof typeof preset.lightTheme, value, 'light');
@@ -254,7 +264,10 @@ const PresetThemes = () => {
       updateThemeColor(key as keyof typeof preset.darkTheme, value, 'dark');
     });
     
-    toast.success(`Applied "${preset.name}" theme`);
+    toast.success(`Selected "${preset.name}" theme`);
+    
+    // Navigate to the customize tab
+    setActiveTab('customize');
   };
   
   return (
@@ -285,11 +298,11 @@ const PresetThemes = () => {
                 <h3 className="font-medium">{preset.name}</h3>
                 <p className="text-sm text-muted-foreground">{preset.description}</p>
                 <Button 
-                  onClick={() => applyTheme(preset)} 
+                  onClick={() => chooseTheme(preset)} 
                   className="w-full mt-2"
                   variant="outline"
                 >
-                  Apply Theme
+                  Choose Theme
                 </Button>
               </div>
             </div>
