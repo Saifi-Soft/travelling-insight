@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -99,6 +98,10 @@ export default {
 					700: '#96702b',
 					800: '#7a5828',
 					900: '#654824',
+				},
+				'custom-green': {
+					DEFAULT: '#065f46',
+					foreground: '#ecfdf5'
 				}
 			},
 			fontFamily: {

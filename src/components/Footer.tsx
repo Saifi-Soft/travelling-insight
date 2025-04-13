@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -74,7 +74,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-theme-footer text-white">
+    <footer className="bg-[#065f46] text-[#f8fafc]">
       <div className="container-custom py-12">
         {/* Newsletter Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between py-8 border-b border-white/20 mb-8 gap-6">

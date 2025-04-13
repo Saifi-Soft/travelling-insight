@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Search, User, Sun, Moon, Plane } from 'lucide-react';
@@ -48,7 +47,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 bg-theme-header ${scrolled ? 'shadow-md backdrop-blur-sm bg-opacity-90' : 'shadow-none'}`}>
+    <nav className={`sticky top-0 z-50 transition-all duration-300 bg-[#065f46] text-[#f8fafc]`}>
       <div className="container-custom py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -61,7 +60,7 @@ const Navbar = () => {
             <Link 
               to="/" 
               className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-primary" : ""
+                location.pathname === "/" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
               }`}
             >
               Home
@@ -69,7 +68,7 @@ const Navbar = () => {
             <Link 
               to="/blog" 
               className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/blog" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-primary" : ""
+                location.pathname === "/blog" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
               }`}
             >
               Blog
@@ -77,7 +76,7 @@ const Navbar = () => {
             <Link 
               to="/destinations" 
               className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/destinations" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-primary" : ""
+                location.pathname === "/destinations" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
               }`}
             >
               Destinations
@@ -85,7 +84,7 @@ const Navbar = () => {
             <Link 
               to="/travel/planner" 
               className={`font-medium hover:text-primary transition-colors relative flex items-center ${
-                location.pathname.startsWith("/travel") ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-primary" : ""
+                location.pathname.startsWith("/travel") ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
               }`}
             >
               <Plane className="h-4 w-4 mr-1" /> Travel
@@ -93,7 +92,7 @@ const Navbar = () => {
             <Link 
               to="/community" 
               className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/community" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-primary" : ""
+                location.pathname === "/community" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
               }`}
             >
               Community
@@ -101,7 +100,7 @@ const Navbar = () => {
             <Link 
               to="/about" 
               className={`font-medium hover:text-primary transition-colors relative ${
-                location.pathname === "/about" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-primary" : ""
+                location.pathname === "/about" ? "after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-0.5 after:bg-[#065f46]" : ""
               }`}
             >
               About
