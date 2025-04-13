@@ -3,7 +3,6 @@ import React from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import ThemeSettings from '@/components/admin/ThemeSettings';
 
 const AdminSettings = () => {
   return (
@@ -16,16 +15,11 @@ const AdminSettings = () => {
           </p>
         </div>
         
-        <Tabs defaultValue="theme">
+        <Tabs defaultValue="general">
           <TabsList className="mb-4">
-            <TabsTrigger value="theme">Theme</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="theme">
-            <ThemeSettings />
-          </TabsContent>
           
           <TabsContent value="general">
             <Card>
