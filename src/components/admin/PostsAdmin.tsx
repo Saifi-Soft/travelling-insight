@@ -20,7 +20,14 @@ const PostsAdmin = () => {
   // Fetch all posts
   const { data: posts = [], isLoading, error } = useQuery({
     queryKey: ['posts'],
-    queryFn: postsApi.getAll,
+    queryFn: async () => {
+      const fetchedPosts = await postsApi.getAll();
+      // Ensure each post has an id (required by Post type in common.d.ts)
+      return fetchedPosts.map(post => ({
+        ...post,
+        id: post.id || post._id || '', // Ensure id is never undefined
+      })) as Post[];
+    },
   });
   
   // Fetch categories and topics for the editor
@@ -165,7 +172,7 @@ const PostsAdmin = () => {
         </div>
       ) : (
         <PostsList 
-          posts={filteredPosts} 
+          posts={filteredPosts as Post[]} 
           isLoading={isLoading} 
           onEdit={handleEdit} 
           onDelete={handleDelete} 

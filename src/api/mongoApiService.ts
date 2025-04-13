@@ -1,57 +1,9 @@
-import { MongoOperators } from '@/types/common';
+import { MongoOperators, Post, Category, Topic, Comment } from '@/types/common';
 import { toast } from 'sonner';
 
 // Type definitions for our API functions
-export interface Topic {
-  id?: string;
-  _id?: string;
-  name: string;
-  slug: string;
-  count?: number;
-}
-
-export interface Category {
-  id?: string;
-  _id?: string;
-  name: string;
-  slug: string;
-  icon: string;
-  count: number;
-  image: string;
-}
-
-export interface Post {
-  id?: string;
-  _id?: string;
-  title: string;
-  excerpt: string;
-  content?: string;
-  author: {
-    name: string;
-    avatar: string;
-  };
-  category: string;
-  coverImage: string;
-  slug?: string;
-  date: string;
-  readTime: string;
-  likes: number;
-  comments: number;
-  tags?: string[];
-}
-
-export interface Comment {
-  id?: string;
-  _id?: string;
-  postId: string;
-  author: {
-    name: string;
-    avatar: string;
-  };
-  content: string;
-  date: string;
-  likes: number;
-}
+// We'll use interfaces that match our common types but with optional IDs
+// since MongoDB will assign IDs
 
 // Simulated MongoDB collections
 const collections: Record<string, any[]> = {

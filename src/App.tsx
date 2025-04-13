@@ -37,6 +37,7 @@ import AdminHashtags from './pages/AdminHashtags';
 import { mongoApiService } from './api/mongoApiService';
 import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './api/sampleData';
 import { Toaster } from '@/components/ui/toaster';
+import { Post, Category, Topic } from '@/types/common'; // Add this import
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
