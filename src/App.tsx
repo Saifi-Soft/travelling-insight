@@ -10,6 +10,7 @@ import Post from './pages/Post';
 import Destinations from './pages/Destinations';
 import TravelPlanner from './pages/TravelPlanner';
 import Community from './pages/Community';
+import CommunityHub from './pages/CommunityHub';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -45,7 +46,8 @@ const App: React.FC = () => {
             <Route path="/post/:slug" element={<Post />} />
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/travel/planner" element={<TravelPlanner />} />
-            <Route path="/community" element={<Community />} />
+            <Route path="/community" element={<CommunityRouter />} />
+            <Route path="/community-hub" element={<CommunityAuthGuard><CommunityHub /></CommunityAuthGuard>} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
@@ -132,6 +134,76 @@ const App: React.FC = () => {
       </ThemeProvider>
     </SessionProvider>
   );
+};
+
+// Router component to direct users to the appropriate community page based on subscription status
+const CommunityRouter: React.FC = () => {
+  const { session } = useSession();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (session.user?.id) {
+        try {
+          const subscriptionData = await communityApi.payments.getSubscription(session.user.id);
+          setIsSubscribed(subscriptionData && subscriptionData.status === 'active');
+        } catch (error) {
+          console.error('Error checking subscription status:', error);
+        }
+      }
+      setIsLoading(false);
+    };
+    
+    checkSubscription();
+  }, [session.user?.id]);
+  
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  
+  if (session.isAuthenticated && isSubscribed) {
+    return <Navigate to="/community-hub" replace />;
+  }
+  
+  return <Community />;
+};
+
+// Authentication guard for community hub
+const CommunityAuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { session } = useSession();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (session.user?.id) {
+        try {
+          const subscriptionData = await communityApi.payments.getSubscription(session.user.id);
+          setIsSubscribed(subscriptionData && subscriptionData.status === 'active');
+        } catch (error) {
+          console.error('Error checking subscription status:', error);
+        }
+      }
+      setIsLoading(false);
+    };
+    
+    checkSubscription();
+  }, [session.user?.id]);
+  
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!session.isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!isSubscribed) {
+    return <Navigate to="/community" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 // Authentication guard for admin routes
