@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -124,14 +123,14 @@ const AdminCommunity = () => {
         description: newEvent.description,
         type: newEvent.type,
         host: 'admin', // In a real app, this would be the actual admin ID
-        date: eventDate,
+        date: eventDate.toISOString(), // Convert to ISO string format for MongoDB compatibility
         location: {
           type: newEvent.isOnline ? 'online' : 'physical',
           details: newEvent.isOnline ? 'Zoom link will be shared before the event' : newEvent.location
         },
         attendees: [],
         status: 'upcoming',
-        createdAt: new Date()
+        createdAt: new Date().toISOString() // Convert to ISO string for MongoDB compatibility
       } as Omit<CommunityEvent, 'id'>;
       
       await communityEventsApi.create(eventData);
@@ -168,7 +167,7 @@ const AdminCommunity = () => {
   };
 
   // Format date for display
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string | Date) => {
     try {
       return format(new Date(date), 'MMM d, yyyy');
     } catch (e) {
