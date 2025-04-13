@@ -1,25 +1,31 @@
 
-import { connectToDatabase, COLLECTIONS } from './mongodb';
+import { mongoApiService } from './mongoApiService';
 
 // Theme service functions
 export async function saveThemeSettings(userId: string, theme: any) {
   try {
-    const { collections } = await connectToDatabase();
-    const existingSettings = await collections[COLLECTIONS.USER_SETTINGS]?.findOne({ userId });
+    const userSettings = await mongoApiService.queryDocuments('userSettings', { userId });
     
     // Save complete theme settings with separate light and dark mode colors
-    if (existingSettings) {
-      await collections[COLLECTIONS.USER_SETTINGS]?.updateOne(
-        { userId },
-        { $set: { theme, updatedAt: new Date().toISOString() } }
+    if (userSettings.length > 0) {
+      await mongoApiService.updateDocument(
+        'userSettings',
+        userSettings[0].id,
+        { 
+          theme, 
+          updatedAt: new Date().toISOString() 
+        }
       );
     } else {
-      await collections[COLLECTIONS.USER_SETTINGS]?.insertOne({
-        userId,
-        theme,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
+      await mongoApiService.insertDocument(
+        'userSettings', 
+        {
+          userId,
+          theme,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      );
     }
     
     return { success: true };
@@ -31,11 +37,10 @@ export async function saveThemeSettings(userId: string, theme: any) {
 
 export async function getThemeSettings(userId: string) {
   try {
-    const { collections } = await connectToDatabase();
-    const settings = await collections[COLLECTIONS.USER_SETTINGS]?.findOne({ userId });
+    const userSettings = await mongoApiService.queryDocuments('userSettings', { userId });
     
-    if (settings?.theme) {
-      return settings.theme;
+    if (userSettings.length > 0 && userSettings[0].theme) {
+      return userSettings[0].theme;
     } else {
       // Return default theme settings if not found
       return {
@@ -62,6 +67,27 @@ export async function getThemeSettings(userId: string) {
     }
   } catch (error) {
     console.error('Error getting theme settings:', error);
-    return null;
+    // Return default theme settings in case of error
+    return {
+      theme: 'light',
+      // Default light theme colors
+      lightThemeColors: {
+        background: '#ffffff',
+        foreground: '#222222',
+        primary: '#065f46',
+        footer: '#065f46',
+        header: '#ffffff',
+        card: '#f8f9fa',
+      },
+      // Default dark theme colors - restored to original values
+      darkThemeColors: {
+        background: '#1A1F2C',
+        foreground: '#f8f9fa',
+        primary: '#10B981',
+        footer: '#222222',
+        header: '#222222',
+        card: '#2D3748',
+      }
+    };
   }
 }
