@@ -54,7 +54,7 @@ const BlogHeader = ({
           </div>
           
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Filter className="h-4 w-4 text-custom-green" />
             <span className="text-sm font-medium">Filter:</span>
           </div>
           
@@ -63,7 +63,7 @@ const BlogHeader = ({
               <Badge 
                 key={category} 
                 variant={activeCategory === category ? "default" : "outline"}
-                className={`cursor-pointer ${activeCategory === category ? "bg-primary" : "hover:bg-primary/10"}`}
+                className={`cursor-pointer ${activeCategory === category ? "bg-custom-green" : "hover:bg-custom-green/10"}`}
                 onClick={() => setActiveCategory(category)}
               >
                 {category}

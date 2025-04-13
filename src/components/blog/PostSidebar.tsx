@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Post } from '@/types/common';
@@ -17,7 +18,7 @@ const PostSidebar = ({ author, relatedPosts, popularTags }: PostSidebarProps) =>
       
       {/* Related Articles */}
       <div className="mb-8">
-        <h3 className="text-xl font-bold mb-4">Related Articles</h3>
+        <h3 className="text-xl font-bold mb-4 text-custom-green">Related Articles</h3>
         <div className="space-y-6">
           {relatedPosts.map((relatedPost) => (
             <Link 
@@ -33,7 +34,7 @@ const PostSidebar = ({ author, relatedPosts, popularTags }: PostSidebarProps) =>
                 />
               </div>
               <div>
-                <h4 className="font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                <h4 className="font-medium line-clamp-2 group-hover:text-custom-green transition-colors">
                   {relatedPost.title}
                 </h4>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -47,7 +48,7 @@ const PostSidebar = ({ author, relatedPosts, popularTags }: PostSidebarProps) =>
       
       {/* Popular Tags */}
       <div>
-        <h3 className="text-xl font-bold mb-4">Popular Tags</h3>
+        <h3 className="text-xl font-bold mb-4 text-custom-green">Popular Tags</h3>
         <div className="flex flex-wrap gap-2">
           {popularTags.map((tag) => (
             <Link 

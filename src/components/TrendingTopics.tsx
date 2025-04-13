@@ -1,4 +1,3 @@
-
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -203,11 +202,11 @@ const TrendingTopics = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
             <div className="flex items-center mb-6">
-              <TrendingUp className="h-6 w-6 text-primary mr-2" />
-              <h2 className="text-2xl font-bold">Trending Hashtags</h2>
+              <TrendingUp className="h-6 w-6 text-custom-green mr-2" />
+              <h2 className="text-2xl font-bold text-custom-green">Trending Hashtags</h2>
             </div>
             
-            <Card className="overflow-hidden border-primary/10 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80">
+            <Card className="overflow-hidden border-custom-green/10 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80">
               <CardContent className="p-6">
                 {isHashtagsLoading ? (
                   <div className="flex flex-wrap gap-3">
@@ -221,11 +220,11 @@ const TrendingTopics = () => {
                       <Link to={`/tags/${tag.slug}`} key={tag.id}>
                         <Badge 
                           variant="outline" 
-                          className="text-sm py-2 px-3 border-primary/30 hover:bg-primary/10 
-                          transition-colors hover:border-primary/50 flex items-center gap-1.5"
+                          className="text-sm py-2 px-3 border-custom-green/30 hover:bg-custom-green/10 
+                          transition-colors hover:border-custom-green/50 flex items-center gap-1.5"
                         >
-                          <span className="text-primary font-medium">#{tag.name}</span>
-                          <span className="ml-1.5 bg-primary/20 text-primary px-1.5 py-0.5 rounded-md text-xs">
+                          <span className="text-custom-green font-medium">#{tag.name}</span>
+                          <span className="ml-1.5 bg-custom-green/20 text-custom-green px-1.5 py-0.5 rounded-md text-xs">
                             {tag.count}
                           </span>
                         </Badge>
@@ -240,17 +239,17 @@ const TrendingTopics = () => {
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
-                <Flame className="h-6 w-6 text-accent mr-2" />
-                <h2 className="text-2xl font-bold">Trending Articles</h2>
+                <Flame className="h-6 w-6 text-custom-green mr-2" />
+                <h2 className="text-2xl font-bold text-custom-green">Trending Articles</h2>
               </div>
-              <Button variant="ghost" size="sm" className="text-primary flex items-center gap-1" asChild>
+              <Button variant="ghost" size="sm" className="text-custom-green flex items-center gap-1" asChild>
                 <Link to="/blog?trending=true">
                   View All <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
             </div>
             
-            <Card className="overflow-hidden border-accent/10 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80">
+            <Card className="overflow-hidden border-custom-green/10 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80">
               <CardContent className="p-6 space-y-4">
                 {isArticlesLoading ? (
                   Array(3).fill(0).map((_, i) => (
@@ -263,23 +262,27 @@ const TrendingTopics = () => {
                     </div>
                   ))
                 ) : (
-                  trendingArticles?.slice(0, 3).map((article) => (
+                  trendingArticles?.slice(0, 3).map((relatedPost) => (
                     <Link 
-                      to={`/blog/${article.id}`} 
-                      key={article.id} 
-                      className="flex gap-3 items-center hover:bg-muted/50 p-2 rounded-md transition-colors"
-                      onClick={() => trackArticleClick(article.id)}
+                      to={`/blog/${relatedPost.id}`} 
+                      key={relatedPost.id}
+                      className="flex gap-4 group hover:bg-muted/50 p-2 rounded-md transition-colors"
+                      onClick={() => trackArticleClick(relatedPost.id)}
                     >
                       <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                         <img 
-                          src={article.coverImage} 
-                          alt={article.title}
+                          src={relatedPost.coverImage} 
+                          alt={relatedPost.title}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div>
-                        <h3 className="font-medium text-sm line-clamp-2">{article.title}</h3>
-                        <p className="text-xs text-muted-foreground">{article.likes}k reads • {article.date}</p>
+                        <h3 className="font-medium text-sm line-clamp-2 group-hover:text-custom-green transition-colors">
+                          {relatedPost.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {relatedPost.likes}k reads • {relatedPost.date}
+                        </p>
                       </div>
                     </Link>
                   ))
@@ -290,8 +293,8 @@ const TrendingTopics = () => {
           
           <div className="md:col-span-2 mt-6">
             <div className="flex items-center mb-6">
-              <Globe className="h-6 w-6 text-primary mr-2" />
-              <h2 className="text-2xl font-bold">Explore Categories</h2>
+              <Globe className="h-6 w-6 text-custom-green mr-2" />
+              <h2 className="text-2xl font-bold text-custom-green">Explore Categories</h2>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -313,7 +316,7 @@ const TrendingTopics = () => {
                     key={category.id}
                     className="group"
                   >
-                    <Card className="overflow-hidden border-primary/10 hover:border-primary/30 transition-colors h-full shadow-md">
+                    <Card className="overflow-hidden border-custom-green/10 hover:border-custom-green/30 transition-colors h-full shadow-md">
                       <div className="h-32 overflow-hidden">
                         <img 
                           src={category.image}
@@ -323,7 +326,7 @@ const TrendingTopics = () => {
                       </div>
                       <CardContent className="p-4 flex flex-col items-center text-center">
                         <div className="text-2xl mb-2">{category.icon}</div>
-                        <h3 className="font-medium group-hover:text-primary transition-colors">
+                        <h3 className="font-medium group-hover:text-custom-green transition-colors">
                           {category.name}
                         </h3>
                         <p className="text-xs text-muted-foreground">
