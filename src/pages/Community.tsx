@@ -42,23 +42,23 @@ const Community = () => {
   };
 
   // Function to handle clicking on any community feature
-  const handleCommunityFeatureClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); // Prevent default navigation
-    e.stopPropagation(); // Stop event propagation
+  const handleCommunityFeatureClick = () => {
+    console.log('Button clicked, checking user status...');
     
     if (!userId) {
+      console.log('No user ID found, redirecting to login');
       toast.error('Please log in to access community features');
       navigate('/login');
       return;
     }
     
     if (!isSubscribed) {
+      console.log('User not subscribed, showing subscription modal');
       setIsSubscriptionModalOpen(true);
     } else {
+      console.log('User already subscribed');
       toast.info('You already have access to all community features!');
     }
-    
-    return false; // Extra safeguard to prevent navigation
   };
   
   // Handle successful subscription
