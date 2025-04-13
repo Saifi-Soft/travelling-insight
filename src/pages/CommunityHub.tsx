@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -37,14 +36,12 @@ const CommunityHub = () => {
   const userId = localStorage.getItem('community_user_id');
   const userName = localStorage.getItem('userName') || 'User';
 
-  // Fetch user profile data
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ['communityUser', userId],
     queryFn: () => userId ? communityApi.users.getById(userId) : null,
     enabled: !!userId,
   });
 
-  // Check if profile is empty/incomplete
   const isProfileIncomplete = !userData || 
     !userData.bio || 
     !userData.travelStyles || 
@@ -53,7 +50,6 @@ const CommunityHub = () => {
     userData.visitedCountries.length === 0;
 
   useEffect(() => {
-    // Show a toast notification if profile is incomplete
     if (!isLoadingUser && isProfileIncomplete) {
       toast.info(
         "Your profile is incomplete. Complete your profile to connect with like-minded travelers!", 
@@ -62,7 +58,6 @@ const CommunityHub = () => {
     }
   }, [isLoadingUser, isProfileIncomplete]);
 
-  // Create demo user in MongoDB if it doesn't exist
   useEffect(() => {
     const createDemoUser = async () => {
       if (!userId) return;
@@ -102,7 +97,6 @@ const CommunityHub = () => {
         
         <main className="flex-grow pt-4 pb-12 px-4 md:px-6 lg:px-8">
           <div className="container mx-auto max-w-7xl">
-            {/* Mobile Navigation Bar */}
             <div className="md:hidden flex justify-between items-center py-2 mb-6">
               <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                 TravelSphere
@@ -117,7 +111,6 @@ const CommunityHub = () => {
               </div>
             </div>
             
-            {/* Desktop Header with Search */}
             <div className="hidden md:flex justify-between items-center mb-8">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                 TravelSphere Community
@@ -151,7 +144,6 @@ const CommunityHub = () => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Left Sidebar */}
               <div className="hidden lg:block">
                 <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-xl p-5 shadow-lg sticky top-24">
                   <div className="flex flex-col items-center mb-6">
@@ -163,7 +155,7 @@ const CommunityHub = () => {
                       </Avatar>
                     ) : (
                       <Avatar className="h-20 w-20 bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-purple-500">
-                        <span className="text-xl font-bold">{userName.charAt(0)}</span>
+                        <span className="text-xl font-semibold">{userName.charAt(0)}</span>
                       </Avatar>
                     )}
                     
@@ -239,9 +231,7 @@ const CommunityHub = () => {
                 </div>
               </div>
               
-              {/* Main Content Area */}
               <div className="lg:col-span-3">
-                {/* Mobile Navigation Tabs */}
                 <div className="lg:hidden overflow-x-auto pb-3 mb-4">
                   <div className="flex space-x-1 min-w-max">
                     <MobileNavTab 
@@ -277,7 +267,6 @@ const CommunityHub = () => {
                   </div>
                 </div>
                 
-                {/* Content based on active tab */}
                 <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-xl p-6 shadow-xl">
                   {activeTab === 'feed' && (
                     <div>
@@ -346,7 +335,6 @@ const CommunityHub = () => {
           </div>
         </main>
         
-        {/* Mobile Bottom Navigation */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-lg border-t border-slate-700 p-2 z-50">
           <div className="flex justify-around">
             <MobileNavButton 
@@ -361,6 +349,7 @@ const CommunityHub = () => {
             />
             <MobileNavButton 
               icon={<PlusSquare size={24} />} 
+              isActive={false}
               isSpecial 
               onClick={() => toast.info('Create post feature coming soon!')}
             />
@@ -383,7 +372,6 @@ const CommunityHub = () => {
   );
 };
 
-// Navigation Link Component for Desktop Sidebar
 const NavigationLink = ({ icon, label, isActive, onClick }) => {
   return (
     <button
@@ -403,7 +391,6 @@ const NavigationLink = ({ icon, label, isActive, onClick }) => {
   );
 };
 
-// Mobile Navigation Tab Component
 const MobileNavTab = ({ icon, isActive, onClick }) => {
   return (
     <button
@@ -419,7 +406,6 @@ const MobileNavTab = ({ icon, isActive, onClick }) => {
   );
 };
 
-// Mobile Navigation Button Component for Bottom Bar
 const MobileNavButton = ({ icon, isActive, isSpecial = false, onClick }) => {
   return (
     <button
