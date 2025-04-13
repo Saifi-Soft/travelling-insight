@@ -1,5 +1,6 @@
 import { MongoOperators, Post, Category, Topic, Comment } from '@/types/common';
 import { toast } from 'sonner';
+import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './sampleData';
 
 // Type definitions for our API functions
 // We'll use interfaces that match our common types but with optional IDs
@@ -30,6 +31,163 @@ const generateObjectId = () => {
 
 // Simple in-memory MongoDB-like API service
 class MongoApiService {
+  private initialized = false;
+
+  // Initialize MongoDB with sample data
+  async initialize(): Promise<boolean> {
+    try {
+      if (this.initialized) {
+        console.log('[MongoDB] Already initialized');
+        return true;
+      }
+
+      console.log('[MongoDB] Initializing...');
+      
+      // Initialize collections with sample data
+      await this.initializeCollectionsWithSampleData(
+        MOCK_POSTS,
+        MOCK_CATEGORIES,
+        MOCK_TOPICS
+      );
+      
+      // Initialize ad placements
+      await this.initAdPlacements();
+      
+      this.initialized = true;
+      console.log('[MongoDB] Initialization complete');
+      return true;
+    } catch (error) {
+      console.error('[MongoDB] Initialization failed:', error);
+      return false;
+    }
+  }
+
+  // Initialize collections with sample data
+  async initializeCollectionsWithSampleData(
+    posts: Post[],
+    categories: Category[],
+    topics: Topic[]
+  ): Promise<void> {
+    try {
+      // Check if posts collection is empty and initialize with sample data if it is
+      const existingPosts = await this.queryDocuments('posts', {});
+      if (existingPosts.length === 0 && posts.length > 0) {
+        for (const post of posts) {
+          await this.insertDocument('posts', post);
+        }
+        console.log('[MongoDB] Initialized posts collection with sample data');
+      }
+
+      // Check if categories collection is empty and initialize with sample data if it is
+      const existingCategories = await this.queryDocuments('categories', {});
+      if (existingCategories.length === 0 && categories.length > 0) {
+        for (const category of categories) {
+          await this.insertDocument('categories', category);
+        }
+        console.log('[MongoDB] Initialized categories collection with sample data');
+      }
+
+      // Check if topics collection is empty and initialize with sample data if it is
+      const existingTopics = await this.queryDocuments('topics', {});
+      if (existingTopics.length === 0 && topics.length > 0) {
+        for (const topic of topics) {
+          await this.insertDocument('topics', topic);
+        }
+        console.log('[MongoDB] Initialized topics collection with sample data');
+      }
+    } catch (error) {
+      console.error('[MongoDB] Error initializing collections with sample data:', error);
+      throw error;
+    }
+  }
+
+  // Initialize MongoDB with sample ad placements
+  async initAdPlacements(): Promise<void> {
+    try {
+      const MOCK_ADS = [
+        {
+          name: 'Header Banner',
+          slot: '1234567890',
+          type: 'header',
+          format: 'horizontal',
+          location: 'all-pages',
+          isEnabled: true,
+          responsive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          name: 'Sidebar Ad',
+          slot: '0987654321',
+          type: 'sidebar',
+          format: 'vertical',
+          location: 'blog',
+          isEnabled: true,
+          responsive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          name: 'Between Posts',
+          slot: '1122334455',
+          type: 'between-posts',
+          format: 'auto',
+          location: 'blog',
+          isEnabled: true,
+          responsive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          name: 'Footer Ad',
+          slot: '5566778899',
+          type: 'footer',
+          format: 'horizontal',
+          location: 'all-pages',
+          isEnabled: true,
+          responsive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        // Add new ad types for vertical and popup ads
+        {
+          name: 'Vertical Side Ad',
+          slot: '1231231231',
+          type: 'vertical',
+          format: 'vertical',
+          location: 'travel',
+          isEnabled: true,
+          responsive: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          name: 'Popup Ad',
+          slot: '3213213211',
+          type: 'popup',
+          format: 'rectangle',
+          location: 'all-pages',
+          isEnabled: true,
+          responsive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+      ];
+
+      // Check if ads collection has data
+      const existingAds = await this.queryDocuments('ads', {});
+      
+      if (existingAds.length === 0) {
+        for (const ad of MOCK_ADS) {
+          await this.insertDocument('ads', ad);
+        }
+        console.log('[MongoDB] Ad placements initialized with sample data');
+      }
+    } catch (error) {
+      console.error('[MongoDB] Error initializing ad placements:', error);
+    }
+  }
+
   // Insert a document into a collection
   async insertDocument(collectionName: string, document: any): Promise<any> {
     try {
@@ -224,54 +382,6 @@ class MongoApiService {
 }
 
 export const mongoApiService = new MongoApiService();
-
-// Initialize collections with sample data
-export const initializeCollectionsWithSampleData = async (
-  mockPosts: Post[],
-  mockCategories: Category[],
-  mockTopics: Topic[]
-) => {
-  try {
-    // Check if posts collection is empty and initialize with sample data if it is
-    if (collections.posts.length === 0 && mockPosts.length > 0) {
-      collections.posts = mockPosts.map(post => ({
-        ...post,
-        id: post.id || generateObjectId(),
-        _id: post.id || generateObjectId(), // Keep both id and _id for compatibility
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }));
-      console.log('[MongoDB] Initialized posts collection with sample data');
-    }
-
-    // Check if categories collection is empty and initialize with sample data if it is
-    if (collections.categories.length === 0 && mockCategories.length > 0) {
-      collections.categories = mockCategories.map(category => ({
-        ...category,
-        id: category.id || generateObjectId(),
-        _id: category.id || generateObjectId(), // Keep both id and _id for compatibility
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }));
-      console.log('[MongoDB] Initialized categories collection with sample data');
-    }
-
-    // Check if topics collection is empty and initialize with sample data if it is
-    if (collections.topics.length === 0 && mockTopics.length > 0) {
-      collections.topics = mockTopics.map(topic => ({
-        ...topic,
-        id: topic.id || generateObjectId(),
-        _id: topic.id || generateObjectId(), // Keep both id and _id for compatibility
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }));
-      console.log('[MongoDB] Initialized topics collection with sample data');
-    }
-  } catch (error) {
-    console.error('[MongoDB] Error initializing collections with sample data:', error);
-    throw error;
-  }
-};
 
 // Posts API
 export const postsApi = {
