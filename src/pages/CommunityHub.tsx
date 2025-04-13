@@ -8,7 +8,6 @@ import UserProfile from '@/components/community/UserProfile';
 import CommunityEvents from '@/components/community/CommunityEvents';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Bookmark, Users, Calendar, Compass, Settings } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const queryClient = new QueryClient();
 
