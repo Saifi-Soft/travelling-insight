@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { getThemeSettings, saveThemeSettings } from '@/api/themeService';
+import { useSession } from '@/hooks/useSession';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -49,9 +51,57 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [lightThemeColors, setLightThemeColors] = useState<ThemeColors>(defaultLightColors);
   const [darkThemeColors, setDarkThemeColors] = useState<ThemeColors>(defaultDarkColors);
   const [themeColors, setThemeColors] = useState<ThemeColors>(defaultLightColors);
-
-  // Load saved theme and colors from localStorage after component mounts
+  const { session } = useSession();
+  
+  // Load theme settings from MongoDB
   useEffect(() => {
+    const loadThemeFromDb = async () => {
+      if (session?.user?.id) {
+        try {
+          const savedTheme = await getThemeSettings(session.user.id);
+          
+          if (savedTheme) {
+            // Set theme mode
+            if (savedTheme.theme) {
+              setThemeState(savedTheme.theme as Theme);
+            }
+            
+            // Set light theme colors if available
+            if (savedTheme.lightThemeColors) {
+              setLightThemeColors(savedTheme.lightThemeColors);
+            }
+            
+            // Set dark theme colors if available
+            if (savedTheme.darkThemeColors) {
+              setDarkThemeColors(savedTheme.darkThemeColors);
+            }
+            
+            // Set active colors based on current theme
+            const isDark = 
+              savedTheme.theme === 'dark' || 
+              (savedTheme.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            setThemeColors(isDark ? 
+              (savedTheme.darkThemeColors || defaultDarkColors) : 
+              (savedTheme.lightThemeColors || defaultLightColors)
+            );
+          }
+        } catch (error) {
+          console.error('Error loading theme from database:', error);
+          // Fall back to localStorage if database fetch fails
+          loadFromLocalStorage();
+        }
+      } else {
+        // If no user session, fall back to localStorage
+        loadFromLocalStorage();
+      }
+    };
+    
+    loadThemeFromDb();
+  }, [session?.user?.id]);
+
+  // Fallback function to load from localStorage
+  const loadFromLocalStorage = () => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     
     // Load saved theme colors from localStorage
@@ -62,9 +112,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedLightColors) {
       try {
         const parsedLightColors = JSON.parse(savedLightColors);
-        // Preserve custom green for light mode
-        parsedLightColors.primary = '#065f46';
-        parsedLightColors.footer = '#065f46';
         setLightThemeColors(parsedLightColors);
       } catch (e) {
         console.error("Error parsing light theme colors:", e);
@@ -76,7 +123,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedDarkColors) {
       try {
         const parsedDarkColors = JSON.parse(savedDarkColors);
-        // Allow dark mode to have different colors
         setDarkThemeColors(parsedDarkColors);
       } catch (e) {
         console.error("Error parsing dark theme colors:", e);
@@ -94,9 +140,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setThemeColors(parsedDarkColors);
       } else {
         const parsedLightColors = savedLightColors ? JSON.parse(savedLightColors) : defaultLightColors;
-        // Preserve custom green for light mode
-        parsedLightColors.primary = '#065f46';
-        parsedLightColors.footer = '#065f46';
         setThemeColors(parsedLightColors);
       }
     } else {
@@ -105,15 +148,35 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setThemeState(prefersDark ? 'dark' : 'light');
       setThemeColors(prefersDark ? darkThemeColors : lightThemeColors);
     }
-  }, []);
+  };
+
+  // Save theme settings to MongoDB and localStorage
+  const saveThemeSettings = async (
+    newTheme: Theme = theme, 
+    newLightColors: ThemeColors = lightThemeColors, 
+    newDarkColors: ThemeColors = darkThemeColors
+  ) => {
+    // Save to localStorage
+    localStorage.setItem('theme', newTheme);
+    localStorage.setItem('lightThemeColors', JSON.stringify(newLightColors));
+    localStorage.setItem('darkThemeColors', JSON.stringify(newDarkColors));
+    
+    // Save to MongoDB if user is logged in
+    if (session?.user?.id) {
+      try {
+        await saveThemeSettings(session.user.id, {
+          theme: newTheme,
+          lightThemeColors: newLightColors,
+          darkThemeColors: newDarkColors
+        });
+      } catch (error) {
+        console.error('Error saving theme to database:', error);
+      }
+    }
+  };
 
   // Apply theme changes
   useEffect(() => {
-    // Update localStorage
-    localStorage.setItem('theme', theme);
-    localStorage.setItem('lightThemeColors', JSON.stringify(lightThemeColors));
-    localStorage.setItem('darkThemeColors', JSON.stringify(darkThemeColors));
-    
     // Determine if dark mode should be applied
     const isDark = 
       theme === 'dark' || 
@@ -133,7 +196,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       document.documentElement.style.setProperty(`--color-${key}`, value);
     });
     
-  }, [theme, lightThemeColors, darkThemeColors, themeColors]);
+    // Save settings
+    saveThemeSettings();
+    
+  }, [theme, lightThemeColors, darkThemeColors, themeColors, session?.user?.id]);
 
   // Update when system preference changes
   useEffect(() => {
@@ -152,9 +218,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Toggle through themes: light -> dark -> system -> light
   const toggleTheme = () => {
     setThemeState(prevTheme => {
-      if (prevTheme === 'light') return 'dark';
-      if (prevTheme === 'dark') return 'system';
-      return 'light';
+      const newTheme = prevTheme === 'light' ? 'dark' : prevTheme === 'dark' ? 'system' : 'light';
+      return newTheme;
     });
   };
 
@@ -166,11 +231,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Update theme color for specific mode (light/dark)
   const updateThemeColor = (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => {
     if (mode === 'light') {
-      // For light mode, enforce custom-green color for primary and footer
-      if (colorType === 'primary' || colorType === 'footer') {
-        value = '#065f46';
-      }
-      
+      // For light mode, don't enforce custom-green for primary and footer anymore
       setLightThemeColors(prev => ({
         ...prev,
         [colorType]: value
@@ -182,7 +243,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           ...prev,
           [colorType]: value
         }));
-        document.documentElement.style.setProperty(`--color-${colorType}`, value);
       }
     } else {
       // For dark mode, allow any color
@@ -197,9 +257,26 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           ...prev,
           [colorType]: value
         }));
-        document.documentElement.style.setProperty(`--color-${colorType}`, value);
       }
     }
+    
+    // Save updated theme settings
+    const updatedThemeSettings = {
+      theme,
+      lightThemeColors: mode === 'light' ? {
+        ...lightThemeColors,
+        [colorType]: value
+      } : lightThemeColors,
+      darkThemeColors: mode === 'dark' ? {
+        ...darkThemeColors,
+        [colorType]: value
+      } : darkThemeColors
+    };
+    
+    saveThemeSettings(theme, 
+      updatedThemeSettings.lightThemeColors, 
+      updatedThemeSettings.darkThemeColors
+    );
   };
 
   return (

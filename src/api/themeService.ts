@@ -7,7 +7,7 @@ export async function saveThemeSettings(userId: string, theme: any) {
     const { collections } = await connectToDatabase();
     const existingSettings = await collections[COLLECTIONS.USER_SETTINGS]?.findOne({ userId });
     
-    // Preserve color scheme settings for both light and dark modes separately
+    // Save complete theme settings with separate light and dark mode colors
     if (existingSettings) {
       await collections[COLLECTIONS.USER_SETTINGS]?.updateOne(
         { userId },
