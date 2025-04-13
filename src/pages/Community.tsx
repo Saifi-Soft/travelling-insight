@@ -42,7 +42,11 @@ const Community = () => {
   };
 
   // Function to handle clicking on any community feature
-  const handleCommunityFeatureClick = () => {
+  const handleCommunityFeatureClick = (e: React.MouseEvent) => {
+    // Prevent the default button action and event propagation
+    e.preventDefault();
+    e.stopPropagation();
+    
     console.log('Button clicked, checking user status...');
     
     if (!userId) {

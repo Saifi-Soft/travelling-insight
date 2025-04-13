@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,6 +17,7 @@ import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import Community from './pages/Community';
 import Destinations from './pages/Destinations';
 import NotFound from './pages/NotFound';
+import Login from './pages/Login';
 
 // Admin routes
 import AdminLogin from './pages/AdminLogin';
@@ -232,6 +234,7 @@ const App = () => {
             <Route path="/travel/booking/confirmation" element={<BookingConfirmationPage />} />
             <Route path="/community" element={<Community />} />
             <Route path="/destinations" element={<Destinations />} />
+            <Route path="/login" element={<Login />} />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
