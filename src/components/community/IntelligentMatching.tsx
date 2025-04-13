@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Heart, Users, MapPin } from 'lucide-react';
 import { generateIntelligentMatches } from '@/utils/arrayUtils';
-import { travelMatchesApi, TravelMatch } from '@/api/communityApiService';
+import { TravelMatch } from '@/types/common';
+import { travelMatchesApi } from '@/api/communityApiService';
 
 interface IntelligentMatchingProps {
   userPreferences: {
@@ -35,18 +35,23 @@ const IntelligentMatching = ({ userPreferences, userId }: IntelligentMatchingPro
       // Fetch potential matches from the API
       const potentialMatches = await travelMatchesApi.findPotentialMatches(userId, userPreferences);
       
-      // Run the intelligent matching algorithm
-      const intelligentMatches = generateIntelligentMatches(
-        userPreferences,
-        potentialMatches
-      );
+      // Ensure all required properties are present in matches
+      const validMatches: TravelMatch[] = potentialMatches.map(match => ({
+        ...match,
+        name: match.name || 'Anonymous Traveler',
+        userId: match.userId,
+        compatibilityScore: match.compatibilityScore,
+        destinations: match.destinations,
+        travelStyles: match.travelStyles,
+        interests: match.interests
+      }));
       
-      setMatches(intelligentMatches);
+      setMatches(validMatches);
       
-      if (intelligentMatches.length === 0) {
+      if (validMatches.length === 0) {
         toast.info('No matching travel buddies found for your preferences yet');
       } else {
-        toast.success(`Found ${intelligentMatches.length} potential travel buddies!`);
+        toast.success(`Found ${validMatches.length} potential travel buddies!`);
       }
     } catch (error) {
       console.error('Error finding matches:', error);

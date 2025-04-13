@@ -1,4 +1,3 @@
-
 import { Post, Category, Topic } from '@/types/common';
 
 // Sample data for the blog
@@ -102,14 +101,14 @@ export const MOCK_POSTS: Post[] = [
 ];
 
 export const MOCK_CATEGORIES: Category[] = [
-  { id: "1", name: "Beaches", slug: "beaches", icon: "🏖️", count: 12 },
-  { id: "2", name: "Mountains", slug: "mountains", icon: "🏔️", count: 8 },
-  { id: "3", name: "Urban", slug: "urban", icon: "🏙️", count: 15 },
-  { id: "4", name: "Food & Drink", slug: "food-drink", icon: "🍴", count: 20 },
-  { id: "5", name: "Culture", slug: "culture", icon: "🏛️", count: 13 },
-  { id: "6", name: "Budget", slug: "budget", icon: "💰", count: 7 },
-  { id: "7", name: "Sustainable", slug: "sustainable", icon: "♻️", count: 9 },
-  { id: "8", name: "Adventure", slug: "adventure", icon: "🧗", count: 18 }
+  { id: "1", name: "Beaches", slug: "beaches", icon: "🏖️", count: 12, image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1173&q=80" },
+  { id: "2", name: "Mountains", slug: "mountains", icon: "🏔️", count: 8, image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" },
+  { id: "3", name: "Urban", slug: "urban", icon: "🏙️", count: 15, image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1244&q=80" },
+  { id: "4", name: "Food & Drink", slug: "food-drink", icon: "🍽️", count: 20, image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" },
+  { id: "5", name: "Culture", slug: "culture", icon: "🏛️", count: 13, image: "https://images.unsplash.com/photo-1551009175-15bdf9dcb580?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1169&q=80" },
+  { id: "6", name: "Budget", slug: "budget", icon: "💰", count: 7, image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80" },
+  { id: "7", name: "Sustainable", slug: "sustainable", icon: "♻️", count: 9, image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" },
+  { id: "8", name: "Adventure", slug: "adventure", icon: "🧗", count: 18, image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" }
 ];
 
 export const MOCK_TOPICS: Topic[] = [

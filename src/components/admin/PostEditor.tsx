@@ -23,9 +23,9 @@ interface PostEditorProps {
 
 // Mock categories and topics
 const mockCategories: Category[] = [
-  { id: '1', name: 'Adventure', slug: 'adventure', image: '', count: 12 },
-  { id: '2', name: 'City Life', slug: 'city-life', image: '', count: 8 },
-  { id: '3', name: 'Beach', slug: 'beach', image: '', count: 15 },
+  { id: '1', name: 'Adventure', slug: 'adventure', icon: '🧗', count: 12, image: '' },
+  { id: '2', name: 'City Life', slug: 'city-life', icon: '🏙️', count: 8, image: '' },
+  { id: '3', name: 'Beach', slug: 'beach', icon: '🏖️', count: 15, image: '' },
 ];
 
 const mockTopics: Topic[] = [

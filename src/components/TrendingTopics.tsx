@@ -1,23 +1,170 @@
-
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Flame, Globe, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { topicsApi, categoriesApi, postsApi } from '@/api/mongoApiService';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Topic, Category, Post } from '@/types/common';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 
+const topicsApi = {
+  getTrending: async (): Promise<Topic[]> => {
+    return await mongoApiService.queryDocuments('topics', {});
+  }
+};
+
+const categoriesApi = {
+  getAll: async (): Promise<Category[]> => {
+    return await mongoApiService.queryDocuments('categories', {});
+  }
+};
+
+const postsApi = {
+  getTrending: async (): Promise<Post[]> => {
+    return await mongoApiService.queryDocuments('posts', {});
+  },
+  trackClick: async (id: string): Promise<void> => {
+    const post = await mongoApiService.getDocumentById('posts', id);
+    if (post) {
+      await mongoApiService.updateDocument('posts', id, { clicks: (post.clicks || 0) + 1 });
+    }
+  }
+};
+
 const TrendingTopics = () => {
+  const TRENDING_HASHTAGS: Topic[] = [
+    { id: "1", name: "SoloTravel", count: 1243, slug: "solo-travel" },
+    { id: "2", name: "VanLife", count: 986, slug: "van-life" },
+    { id: "3", name: "BudgetTravel", count: 879, slug: "budget-travel" },
+    { id: "4", name: "DigitalNomad", count: 763, slug: "digital-nomad" },
+    { id: "5", name: "AdventureTravel", count: 652, slug: "adventure-travel" },
+    { id: "6", name: "SustainableTravel", count: 541, slug: "sustainable-travel" },
+    { id: "7", name: "LuxuryTravel", count: 489, slug: "luxury-travel" },
+    { id: "8", name: "BackpackingAsia", count: 432, slug: "backpacking-asia" },
+  ];
+
+  const CATEGORIES: Category[] = [
+    { 
+      id: "1", 
+      name: "Beaches", 
+      icon: "🏖️", 
+      count: 143, 
+      slug: "beaches",
+      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+    },
+    { 
+      id: "2", 
+      name: "Mountains", 
+      icon: "🏔️", 
+      count: 128, 
+      slug: "mountains",
+      image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
+    },
+    { 
+      id: "3", 
+      name: "Urban", 
+      icon: "🏙️", 
+      count: 112, 
+      slug: "urban",
+      image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df"
+    },
+    { 
+      id: "4", 
+      name: "Food & Drink", 
+      icon: "🍽️", 
+      count: 98, 
+      slug: "food-drink",
+      image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0"
+    },
+    { 
+      id: "5", 
+      name: "Culture", 
+      icon: "🏛️", 
+      count: 86, 
+      slug: "culture",
+      image: "https://images.unsplash.com/photo-1551009175-15bdf9dcb580"
+    },
+    { 
+      id: "6", 
+      name: "Nature", 
+      icon: "🌳", 
+      count: 75, 
+      slug: "nature",
+      image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e"
+    },
+    { 
+      id: "7", 
+      name: "Adventure", 
+      icon: "🧗", 
+      count: 62, 
+      slug: "adventure",
+      image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f"
+    },
+    { 
+      id: "8", 
+      name: "Budget", 
+      icon: "💰", 
+      count: 54, 
+      slug: "budget",
+      image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8"
+    },
+  ];
+
+  const TRENDING_ARTICLES: Post[] = [
+    {
+      id: "1",
+      title: "Top 10 Mountain Views That Will Take Your Breath Away",
+      excerpt: "Discover the most breathtaking mountain panoramas around the world.",
+      author: {
+        name: "Alex Morgan",
+        avatar: "https://i.pravatar.cc/150?img=11"
+      },
+      category: "Mountains",
+      coverImage: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+      likes: 3200,
+      date: "2 days ago",
+      readTime: "8 min read",
+      comments: 56
+    },
+    {
+      id: "2",
+      title: "Street Food Adventures: Eat Like a Local in Southeast Asia",
+      excerpt: "Explore the vibrant street food scene across Southeast Asian countries.",
+      author: {
+        name: "Lisa Wong",
+        avatar: "https://i.pravatar.cc/150?img=5"
+      },
+      category: "Food & Drink",
+      coverImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0",
+      likes: 2700,
+      date: "5 days ago",
+      readTime: "6 min read",
+      comments: 34
+    },
+    {
+      id: "3",
+      title: "Wildlife Photography: Tips for Capturing Animals in Their Natural Habitat",
+      excerpt: "Professional tips to improve your wildlife photography skills.",
+      author: {
+        name: "James Wilson",
+        avatar: "https://i.pravatar.cc/150?img=11"
+      },
+      category: "Photography",
+      coverImage: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06",
+      likes: 1900,
+      date: "1 week ago",
+      readTime: "5 min read",
+      comments: 21
+    },
+  ];
+
   const { 
     data: trendingHashtags, 
     isLoading: isHashtagsLoading 
   } = useQuery({
     queryKey: ['trendingHashtags'],
     queryFn: topicsApi.getTrending,
-    placeholderData: TRENDING_HASHTAGS,
+    placeholderData: () => TRENDING_HASHTAGS,
   });
 
   const { 
@@ -26,7 +173,7 @@ const TrendingTopics = () => {
   } = useQuery({
     queryKey: ['categories'],
     queryFn: categoriesApi.getAll,
-    placeholderData: CATEGORIES,
+    placeholderData: () => CATEGORIES,
   });
 
   const { 
@@ -35,18 +182,12 @@ const TrendingTopics = () => {
   } = useQuery({
     queryKey: ['trendingArticles'],
     queryFn: postsApi.getTrending,
-    placeholderData: TRENDING_ARTICLES,
+    placeholderData: () => TRENDING_ARTICLES,
   });
 
-  // Track article clicks to determine trending status
   const trackArticleClick = async (articleId: string) => {
     try {
-      // Increment click count in the database
-      // This would typically update a 'clicks' or 'views' field for the article
       await postsApi.trackClick(articleId);
-      
-      // Invalidate the trending articles query to refresh the data
-      // This would normally be handled by the QueryClient
       console.log(`Tracked click for article ${articleId}`);
     } catch (error) {
       console.error('Error tracking article click:', error);
@@ -57,7 +198,6 @@ const TrendingTopics = () => {
     <section className="section">
       <div className="container-custom">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* Trending Hashtags */}
           <div>
             <div className="flex items-center mb-6">
               <TrendingUp className="h-6 w-6 text-primary mr-2" />
@@ -94,7 +234,6 @@ const TrendingTopics = () => {
             </Card>
           </div>
           
-          {/* Trending Articles */}
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
@@ -146,7 +285,6 @@ const TrendingTopics = () => {
             </Card>
           </div>
           
-          {/* Categories Grid - Full Width */}
           <div className="md:col-span-2 mt-6">
             <div className="flex items-center mb-6">
               <Globe className="h-6 w-6 text-primary mr-2" />
@@ -200,132 +338,5 @@ const TrendingTopics = () => {
     </section>
   );
 };
-
-// Fallback data
-const TRENDING_HASHTAGS: Topic[] = [
-  { id: "1", name: "SoloTravel", count: 1243, slug: "solo-travel" },
-  { id: "2", name: "VanLife", count: 986, slug: "van-life" },
-  { id: "3", name: "BudgetTravel", count: 879, slug: "budget-travel" },
-  { id: "4", name: "DigitalNomad", count: 763, slug: "digital-nomad" },
-  { id: "5", name: "AdventureTravel", count: 652, slug: "adventure-travel" },
-  { id: "6", name: "SustainableTravel", count: 541, slug: "sustainable-travel" },
-  { id: "7", name: "LuxuryTravel", count: 489, slug: "luxury-travel" },
-  { id: "8", name: "BackpackingAsia", count: 432, slug: "backpacking-asia" },
-];
-
-const CATEGORIES: Category[] = [
-  { 
-    id: "1", 
-    name: "Beaches", 
-    icon: "🏖️", 
-    count: 143, 
-    slug: "beaches",
-    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1173&q=80"
-  },
-  { 
-    id: "2", 
-    name: "Mountains", 
-    icon: "🏔️", 
-    count: 128, 
-    slug: "mountains",
-    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
-  },
-  { 
-    id: "3", 
-    name: "Urban", 
-    icon: "🏙️", 
-    count: 112, 
-    slug: "urban",
-    image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1244&q=80"
-  },
-  { 
-    id: "4", 
-    name: "Food & Drink", 
-    icon: "🍽️", 
-    count: 98, 
-    slug: "food-drink",
-    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
-  },
-  { 
-    id: "5", 
-    name: "Culture", 
-    icon: "🏛️", 
-    count: 86, 
-    slug: "culture",
-    image: "https://images.unsplash.com/photo-1551009175-15bdf9dcb580?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1169&q=80"
-  },
-  { 
-    id: "6", 
-    name: "Nature", 
-    icon: "🌳", 
-    count: 75, 
-    slug: "nature",
-    image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1171&q=80"
-  },
-  { 
-    id: "7", 
-    name: "Adventure", 
-    icon: "🧗", 
-    count: 62, 
-    slug: "adventure",
-    image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
-  },
-  { 
-    id: "8", 
-    name: "Budget", 
-    icon: "💰", 
-    count: 54, 
-    slug: "budget",
-    image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80"
-  },
-];
-
-const TRENDING_ARTICLES: Post[] = [
-  {
-    id: "1",
-    title: "Top 10 Mountain Views That Will Take Your Breath Away",
-    excerpt: "Discover the most breathtaking mountain panoramas around the world.",
-    author: {
-      name: "Alex Morgan",
-      avatar: "https://i.pravatar.cc/150?img=11"
-    },
-    category: "Mountains",
-    coverImage: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-    likes: 3200,
-    date: "2 days ago",
-    readTime: "8 min read",
-    comments: 56
-  },
-  {
-    id: "2",
-    title: "Street Food Adventures: Eat Like a Local in Southeast Asia",
-    excerpt: "Explore the vibrant street food scene across Southeast Asian countries.",
-    author: {
-      name: "Lisa Wong",
-      avatar: "https://i.pravatar.cc/150?img=5"
-    },
-    category: "Food & Drink",
-    coverImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-    likes: 2700,
-    date: "5 days ago",
-    readTime: "6 min read",
-    comments: 34
-  },
-  {
-    id: "3",
-    title: "Wildlife Photography: Tips for Capturing Animals in Their Natural Habitat",
-    excerpt: "Professional tips to improve your wildlife photography skills.",
-    author: {
-      name: "James Wilson",
-      avatar: "https://i.pravatar.cc/150?img=11"
-    },
-    category: "Photography",
-    coverImage: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1171&q=80",
-    likes: 1900,
-    date: "1 week ago",
-    readTime: "5 min read",
-    comments: 21
-  },
-];
 
 export default TrendingTopics;

@@ -1,4 +1,3 @@
-
 import { Post, Topic, Category } from '@/types/common';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -18,7 +17,8 @@ const MOCK_POSTS: Post[] = [
     date: "May 15, 2025",
     readTime: "8 min read",
     likes: 342,
-    comments: 56
+    comments: 56,
+    topics: ["Thailand", "Beaches", "Travel Tips"]
   },
   {
     id: "2",
@@ -188,7 +188,7 @@ export const postsApi = {
   },
   
   getByTag: (tag: string) => {
-    // Assuming topics/tags are stored in post.topics
+    // Use optional chaining to safely access topics property
     const filtered = posts.filter(post => post.topics?.includes(tag));
     return fetchAPI<Post[]>(`/posts/tag/${tag}`, undefined, filtered);
   },

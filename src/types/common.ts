@@ -11,6 +11,19 @@ export interface MongoOperators {
   $nin?: any[];
 }
 
+// Define Author interface used in Post
+export interface Author {
+  id?: string;
+  name: string;
+  avatar: string;
+  bio?: string;
+  social?: {
+    twitter?: string;
+    instagram?: string;
+    facebook?: string;
+  }
+}
+
 // Define Post interface
 export interface Post {
   id: string;
@@ -18,22 +31,25 @@ export interface Post {
   slug?: string;
   excerpt: string;
   content?: string;
-  author: {
-    id?: string;
-    name: string;
-    avatar: string;
-  };
-  date?: string;
+  author: Author;
+  date: string; // Making this required to match the mongoApiService expectations
   publishedAt?: Date;
   updatedAt?: Date;
   coverImage: string;
   category: string;
   tags?: string[];
+  topics?: string[]; // Adding this property since it's being used
   likes: number;
   comments: number;
   readTime: string;
   isFeatured?: boolean;
   clicks?: number;
+  seo?: {  // Adding SEO property
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: string;
+    ogImage?: string;
+  }
 }
 
 // Define Category interface
@@ -43,7 +59,7 @@ export interface Category {
   slug: string;
   icon: string;
   count: number;
-  image?: string;
+  image: string; // Making this required to match API expectations
 }
 
 // Define Topic/Hashtag interface
@@ -110,4 +126,16 @@ export interface CommunityEvent {
   attendees: string[];
   status: 'upcoming' | 'ongoing' | 'completed' | 'canceled';
   createdAt: Date;
+}
+
+// Travel match interface for the intelligent matching feature
+export interface TravelMatch {
+  id?: string;
+  userId: string;
+  name: string; // Making this required as per the error message
+  avatar?: string;
+  compatibilityScore: number;
+  destinations: string[];
+  travelStyles: string[];
+  interests: string[];
 }

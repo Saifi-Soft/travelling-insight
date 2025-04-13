@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -32,10 +31,11 @@ import AdminSettings from './pages/AdminSettings';
 import AdminAds from './pages/AdminAds';
 
 // MongoDB initialization
-import { initializeCollectionsWithSampleData } from './api/mongoApiService';
+import { mongoApiService } from './api/mongoApiService';
 import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './api/sampleData';
 import { toast } from '@/components/ui/use-toast';
 import { Toaster } from '@/components/ui/toaster';
+import { Post, Category, Topic } from '@/types/common';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -68,6 +68,45 @@ const initializePageAds = () => {
     }
   } catch (error) {
     console.error('Error initializing page ads:', error);
+  }
+};
+
+// Initialize MongoDB collections with sample data
+const initializeCollectionsWithSampleData = async (
+  posts: Post[],
+  categories: Category[],
+  topics: Topic[]
+) => {
+  try {
+    // Check if posts collection is empty and initialize with sample data if it is
+    const existingPosts = await mongoApiService.queryDocuments('posts', {});
+    if (existingPosts.length === 0 && posts.length > 0) {
+      for (const post of posts) {
+        await mongoApiService.insertDocument('posts', post);
+      }
+      console.log('[MongoDB] Initialized posts collection with sample data');
+    }
+
+    // Check if categories collection is empty and initialize with sample data if it is
+    const existingCategories = await mongoApiService.queryDocuments('categories', {});
+    if (existingCategories.length === 0 && categories.length > 0) {
+      for (const category of categories) {
+        await mongoApiService.insertDocument('categories', category);
+      }
+      console.log('[MongoDB] Initialized categories collection with sample data');
+    }
+
+    // Check if topics collection is empty and initialize with sample data if it is
+    const existingTopics = await mongoApiService.queryDocuments('topics', {});
+    if (existingTopics.length === 0 && topics.length > 0) {
+      for (const topic of topics) {
+        await mongoApiService.insertDocument('topics', topic);
+      }
+      console.log('[MongoDB] Initialized topics collection with sample data');
+    }
+  } catch (error) {
+    console.error('[MongoDB] Error initializing collections with sample data:', error);
+    throw error;
   }
 };
 
@@ -125,12 +164,13 @@ const initAdPlacements = async () => {
     ];
 
     // Check if ads collection has data
-    const adsCollection = collections.ads;
-    const existingAds = await adsCollection.find({}).toArray();
+    if (collections && collections.ads) {
+      const existingAds = await collections.ads.find({}).toArray();
 
-    if (existingAds.length === 0) {
-      await adsCollection.insertMany(MOCK_ADS);
-      console.log('Ad placements initialized with sample data');
+      if (existingAds.length === 0) {
+        await collections.ads.insertMany(MOCK_ADS);
+        console.log('Ad placements initialized with sample data');
+      }
     }
   } catch (error) {
     console.error('Error initializing ad placements:', error);

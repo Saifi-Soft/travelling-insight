@@ -8,9 +8,36 @@ import BlogHeader from '@/components/BlogHeader';
 import BlogContent from '@/components/BlogContent';
 import HeaderAd from '@/components/ads/HeaderAd';
 import FooterAd from '@/components/ads/FooterAd';
-import { postsApi, categoriesApi, topicsApi } from '@/api/mongoApiService';
 import { Loader2 } from 'lucide-react';
-import { Post, Category } from '@/types/common';
+import { Post, Category, Topic } from '@/types/common';
+
+// Import the mongoApiService for direct query access
+import { mongoApiService } from '@/api/mongoApiService';
+
+// Define wrapper functions to match the expected types
+const postsApi = {
+  getAll: async (): Promise<Post[]> => {
+    return await mongoApiService.queryDocuments('posts', {});
+  },
+  
+  getTrending: async (): Promise<Post[]> => {
+    const posts = await mongoApiService.queryDocuments('posts', {});
+    // Sort posts by likes to get trending
+    return posts.sort((a: Post, b: Post) => b.likes - a.likes).slice(0, 10);
+  }
+};
+
+const categoriesApi = {
+  getAll: async (): Promise<Category[]> => {
+    return await mongoApiService.queryDocuments('categories', {});
+  }
+};
+
+const topicsApi = {
+  getTrending: async (): Promise<Topic[]> => {
+    return await mongoApiService.queryDocuments('topics', {});
+  }
+};
 
 const Blog = () => {
   const [searchParams] = useSearchParams();
