@@ -10,14 +10,15 @@ import {
   LogOut,
   MessageSquare,
   Users,
-  BarChart
+  BarChart,
+  Hash
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface AdminLayoutProps {
   children: ReactNode;
-  activeItem?: 'dashboard' | 'posts' | 'categories' | 'comments' | 'community' | 'settings' | 'ads';
+  activeItem?: 'dashboard' | 'posts' | 'categories' | 'hashtags' | 'comments' | 'community' | 'settings' | 'ads';
 }
 
 const AdminLayout = ({ children, activeItem = 'dashboard' }: AdminLayoutProps) => {
@@ -41,6 +42,12 @@ const AdminLayout = ({ children, activeItem = 'dashboard' }: AdminLayoutProps) =
       label: 'Categories',
       icon: <FolderOpen className="h-5 w-5" />,
       path: '/admin/categories'
+    },
+    {
+      id: 'hashtags',
+      label: 'Hashtags',
+      icon: <Hash className="h-5 w-5" />,
+      path: '/admin/hashtags'
     },
     {
       id: 'comments',
@@ -69,7 +76,7 @@ const AdminLayout = ({ children, activeItem = 'dashboard' }: AdminLayoutProps) =
   ];
 
   const handleLogout = () => {
-    // For now, just redirect to login
+    localStorage.removeItem('adminAuth');
     navigate('/admin/login');
   };
 

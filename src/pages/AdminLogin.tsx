@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,14 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const authStatus = localStorage.getItem('adminAuth') === 'true';
+    if (authStatus) {
+      navigate('/admin/dashboard');
+    }
+  }, [navigate]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -23,11 +31,11 @@ const AdminLogin = () => {
       // Hardcoded credentials for demo
       if (username === 'admin' && password === 'password') {
         localStorage.setItem('adminAuth', 'true');
-        navigate('/admin');
         toast({
           title: "Login successful",
           description: "Welcome to the admin dashboard",
         });
+        navigate('/admin/dashboard'); // Redirect to dashboard after successful login
       } else {
         toast({
           title: "Login failed",

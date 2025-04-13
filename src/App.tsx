@@ -1,6 +1,5 @@
-
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Index from './pages/Index';
@@ -31,6 +30,7 @@ import AdminComments from './pages/AdminComments';
 import AdminCommunity from './pages/AdminCommunity';
 import AdminSettings from './pages/AdminSettings';
 import AdminAds from './pages/AdminAds';
+import AdminHashtags from './pages/AdminHashtags';
 
 // MongoDB initialization
 import { mongoApiService } from './api/mongoApiService';
@@ -236,13 +236,14 @@ const App = () => {
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/login" element={<Login />} />
             
-            {/* Admin Routes */}
+            {/* Admin Routes - Updated for proper authentication flow */}
+            <Route path="/admin" element={<Navigate to="/admin/login" />} />
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminAuthGuard><Admin /></AdminAuthGuard>} />
             <Route path="/admin/dashboard" element={<AdminAuthGuard><AdminDashboard /></AdminAuthGuard>} />
             <Route path="/admin/posts" element={<AdminAuthGuard><AdminPosts /></AdminAuthGuard>} />
             <Route path="/admin/posts/create" element={<AdminAuthGuard><AdminCreatePost /></AdminAuthGuard>} />
             <Route path="/admin/categories" element={<AdminAuthGuard><AdminCategories /></AdminAuthGuard>} />
+            <Route path="/admin/hashtags" element={<AdminAuthGuard><AdminHashtags /></AdminAuthGuard>} />
             <Route path="/admin/comments" element={<AdminAuthGuard><AdminComments /></AdminAuthGuard>} />
             <Route path="/admin/community" element={<AdminAuthGuard><AdminCommunity /></AdminAuthGuard>} />
             <Route path="/admin/settings" element={<AdminAuthGuard><AdminSettings /></AdminAuthGuard>} />
