@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Heart, MessageSquare, Bookmark, Facebook, Twitter, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -39,13 +40,13 @@ const PostActions = ({ initialLikes, commentCount, onShareClick }: PostActionsPr
           <Button 
             variant="ghost" 
             size="sm"
-            className={liked ? "text-red-500" : ""}
+            className={liked ? "text-red-500" : "text-custom-green"}
             onClick={handleLike}
           >
             <Heart className={`h-5 w-5 mr-1 ${liked ? "fill-current" : ""}`} />
             <span>{liked ? initialLikes + 1 : initialLikes}</span>
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="text-custom-green">
             <MessageSquare className="h-5 w-5 mr-1" />
             <span>{commentCount}</span>
           </Button>
@@ -55,18 +56,18 @@ const PostActions = ({ initialLikes, commentCount, onShareClick }: PostActionsPr
           <Button 
             variant="ghost" 
             size="icon"
-            className={bookmarked ? "text-primary" : ""}
+            className={bookmarked ? "text-custom-green" : "text-custom-green"}
             onClick={handleBookmark}
           >
             <Bookmark className={`h-5 w-5 ${bookmarked ? "fill-current" : ""}`} />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => onShareClick("Facebook")}>
+          <Button variant="ghost" size="icon" onClick={() => onShareClick("Facebook")} className="text-custom-green">
             <Facebook className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => onShareClick("Twitter")}>
+          <Button variant="ghost" size="icon" onClick={() => onShareClick("Twitter")} className="text-custom-green">
             <Twitter className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => onShareClick("Link")}>
+          <Button variant="ghost" size="icon" onClick={() => onShareClick("Link")} className="text-custom-green">
             <LinkIcon className="h-5 w-5" />
           </Button>
         </div>

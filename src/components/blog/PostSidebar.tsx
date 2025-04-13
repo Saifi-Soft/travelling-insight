@@ -55,7 +55,7 @@ const PostSidebar = ({ author, relatedPosts, popularTags }: PostSidebarProps) =>
               to={`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}`} 
               key={tag}
             >
-              <Badge variant="outline" className="text-sm py-1 px-3">
+              <Badge variant="outline" className="text-sm py-1 px-3 text-custom-green border-custom-green/30 hover:bg-custom-green/10">
                 {tag}
               </Badge>
             </Link>

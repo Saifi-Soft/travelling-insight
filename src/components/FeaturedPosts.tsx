@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -5,7 +6,6 @@ import { Calendar, MessageSquare, Heart, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { postsApi } from '@/api/apiService';
 import { Post } from '@/types/common';
-import PostCard from '@/components/PostCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const FeaturedPosts = () => {
@@ -17,10 +17,10 @@ const FeaturedPosts = () => {
   });
 
   return (
-    <section className="section bg-gradient-to-b from-primary/10 to-background">
+    <section className="section bg-gradient-to-b from-custom-green/10 to-background">
       <div className="container-custom">
         <div className="flex flex-col items-center text-center mb-12">
-          <span className="bg-primary/20 text-primary px-4 py-1 rounded-full text-sm font-medium mb-3">Discover</span>
+          <span className="bg-custom-green/20 text-custom-green px-4 py-1 rounded-full text-sm font-medium mb-3">Discover</span>
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-primary">Featured Articles</h2>
           <p className="text-muted-foreground max-w-2xl">
             Explore our handpicked selection of inspiring travel stories, guides, and adventures from around the world
@@ -66,14 +66,14 @@ const FeaturedPosts = () => {
                       alt={post.title}
                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute top-4 left-4 bg-primary text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                    <div className="absolute top-4 left-4 bg-custom-green text-white text-xs font-medium px-3 py-1.5 rounded-full">
                       {post.category}
                     </div>
                   </div>
                   
                   <CardContent className="pt-6">
                     <div className="mb-4">
-                      <h3 className="text-xl font-semibold line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                      <h3 className="text-xl font-semibold line-clamp-2 mb-2 group-hover:text-custom-green transition-colors">
                         {post.title}
                       </h3>
                       <p className="text-muted-foreground line-clamp-3">
@@ -85,7 +85,7 @@ const FeaturedPosts = () => {
                       <img 
                         src={post.author.avatar} 
                         alt={post.author.name}
-                        className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20"
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-custom-green/20"
                       />
                       <div>
                         <p className="text-sm font-medium">{post.author.name}</p>
@@ -96,16 +96,16 @@ const FeaturedPosts = () => {
                   <CardFooter className="border-t border-border pt-4 text-sm text-muted-foreground">
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4 text-primary" />
+                        <Calendar className="h-4 w-4 text-custom-green" />
                         <span>{post.date} • {post.readTime}</span>
                       </div>
                       <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-1">
-                          <Heart className="h-4 w-4 text-rose-500" />
+                          <Heart className="h-4 w-4 text-custom-green" />
                           <span>{post.likes}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <MessageSquare className="h-4 w-4 text-blue-500" />
+                          <MessageSquare className="h-4 w-4 text-custom-green" />
                           <span>{post.comments}</span>
                         </div>
                       </div>
@@ -119,7 +119,7 @@ const FeaturedPosts = () => {
         
         <div className="mt-12 text-center">
           <Link to="/blog">
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 group">
+            <Button variant="outline" className="border-custom-green text-custom-green hover:bg-custom-green/10 group">
               View All Articles
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>

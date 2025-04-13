@@ -24,7 +24,7 @@ const BlogHeader = ({
     <>
       {/* Hero Banner with improved background and reduced opacity */}
       <div className="bg-[url('https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center relative text-white py-20">
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-600/15 to-amber-500/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-custom-green/30 to-custom-green/20"></div>
         <div className="container-custom relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl font-bold mb-4">
@@ -47,7 +47,7 @@ const BlogHeader = ({
             <Input 
               type="search" 
               placeholder="Search articles..." 
-              className="pl-10"
+              className="pl-10 border-custom-green/30 focus:border-custom-green"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -55,7 +55,7 @@ const BlogHeader = ({
           
           <div className="flex items-center space-x-2">
             <Filter className="h-4 w-4 text-custom-green" />
-            <span className="text-sm font-medium">Filter:</span>
+            <span className="text-sm font-medium text-custom-green">Filter:</span>
           </div>
           
           <div className="flex overflow-x-auto gap-2 pb-1 w-full md:w-auto">

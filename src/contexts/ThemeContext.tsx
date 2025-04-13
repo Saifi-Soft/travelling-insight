@@ -62,6 +62,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedLightColors) {
       try {
         const parsedLightColors = JSON.parse(savedLightColors);
+        // Ensure custom green color is always maintained
+        parsedLightColors.primary = '#065f46';
+        parsedLightColors.footer = '#065f46';
         setLightThemeColors(parsedLightColors);
       } catch (e) {
         console.error("Error parsing light theme colors:", e);
@@ -73,6 +76,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedDarkColors) {
       try {
         const parsedDarkColors = JSON.parse(savedDarkColors);
+        // Ensure custom green color is always maintained
+        parsedDarkColors.primary = '#065f46';
+        parsedDarkColors.footer = '#065f46';
         setDarkThemeColors(parsedDarkColors);
       } catch (e) {
         console.error("Error parsing dark theme colors:", e);
@@ -86,9 +92,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       if (savedTheme === 'dark' || 
           (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        setThemeColors(savedDarkColors ? JSON.parse(savedDarkColors) : defaultDarkColors);
+        const parsedDarkColors = savedDarkColors ? JSON.parse(savedDarkColors) : defaultDarkColors;
+        // Ensure custom green color
+        parsedDarkColors.primary = '#065f46';
+        parsedDarkColors.footer = '#065f46';
+        setThemeColors(parsedDarkColors);
       } else {
-        setThemeColors(savedLightColors ? JSON.parse(savedLightColors) : defaultLightColors);
+        const parsedLightColors = savedLightColors ? JSON.parse(savedLightColors) : defaultLightColors;
+        // Ensure custom green color
+        parsedLightColors.primary = '#065f46';
+        parsedLightColors.footer = '#065f46';
+        setThemeColors(parsedLightColors);
       }
     } else {
       // Check system preference if no saved theme
@@ -156,6 +170,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Update theme color for specific mode (light/dark)
   const updateThemeColor = (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => {
+    // For primary and footer, always enforce custom-green color
+    if (colorType === 'primary' || colorType === 'footer') {
+      value = '#065f46';
+    }
+    
     if (mode === 'light') {
       setLightThemeColors(prev => ({
         ...prev,

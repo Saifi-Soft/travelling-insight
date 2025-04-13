@@ -5,7 +5,6 @@ import { TrendingUp, Flame, Globe, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Topic, Category, Post } from '@/types/common';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
 import { mongoApiService } from '@/api/mongoApiService';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -33,133 +32,133 @@ const postsApi = {
   }
 };
 
+const TRENDING_HASHTAGS: Topic[] = [
+  { id: "1", name: "SoloTravel", count: 1243, slug: "solo-travel" },
+  { id: "2", name: "VanLife", count: 986, slug: "van-life" },
+  { id: "3", name: "BudgetTravel", count: 879, slug: "budget-travel" },
+  { id: "4", name: "DigitalNomad", count: 763, slug: "digital-nomad" },
+  { id: "5", name: "AdventureTravel", count: 652, slug: "adventure-travel" },
+  { id: "6", name: "SustainableTravel", count: 541, slug: "sustainable-travel" },
+  { id: "7", name: "LuxuryTravel", count: 489, slug: "luxury-travel" },
+  { id: "8", name: "BackpackingAsia", count: 432, slug: "backpacking-asia" },
+];
+
+const CATEGORIES: Category[] = [
+  { 
+    id: "1", 
+    name: "Beaches", 
+    icon: "🏖️", 
+    count: 143, 
+    slug: "beaches",
+    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+  },
+  { 
+    id: "2", 
+    name: "Mountains", 
+    icon: "🏔️", 
+    count: 128, 
+    slug: "mountains",
+    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
+  },
+  { 
+    id: "3", 
+    name: "Urban", 
+    icon: "🏙️", 
+    count: 112, 
+    slug: "urban",
+    image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df"
+  },
+  { 
+    id: "4", 
+    name: "Food & Drink", 
+    icon: "🍽️", 
+    count: 98, 
+    slug: "food-drink",
+    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0"
+  },
+  { 
+    id: "5", 
+    name: "Culture", 
+    icon: "🏛️", 
+    count: 86, 
+    slug: "culture",
+    image: "https://images.unsplash.com/photo-1551009175-15bdf9dcb580"
+  },
+  { 
+    id: "6", 
+    name: "Nature", 
+    icon: "🌳", 
+    count: 75, 
+    slug: "nature",
+    image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e"
+  },
+  { 
+    id: "7", 
+    name: "Adventure", 
+    icon: "🧗", 
+    count: 62, 
+    slug: "adventure",
+    image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f"
+  },
+  { 
+    id: "8", 
+    name: "Budget", 
+    icon: "💰", 
+    count: 54, 
+    slug: "budget",
+    image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8"
+  },
+];
+
+const TRENDING_ARTICLES: Post[] = [
+  {
+    id: "1",
+    title: "Top 10 Mountain Views That Will Take Your Breath Away",
+    excerpt: "Discover the most breathtaking mountain panoramas around the world.",
+    author: {
+      name: "Alex Morgan",
+      avatar: "https://i.pravatar.cc/150?img=11"
+    },
+    category: "Mountains",
+    coverImage: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+    likes: 3200,
+    date: "2 days ago",
+    readTime: "8 min read",
+    comments: 56
+  },
+  {
+    id: "2",
+    title: "Street Food Adventures: Eat Like a Local in Southeast Asia",
+    excerpt: "Explore the vibrant street food scene across Southeast Asian countries.",
+    author: {
+      name: "Lisa Wong",
+      avatar: "https://i.pravatar.cc/150?img=5"
+    },
+    category: "Food & Drink",
+    coverImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0",
+    likes: 2700,
+    date: "5 days ago",
+    readTime: "6 min read",
+    comments: 34
+  },
+  {
+    id: "3",
+    title: "Wildlife Photography: Tips for Capturing Animals in Their Natural Habitat",
+    excerpt: "Professional tips to improve your wildlife photography skills.",
+    author: {
+      name: "James Wilson",
+      avatar: "https://i.pravatar.cc/150?img=11"
+    },
+    category: "Photography",
+    coverImage: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06",
+    likes: 1900,
+    date: "1 week ago",
+    readTime: "5 min read",
+    comments: 21
+  },
+];
+
 const TrendingTopics = () => {
-  const TRENDING_HASHTAGS: Topic[] = [
-    { id: "1", name: "SoloTravel", count: 1243, slug: "solo-travel" },
-    { id: "2", name: "VanLife", count: 986, slug: "van-life" },
-    { id: "3", name: "BudgetTravel", count: 879, slug: "budget-travel" },
-    { id: "4", name: "DigitalNomad", count: 763, slug: "digital-nomad" },
-    { id: "5", name: "AdventureTravel", count: 652, slug: "adventure-travel" },
-    { id: "6", name: "SustainableTravel", count: 541, slug: "sustainable-travel" },
-    { id: "7", name: "LuxuryTravel", count: 489, slug: "luxury-travel" },
-    { id: "8", name: "BackpackingAsia", count: 432, slug: "backpacking-asia" },
-  ];
-
-  const CATEGORIES: Category[] = [
-    { 
-      id: "1", 
-      name: "Beaches", 
-      icon: "🏖️", 
-      count: 143, 
-      slug: "beaches",
-      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
-    },
-    { 
-      id: "2", 
-      name: "Mountains", 
-      icon: "🏔️", 
-      count: 128, 
-      slug: "mountains",
-      image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
-    },
-    { 
-      id: "3", 
-      name: "Urban", 
-      icon: "🏙️", 
-      count: 112, 
-      slug: "urban",
-      image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df"
-    },
-    { 
-      id: "4", 
-      name: "Food & Drink", 
-      icon: "🍽️", 
-      count: 98, 
-      slug: "food-drink",
-      image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0"
-    },
-    { 
-      id: "5", 
-      name: "Culture", 
-      icon: "🏛️", 
-      count: 86, 
-      slug: "culture",
-      image: "https://images.unsplash.com/photo-1551009175-15bdf9dcb580"
-    },
-    { 
-      id: "6", 
-      name: "Nature", 
-      icon: "🌳", 
-      count: 75, 
-      slug: "nature",
-      image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e"
-    },
-    { 
-      id: "7", 
-      name: "Adventure", 
-      icon: "🧗", 
-      count: 62, 
-      slug: "adventure",
-      image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f"
-    },
-    { 
-      id: "8", 
-      name: "Budget", 
-      icon: "💰", 
-      count: 54, 
-      slug: "budget",
-      image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8"
-    },
-  ];
-
-  const TRENDING_ARTICLES: Post[] = [
-    {
-      id: "1",
-      title: "Top 10 Mountain Views That Will Take Your Breath Away",
-      excerpt: "Discover the most breathtaking mountain panoramas around the world.",
-      author: {
-        name: "Alex Morgan",
-        avatar: "https://i.pravatar.cc/150?img=11"
-      },
-      category: "Mountains",
-      coverImage: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
-      likes: 3200,
-      date: "2 days ago",
-      readTime: "8 min read",
-      comments: 56
-    },
-    {
-      id: "2",
-      title: "Street Food Adventures: Eat Like a Local in Southeast Asia",
-      excerpt: "Explore the vibrant street food scene across Southeast Asian countries.",
-      author: {
-        name: "Lisa Wong",
-        avatar: "https://i.pravatar.cc/150?img=5"
-      },
-      category: "Food & Drink",
-      coverImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0",
-      likes: 2700,
-      date: "5 days ago",
-      readTime: "6 min read",
-      comments: 34
-    },
-    {
-      id: "3",
-      title: "Wildlife Photography: Tips for Capturing Animals in Their Natural Habitat",
-      excerpt: "Professional tips to improve your wildlife photography skills.",
-      author: {
-        name: "James Wilson",
-        avatar: "https://i.pravatar.cc/150?img=11"
-      },
-      category: "Photography",
-      coverImage: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06",
-      likes: 1900,
-      date: "1 week ago",
-      readTime: "5 min read",
-      comments: 21
-    },
-  ];
-
   const { 
     data: trendingHashtags, 
     isLoading: isHashtagsLoading 

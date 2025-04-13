@@ -180,6 +180,19 @@
     color: var(--color-foreground);
     transition: color 0.3s ease;
   }
+  
+  /* Button styles to ensure color consistency */
+  .btn-custom {
+    @apply bg-custom-green text-white hover:bg-custom-green/90 transition-colors;
+  }
+  
+  .btn-outline-custom {
+    @apply border border-custom-green text-custom-green hover:bg-custom-green/10 transition-colors;
+  }
+  
+  .btn-ghost-custom {
+    @apply text-custom-green hover:bg-custom-green/10 transition-colors;
+  }
 }
 
 @keyframes fadeIn {
