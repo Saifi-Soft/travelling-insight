@@ -16,7 +16,8 @@ const ThemeSettings = () => {
     theme, 
     lightThemeColors, 
     darkThemeColors,
-    updateThemeColor 
+    updateThemeColor,
+    saveThemeChanges
   } = useTheme();
   
   const [lightColors, setLightColors] = useState({ ...lightThemeColors });
@@ -47,17 +48,15 @@ const ThemeSettings = () => {
   };
 
   const applyLightThemeChanges = () => {
-    Object.entries(lightColors).forEach(([key, value]) => {
-      updateThemeColor(key as ThemeColorKey, value, 'light');
-    });
+    // Apply all light theme changes at once
+    saveThemeChanges('light', lightColors, darkThemeColors);
     setHasChanges(false);
     toast.success('Light theme colors updated');
   };
 
   const applyDarkThemeChanges = () => {
-    Object.entries(darkColors).forEach(([key, value]) => {
-      updateThemeColor(key as ThemeColorKey, value, 'dark');
-    });
+    // Apply all dark theme changes at once
+    saveThemeChanges('dark', lightThemeColors, darkColors);
     setHasChanges(false);
     toast.success('Dark theme colors updated');
   };
@@ -173,6 +172,7 @@ const ThemeSettings = () => {
             <TabsTrigger value="dark" className="flex-1">Dark Mode</TabsTrigger>
           </TabsList>
           
+          {/* Preview section - moved above color selection fields */}
           <div className="space-y-6 mb-6">
             <h3 className="text-lg font-medium">Preview</h3>
             <p className="text-sm text-muted-foreground">

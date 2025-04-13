@@ -337,19 +337,16 @@ const themePresets: ThemePreset[] = [
 ];
 
 const PresetThemes = () => {
-  const { setTheme, updateThemeColor } = useTheme();
+  const { setTheme, updateThemeColor, saveThemeChanges } = useTheme();
   const { setActiveTab } = useContext(AppearanceTabsContext);
   
   const chooseTheme = (preset: ThemePreset) => {
-    // Apply light theme colors
-    Object.entries(preset.lightTheme).forEach(([key, value]) => {
-      updateThemeColor(key as keyof typeof preset.lightTheme, value, 'light');
-    });
+    // Save light theme colors as a batch
+    const lightThemeChanges = {...preset.lightTheme};
+    const darkThemeChanges = {...preset.darkTheme};
     
-    // Apply dark theme colors
-    Object.entries(preset.darkTheme).forEach(([key, value]) => {
-      updateThemeColor(key as keyof typeof preset.darkTheme, value, 'dark');
-    });
+    // Apply the theme changes as a batch instead of individually
+    saveThemeChanges('light', lightThemeChanges, darkThemeChanges);
     
     toast.success(`Selected "${preset.name}" theme`);
     

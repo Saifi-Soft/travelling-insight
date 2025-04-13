@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getThemeSettings, saveThemeSettings } from '@/api/themeService';
 import { useSession } from '@/hooks/useSession';
@@ -26,6 +25,7 @@ interface ThemeContextType {
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
   updateThemeColor: (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => void;
+  saveThemeChanges: (activeMode: 'light' | 'dark', lightChanges: ThemeColors, darkChanges: ThemeColors) => void;
 }
 
 const defaultLightColors: ThemeColors = {
@@ -63,7 +63,8 @@ const ThemeContext = createContext<ThemeContextType>({
   darkThemeColors: defaultDarkColors,
   toggleTheme: () => {},
   setTheme: () => {},
-  updateThemeColor: () => {}
+  updateThemeColor: () => {},
+  saveThemeChanges: () => {}
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -199,6 +200,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         console.error('Error saving theme to database:', error);
       }
     }
+    
+    // Apply theme changes immediately
+    const isDark = 
+      theme === 'dark' || 
+      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    if (isDark) {
+      setThemeColors({...newDarkColors});
+    } else {
+      setThemeColors({...newLightColors});
+    }
   };
 
   // Apply theme changes
@@ -254,6 +266,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setThemeState(newTheme);
   };
 
+  // New function to save theme changes in batch
+  const saveThemeChanges = (activeMode: 'light' | 'dark', lightChanges: ThemeColors, darkChanges: ThemeColors) => {
+    // Update both light and dark theme colors
+    setLightThemeColors({...lightChanges});
+    setDarkThemeColors({...darkChanges});
+    
+    // Save to database and update active theme colors
+    saveToDb(theme, lightChanges, darkChanges);
+  };
+
   // Update theme color for specific mode (light/dark)
   const updateThemeColor = (colorType: keyof ThemeColors, value: string, mode: 'light' | 'dark') => {
     if (mode === 'light') {
@@ -300,7 +322,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       darkThemeColors,
       toggleTheme, 
       setTheme, 
-      updateThemeColor 
+      updateThemeColor,
+      saveThemeChanges
     }}>
       {children}
     </ThemeContext.Provider>

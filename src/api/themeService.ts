@@ -16,6 +16,8 @@ export async function saveThemeSettings(userId: string, theme: any) {
           updatedAt: new Date().toISOString() 
         }
       );
+      
+      console.log('Theme settings updated successfully:', theme);
     } else {
       await mongoApiService.insertDocument(
         'userSettings', 
@@ -26,6 +28,8 @@ export async function saveThemeSettings(userId: string, theme: any) {
           updatedAt: new Date().toISOString()
         }
       );
+      
+      console.log('Theme settings created successfully:', theme);
     }
     
     return { success: true };
