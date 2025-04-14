@@ -11,7 +11,11 @@ const CommunityPostSchema = {
   createdAt: { type: Date, default: Date.now },
   likes: { type: Number, default: 0 },
   comments: { type: Number, default: 0 },
-  visibility: { type: String, enum: ['public', 'connections', 'private'], default: 'public' }
+  visibility: { type: String, enum: ['public', 'connections', 'private'], default: 'public' },
+  // New fields for content moderation
+  moderated: { type: Boolean, default: false },
+  moderationReason: { type: String },
+  moderatedAt: { type: Date }
 };
 
 export { CommunityPostSchema };

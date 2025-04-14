@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,8 @@ import {
   MapPin, 
   Globe,
   X,
-  Users
+  Users,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -23,6 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const CreatePost = () => {
   const [content, setContent] = useState('');
@@ -33,6 +41,7 @@ const CreatePost = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showPolicyDialog, setShowPolicyDialog] = useState(false);
   
   const queryClient = useQueryClient();
   const userId = localStorage.getItem('community_user_id') || '';
@@ -49,14 +58,28 @@ const CreatePost = () => {
       tags?: string[];
       visibility: string;
     }) => communityPostsApi.createPost(postData),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['communityPosts'] });
+      
+      // Check if the post was moderated
+      if (data.wasModerated) {
+        toast.error('Your post was removed for containing inappropriate content. You have received a warning.', {
+          icon: <AlertTriangle className="h-5 w-5 text-destructive" />,
+          duration: 6000,
+        });
+        
+        // Also invalidate notifications to show the new warning
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      } else {
+        toast.success('Your post was published successfully!');
+      }
+      
+      // Reset form either way
       setContent('');
       setLocation('');
       setImages([]);
       setTags([]);
       setVisibility('public');
-      toast.success('Your post was published successfully!');
       setIsSubmitting(false);
     },
     onError: (error) => {
@@ -135,7 +158,16 @@ const CreatePost = () => {
       <Card className="border-border bg-card/50">
         <CardHeader className="pb-3">
           <h3 className="text-xl font-semibold text-foreground">Create a Post</h3>
-          <p className="text-sm text-muted-foreground">Share your adventures with the community</p>
+          <p className="text-sm text-muted-foreground">
+            Share your adventures with the community 
+            <Button 
+              variant="link" 
+              className="p-0 h-auto text-sm underline ml-1"
+              onClick={() => setShowPolicyDialog(true)}
+            >
+              View Community Guidelines
+            </Button>
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -275,10 +307,73 @@ const CreatePost = () => {
               <li>Avoid sharing personal contact information publicly</li>
               <li>Use relevant hashtags to increase your post's reach</li>
               <li>Include location details to help other travelers</li>
+              <li className="text-destructive font-medium">No explicit/adult (18+) content allowed - violations lead to account suspension</li>
             </ul>
           </CardContent>
         </Card>
       </div>
+      
+      <Dialog open={showPolicyDialog} onOpenChange={setShowPolicyDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Community Guidelines</DialogTitle>
+            <DialogDescription>
+              Our guidelines ensure a safe and inclusive environment for all travelers.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-[60vh] overflow-y-auto">
+            <div className="space-y-4 text-sm">
+              <div>
+                <h3 className="font-semibold text-destructive flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  Content Moderation Policy
+                </h3>
+                <ul className="pl-5 list-disc space-y-1 mt-2">
+                  <li>
+                    <strong>Prohibited Content:</strong> Any content containing explicit adult material (18+), 
+                    inappropriate imagery, or language is strictly prohibited.
+                  </li>
+                  <li>
+                    <strong>Automated Detection:</strong> All posts are automatically scanned for prohibited content.
+                  </li>
+                  <li>
+                    <strong>Warning System:</strong> Violations will result in your post being removed and a warning issued to your account.
+                  </li>
+                  <li className="text-destructive font-medium">
+                    After receiving three warnings, your account will be automatically blocked.
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold">General Guidelines</h3>
+                <ul className="pl-5 list-disc space-y-1 mt-2">
+                  <li>Be respectful and kind to fellow community members</li>
+                  <li>Share authentic and helpful travel information</li>
+                  <li>Respect copyright and give credit where it's due</li>
+                  <li>Protect your privacy and that of others</li>
+                  <li>Report any content that violates these guidelines</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold">Getting Support</h3>
+                <p className="mt-1">
+                  If you believe your content was mistakenly flagged or you need assistance, 
+                  please contact our support team through your profile settings.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setShowPolicyDialog(false)}>
+              I understand
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

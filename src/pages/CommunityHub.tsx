@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
   Search, 
   Users, 
-  MessageSquare, 
+  MessageCircle, 
   Bell, 
   User, 
   Compass, 
@@ -26,10 +27,22 @@ import CreatePost from '@/components/community/CreatePost';
 import MessagesContent from '@/components/community/MessagesContent';
 import TravelBuddyFinder from '@/components/community/TravelBuddyFinder';
 import UserProfile from '@/components/community/UserProfile';
+import NotificationsPanel from '@/components/community/NotificationsPanel';
+import { extendCommunityApiWithNotifications } from '@/api/notificationsService';
+import { extendCommunityApi } from '@/api/communityApiExtension';
+
+// Extend the API to include notifications
+// In a real app, you would do this at application bootstrap
+if (typeof window !== 'undefined') {
+  // Extend the API with notifications
+  const existingApi = (window as any).communityApi || communityApi;
+  (window as any).communityApi = extendCommunityApi(existingApi);
+}
 
 const CommunityHub = () => {
   const [activeTab, setActiveTab] = useState('feed');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
   
   const userId = localStorage.getItem('community_user_id');
   const userName = localStorage.getItem('userName') || 'User';
@@ -42,8 +55,12 @@ const CommunityHub = () => {
 
   const { data: notificationCount = 0 } = useQuery({
     queryKey: ['notificationCount', userId],
-    queryFn: () => userId && communityApi.notifications ? communityApi.notifications.getUnreadCount(userId) : 0,
-    enabled: !!userId && !!communityApi.notifications,
+    queryFn: () => {
+      if (!userId || !window.communityApi?.notifications) return 0;
+      return window.communityApi.notifications.getUnreadCount(userId);
+    },
+    enabled: !!userId && !!(window as any).communityApi?.notifications,
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   const isProfileIncomplete = !userData || 
@@ -68,12 +85,33 @@ const CommunityHub = () => {
     // Implement actual search functionality
   };
 
+  // Ensure users see warnings by opening notifications panel when there's a new warning
+  useEffect(() => {
+    if (notificationCount > 0) {
+      // Check if there's a content warning
+      const checkForWarnings = async () => {
+        if (userId && (window as any).communityApi?.notifications) {
+          const notifications = await (window as any).communityApi.notifications.getAll(userId);
+          const hasContentWarning = notifications.some(n => 
+            !n.read && (n.type === 'content_warning' || n.type === 'account_blocked')
+          );
+          
+          if (hasContentWarning) {
+            setShowNotifications(true);
+          }
+        }
+      };
+      
+      checkForWarnings();
+    }
+  }, [notificationCount, userId]);
+
   return (
     <div className="bg-background min-h-screen text-foreground">
       {/* Top Navigation Bar (Mobile & Desktop) */}
       <header className="fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent">
             Travel Community
           </h1>
           
@@ -91,7 +129,12 @@ const CommunityHub = () => {
           </form>
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative hidden md:flex">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative hidden md:flex"
+              onClick={() => setShowNotifications(prev => !prev)}
+            >
               <Bell className="h-5 w-5" />
               {notificationCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -100,17 +143,27 @@ const CommunityHub = () => {
               )}
             </Button>
             
-            <Avatar className="h-9 w-9 border-2 border-primary">
+            <Avatar className="h-9 w-9 border-2 border-green-700">
               {userData?.avatar ? (
                 <AvatarImage src={userData.avatar} alt={userName} />
               ) : (
-                <AvatarFallback className="bg-gradient-to-br from-primary to-purple-500">
+                <AvatarFallback className="bg-gradient-to-br from-green-700 to-green-500">
                   {userName.charAt(0)}
                 </AvatarFallback>
               )}
             </Avatar>
           </div>
         </div>
+        
+        {/* Notifications Panel */}
+        {showNotifications && (
+          <div className="absolute right-4 top-16 z-50 mt-2">
+            <NotificationsPanel 
+              userId={userId || ''} 
+              onClose={() => setShowNotifications(false)}
+            />
+          </div>
+        )}
       </header>
       
       <div className="container mx-auto pt-20 pb-20 px-2 md:px-4 lg:px-6">
@@ -121,11 +174,11 @@ const CommunityHub = () => {
               <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
                 {/* Profile Summary */}
                 <div className="flex flex-col items-center text-center mb-4">
-                  <Avatar className="h-16 w-16 border-2 border-primary mb-2">
+                  <Avatar className="h-16 w-16 border-2 border-green-700 mb-2">
                     {userData?.avatar ? (
                       <AvatarImage src={userData.avatar} alt={userName} />
                     ) : (
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-purple-500">
+                      <AvatarFallback className="bg-gradient-to-br from-green-700 to-green-500">
                         {userName.charAt(0)}
                       </AvatarFallback>
                     )}
@@ -138,7 +191,7 @@ const CommunityHub = () => {
                   {isProfileIncomplete && (
                     <div className="mt-2 w-full bg-secondary rounded-full h-2">
                       <div 
-                        className="bg-primary h-2 rounded-full" 
+                        className="bg-green-700 h-2 rounded-full" 
                         style={{ width: userData ? '40%' : '10%' }}
                       />
                     </div>
@@ -151,25 +204,25 @@ const CommunityHub = () => {
                     { name: 'Feed', icon: Home, tab: 'feed' },
                     { name: 'Discover', icon: Compass, tab: 'discover' },
                     { name: 'Travel Buddies', icon: Users, tab: 'buddies' },
-                    { name: 'Messages', icon: MessageSquare, tab: 'messages' },
+                    { name: 'Messages', icon: MessageCircle, tab: 'messages' },
                     { name: 'My Profile', icon: User, tab: 'profile' },
                   ].map((item) => (
                     <Button
                       key={item.name}
                       variant={activeTab === item.tab ? 'secondary' : 'ghost'}
                       className={`w-full justify-start ${
-                        activeTab === item.tab ? 'bg-secondary text-primary font-medium' : ''
+                        activeTab === item.tab ? 'bg-secondary text-green-700 font-medium' : ''
                       }`}
                       onClick={() => setActiveTab(item.tab)}
                     >
-                      <item.icon className={`mr-2 h-4 w-4 ${activeTab === item.tab ? 'text-primary' : ''}`} />
+                      <item.icon className={`mr-2 h-4 w-4 ${activeTab === item.tab ? 'text-green-700' : ''}`} />
                       {item.name}
                     </Button>
                   ))}
                   
                   <Button 
                     variant="default" 
-                    className="w-full bg-primary hover:bg-primary/90 mt-2"
+                    className="w-full bg-green-700 hover:bg-green-800 mt-2"
                     onClick={() => setActiveTab('create')}
                   >
                     Create Post
@@ -246,7 +299,7 @@ const CommunityHub = () => {
                       <span className="text-sm">{destination}</span>
                     </div>
                   ))}
-                  <Button variant="link" className="text-xs p-0 h-auto">
+                  <Button variant="link" className="text-xs p-0 h-auto text-green-700">
                     See more destinations
                   </Button>
                 </div>
@@ -281,7 +334,7 @@ const CommunityHub = () => {
                       </Button>
                     </div>
                   ))}
-                  <Button variant="link" className="text-xs p-0 h-auto">
+                  <Button variant="link" className="text-xs p-0 h-auto text-green-700">
                     Find more buddies
                   </Button>
                 </div>
@@ -308,7 +361,7 @@ const CommunityHub = () => {
                       View Details
                     </Button>
                   </div>
-                  <Button variant="link" className="text-xs p-0 h-auto">
+                  <Button variant="link" className="text-xs p-0 h-auto text-green-700">
                     See all trip requests
                   </Button>
                 </div>
@@ -325,17 +378,17 @@ const CommunityHub = () => {
             { icon: Home, tab: 'feed' },
             { icon: Compass, tab: 'discover' },
             { icon: Users, tab: 'buddies' },
-            { icon: MessageSquare, tab: 'messages' },
+            { icon: MessageCircle, tab: 'messages' },
             { icon: User, tab: 'profile' }
           ].map((item) => (
             <Button
               key={item.tab}
               variant="ghost"
               size="icon"
-              className={`py-3 ${activeTab === item.tab ? 'text-primary' : 'text-muted-foreground'}`}
+              className={`py-3 ${activeTab === item.tab ? 'text-green-700' : 'text-muted-foreground'}`}
               onClick={() => setActiveTab(item.tab)}
             >
-              <item.icon className={`h-5 w-5 ${activeTab === item.tab ? 'fill-primary/10' : ''}`} />
+              <item.icon className={`h-5 w-5 ${activeTab === item.tab ? 'fill-green-700/10' : ''}`} />
             </Button>
           ))}
         </div>
@@ -343,7 +396,7 @@ const CommunityHub = () => {
         {/* Floating Action Button for Create Post */}
         <Button
           onClick={() => setActiveTab('create')}
-          className="absolute -top-6 left-1/2 transform -translate-x-1/2 rounded-full w-12 h-12 bg-primary hover:bg-primary/90 shadow-lg flex items-center justify-center"
+          className="absolute -top-6 left-1/2 transform -translate-x-1/2 rounded-full w-12 h-12 bg-green-700 hover:bg-green-800 shadow-lg flex items-center justify-center"
         >
           <span className="text-2xl font-light">+</span>
         </Button>

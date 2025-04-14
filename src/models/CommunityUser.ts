@@ -11,6 +11,9 @@ const CommunityUserSchema = {
   joinDate: { type: Date, default: Date.now },
   lastActive: { type: Date },
   status: { type: String, enum: ['pending', 'active', 'blocked'], default: 'pending' },
+  // Add block reason field
+  blockReason: { type: String },
+  blockedAt: { type: Date },
   experienceLevel: { type: String, enum: ['Newbie', 'Casual', 'Regular', 'Experienced', 'Globetrotter'], default: 'Newbie' },
   travelStyles: [{ type: String }], // Luxury, Budget, Adventure, etc.
   visitedCountries: [{ 
@@ -30,7 +33,16 @@ const CommunityUserSchema = {
     instagram: { type: String },
     twitter: { type: String },
     facebook: { type: String }
-  }
+  },
+  // Add notification preferences field
+  notificationPreferences: {
+    contentWarnings: { type: Boolean, default: true },
+    messages: { type: Boolean, default: true },
+    connections: { type: Boolean, default: true }
+  },
+  location: { type: String },
+  connections: [{ type: String }],
+  trips: [{ type: Object }]
 };
 
 export { CommunityUserSchema };

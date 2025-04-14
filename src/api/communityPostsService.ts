@@ -1,12 +1,15 @@
-
 // Updated version of the community posts service with additional functionality
 import { mongoApiService } from './mongoApiService';
+import { contentModerationApi } from './contentModerationService';
 
 // Define API for community posts
 export const communityPostsApi = {
   getAllPosts: async () => {
     try {
-      const posts = await mongoApiService.queryDocuments('communityPosts', {});
+      // Only return non-moderated posts
+      const posts = await mongoApiService.queryDocuments('communityPosts', {
+        moderated: { $ne: true }
+      });
       return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (error) {
       console.error('Error fetching community posts:', error);
@@ -36,15 +39,37 @@ export const communityPostsApi = {
     comments?: number;
   }) => {
     try {
+      // First, scan the content for inappropriate material
+      const moderationResult = await contentModerationApi.scanContent(post.content);
+      
       const newPost = {
         ...post,
         createdAt: new Date().toISOString(),
         likes: post.likes || 0,
         comments: post.comments || 0,
-        visibility: post.visibility || 'public'
+        visibility: post.visibility || 'public',
+        moderated: moderationResult.isInappropriate,
+        moderationReason: moderationResult.reason || null,
+        moderatedAt: moderationResult.isInappropriate ? new Date().toISOString() : null
       };
       
-      return await mongoApiService.insertDocument('communityPosts', newPost);
+      // Insert the post regardless of moderation status
+      const result = await mongoApiService.insertDocument('communityPosts', newPost);
+      
+      // If post was flagged as inappropriate, add a warning to the user
+      if (moderationResult.isInappropriate && result._id) {
+        await contentModerationApi.addWarningToUser(
+          post.userId,
+          result._id,
+          moderationResult.reason || 'Inappropriate content'
+        );
+      }
+      
+      // Return both the post result and whether it was moderated
+      return { 
+        ...result, 
+        wasModerated: moderationResult.isInappropriate 
+      };
     } catch (error) {
       console.error('Error creating community post:', error);
       throw error;
@@ -263,6 +288,16 @@ export const communityPostsApi = {
       );
     } catch (error) {
       console.error(`Error searching posts for "${query}":`, error);
+      return [];
+    }
+  },
+  
+  getModeratedPosts: async () => {
+    try {
+      const posts = await mongoApiService.queryDocuments('communityPosts', { moderated: true });
+      return posts.sort((a, b) => new Date(b.moderatedAt).getTime() - new Date(a.moderatedAt).getTime());
+    } catch (error) {
+      console.error('Error fetching moderated posts:', error);
       return [];
     }
   }
