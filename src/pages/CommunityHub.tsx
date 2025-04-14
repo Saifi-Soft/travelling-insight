@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -31,17 +30,13 @@ import NotificationsPanel from '@/components/community/NotificationsPanel';
 import { extendCommunityApiWithNotifications } from '@/api/notificationsService';
 import { extendCommunityApi } from '@/api/communityApiExtension';
 
-// Extend the global Window interface to include our communityApi
 declare global {
   interface Window {
     communityApi: any;
   }
 }
 
-// Extend the API to include notifications
-// In a real app, you would do this at application bootstrap
 if (typeof window !== 'undefined') {
-  // Extend the API with notifications
   const existingApi = window.communityApi || communityApi;
   window.communityApi = extendCommunityApi(existingApi);
 }
@@ -67,7 +62,7 @@ const CommunityHub = () => {
       return window.communityApi.notifications.getUnreadCount(userId);
     },
     enabled: !!userId && !!(window as any).communityApi?.notifications,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 
   const isProfileIncomplete = !userData || 
@@ -89,13 +84,10 @@ const CommunityHub = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     toast.info(`Searching for: ${searchQuery}`);
-    // Implement actual search functionality
   };
 
-  // Ensure users see warnings by opening notifications panel when there's a new warning
   useEffect(() => {
     if (notificationCount > 0) {
-      // Check if there's a content warning
       const checkForWarnings = async () => {
         if (userId && (window as any).communityApi?.notifications) {
           const notifications = await (window as any).communityApi.notifications.getAll(userId);
@@ -115,7 +107,6 @@ const CommunityHub = () => {
 
   return (
     <div className="bg-background min-h-screen text-foreground">
-      {/* Top Navigation Bar (Mobile & Desktop) */}
       <header className="fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent">
@@ -162,7 +153,6 @@ const CommunityHub = () => {
           </div>
         </div>
         
-        {/* Notifications Panel */}
         {showNotifications && (
           <div className="absolute right-4 top-16 z-50 mt-2">
             <NotificationsPanel 
@@ -175,11 +165,9 @@ const CommunityHub = () => {
       
       <div className="container mx-auto pt-20 pb-20 px-2 md:px-4 lg:px-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
-          {/* Left Sidebar (Desktop only) */}
           <div className="hidden md:block md:col-span-3 lg:col-span-2">
             <div className="sticky top-20 space-y-6">
               <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
-                {/* Profile Summary */}
                 <div className="flex flex-col items-center text-center mb-4">
                   <Avatar className="h-16 w-16 border-2 border-green-700 mb-2">
                     {userData?.avatar ? (
@@ -205,7 +193,6 @@ const CommunityHub = () => {
                   )}
                 </div>
                 
-                {/* Main Navigation */}
                 <nav className="space-y-1">
                   {[
                     { name: 'Feed', icon: Home, tab: 'feed' },
@@ -237,7 +224,6 @@ const CommunityHub = () => {
                 </nav>
               </div>
               
-              {/* Travel Stats */}
               <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
                 <h3 className="font-medium mb-2 flex items-center">
                   <Globe className="h-4 w-4 mr-2" />
@@ -261,10 +247,8 @@ const CommunityHub = () => {
             </div>
           </div>
           
-          {/* Main Content Area */}
           <main className="md:col-span-9 lg:col-span-7">
             <div className="bg-card/50 backdrop-blur-sm rounded-xl shadow-sm border border-border overflow-hidden">
-              {/* Mobile Search */}
               <div className="p-4 border-b border-border md:hidden">
                 <form onSubmit={handleSearch} className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -278,7 +262,6 @@ const CommunityHub = () => {
                 </form>
               </div>
               
-              {/* Content Based on Active Tab */}
               <div className="p-0">
                 {activeTab === 'feed' && <FeedContent />}
                 {activeTab === 'discover' && <DiscoverContent />}
@@ -290,10 +273,8 @@ const CommunityHub = () => {
             </div>
           </main>
           
-          {/* Right Sidebar (Desktop only) */}
           <div className="hidden lg:block lg:col-span-3">
             <div className="sticky top-20 space-y-6">
-              {/* Trending Destinations */}
               <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
                 <h3 className="font-medium mb-3 flex items-center">
                   <TrendingUp className="h-4 w-4 mr-2" />
@@ -312,7 +293,6 @@ const CommunityHub = () => {
                 </div>
               </div>
               
-              {/* Travel Buddies Suggestions */}
               <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
                 <h3 className="font-medium mb-3 flex items-center">
                   <Users className="h-4 w-4 mr-2" />
@@ -347,7 +327,6 @@ const CommunityHub = () => {
                 </div>
               </div>
               
-              {/* Active Trips */}
               <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border">
                 <h3 className="font-medium mb-3 flex items-center">
                   <Activity className="h-4 w-4 mr-2" />
@@ -378,7 +357,6 @@ const CommunityHub = () => {
         </div>
       </div>
       
-      {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background/80 backdrop-blur-lg border-t border-border z-10">
         <div className="flex justify-between px-2">
           {[
@@ -400,7 +378,6 @@ const CommunityHub = () => {
           ))}
         </div>
         
-        {/* Floating Action Button for Create Post */}
         <Button
           onClick={() => setActiveTab('create')}
           className="absolute -top-6 left-1/2 transform -translate-x-1/2 rounded-full w-12 h-12 bg-green-700 hover:bg-green-800 shadow-lg flex items-center justify-center"
