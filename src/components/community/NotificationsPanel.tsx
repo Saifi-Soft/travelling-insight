@@ -10,7 +10,8 @@ import {
   MessageCircle, 
   UserPlus,
   CheckCheck,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
@@ -18,6 +19,12 @@ import { toast } from 'sonner';
 interface NotificationsPanelProps {
   userId: string;
   onClose?: () => void;
+}
+
+// Define the return type for markAllAsRead to resolve TypeScript errors
+interface MarkAllAsReadResponse {
+  success: boolean;
+  count: number;
 }
 
 const NotificationsPanel = ({ userId, onClose }: NotificationsPanelProps) => {
@@ -53,10 +60,10 @@ const NotificationsPanel = ({ userId, onClose }: NotificationsPanelProps) => {
     }
   });
   
-  // Mark all as read
+  // Mark all as read with proper type annotation
   const markAllAsReadMutation = useMutation({
     mutationFn: () => 
-      communityApi?.notifications?.markAllAsRead(userId) || Promise.resolve({ success: false, count: 0 }),
+      communityApi?.notifications?.markAllAsRead(userId) as Promise<MarkAllAsReadResponse> || Promise.resolve({ success: false, count: 0 }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       if (data.success) {

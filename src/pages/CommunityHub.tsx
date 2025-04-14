@@ -31,12 +31,19 @@ import NotificationsPanel from '@/components/community/NotificationsPanel';
 import { extendCommunityApiWithNotifications } from '@/api/notificationsService';
 import { extendCommunityApi } from '@/api/communityApiExtension';
 
+// Extend the global Window interface to include our communityApi
+declare global {
+  interface Window {
+    communityApi: any;
+  }
+}
+
 // Extend the API to include notifications
 // In a real app, you would do this at application bootstrap
 if (typeof window !== 'undefined') {
   // Extend the API with notifications
-  const existingApi = (window as any).communityApi || communityApi;
-  (window as any).communityApi = extendCommunityApi(existingApi);
+  const existingApi = window.communityApi || communityApi;
+  window.communityApi = extendCommunityApi(existingApi);
 }
 
 const CommunityHub = () => {
