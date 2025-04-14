@@ -1,4 +1,3 @@
-
 // Define MongoDB-like operators for querying
 export interface MongoOperators {
   $gt?: any;
@@ -93,16 +92,16 @@ export interface CommunityUser {
   name: string;
   avatar?: string;
   bio?: string;
-  location?: string; // Adding location property
-  website?: string; // Adding website property
+  location?: string;
+  website?: string;
   experienceLevel: string;
   travelStyles: string[];
   interests: string[];
   status: 'active' | 'blocked' | 'pending';
   joinDate: Date;
   reputation: number;
-  connections?: Array<string>; // Adding connections property
-  trips?: Array<any>; // Adding trips property
+  connections?: Array<string>;
+  trips?: Array<any>;
   visitedCountries?: Array<{ 
     name: string;
     year: number;
@@ -134,21 +133,21 @@ export interface TravelGroup {
 }
 
 export interface CommunityEvent {
-  id?: string; // Make id optional as MongoDB provides _id
-  _id?: string; // Add _id for MongoDB compatibility
+  id?: string;
+  _id?: string;
   title: string;
   description: string;
-  type?: string; // Make type optional
-  host?: string; // Make host optional
-  date: string | Date; // Allow both string and Date types
+  type?: string;
+  host?: string;
+  date: string | Date;
   location: {
     type: 'online' | 'physical' | string;
     details: string;
   };
-  attendees: Array<string | {id: string, name: string}>; // Allow both string and object types for attendees
+  attendees: Array<string | {id: string, name: string}>;
   status: 'upcoming' | 'ongoing' | 'completed' | 'canceled';
-  createdAt: string | Date; // Allow both string and Date types
-  organizer?: {id: string, name: string}; // Add organizer field
+  createdAt: string | Date;
+  organizer?: {id: string, name: string};
 }
 
 // Travel match interface for the intelligent matching feature
@@ -158,14 +157,14 @@ export interface TravelMatch {
   name: string;
   avatar?: string;
   compatibilityScore: number;
-  destinations: string[];
-  travelStyles: string[];
-  interests: string[];
-  destination?: string; // Adding missing properties from BuddyMatch
+  destination?: string;
   dates?: {
     start: string;
     end: string;
   };
+  destinations: string[];
+  travelStyles: string[];
+  interests: string[];
   languages?: string[];
 }
 
@@ -184,4 +183,64 @@ export interface BuddyMatch {
   travelStyles: string[];
   interests: string[];
   languages: string[];
+}
+
+// Community post interface
+export interface CommunityPost {
+  _id?: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  content: string;
+  images?: string[];
+  location?: string;
+  tags?: string[];
+  createdAt: string;
+  likes: number;
+  comments: number;
+  visibility?: 'public' | 'connections' | 'private';
+}
+
+// Message interface for community messaging
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId?: string;
+  text: string;
+  time: string;
+  read?: boolean;
+  attachments?: {
+    type: 'image' | 'file' | 'location';
+    url: string;
+    name?: string;
+  }[];
+}
+
+// Conversation interface for community messaging
+export interface Conversation {
+  id: string;
+  participants: string[];
+  isGroup: boolean;
+  name?: string;
+  avatar?: string;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  unread?: number;
+  online?: boolean;
+  members?: number;
+}
+
+// Travel buddy request interface
+export interface TravelBuddyRequest {
+  _id?: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  travelStyle: string[];
+  description: string;
+  createdAt: string;
+  status: 'active' | 'completed' | 'cancelled';
 }

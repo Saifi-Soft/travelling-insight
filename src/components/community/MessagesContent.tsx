@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,7 +61,7 @@ const conversations = [
   },
 ];
 
-// Mock messages for selected conversation
+// Mock messages for selected conversation - fixed apostrophes using double quotes
 const mockMessages = [
   { 
     id: 'm1', 

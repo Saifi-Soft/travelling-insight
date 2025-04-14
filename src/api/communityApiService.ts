@@ -1,5 +1,15 @@
+
 import { mongoApiService } from './mongoApiService';
-import { CommunityUser, TravelGroup, CommunityEvent, TravelMatch } from '@/types/common';
+import { 
+  CommunityUser, 
+  TravelGroup, 
+  CommunityEvent, 
+  TravelMatch, 
+  CommunityPost,
+  TravelBuddyRequest,
+  Message,
+  Conversation
+} from '@/types/common';
 
 // Define community user API
 export const communityUsersApi = {
@@ -173,12 +183,31 @@ export const travelMatchesApi = {
           preferences.destinations.some((dest: string) => interest.toLowerCase().includes(dest.toLowerCase()))
         ),
         travelStyles: user.travelStyles || [],
-        interests: user.interests || []
+        interests: user.interests || [],
+        destination: preferences.destinations[0] || null
       }));
       
       return potentialMatches.sort((a, b) => b.compatibilityScore - a.compatibilityScore);
     } catch (error) {
       console.error('Error finding potential matches:', error);
+      return [];
+    }
+  },
+
+  saveBuddyRequest: async (request: Omit<TravelBuddyRequest, '_id'>): Promise<TravelBuddyRequest> => {
+    try {
+      return await mongoApiService.insertDocument('travelBuddyRequests', request);
+    } catch (error) {
+      console.error('Error creating travel buddy request:', error);
+      throw error;
+    }
+  },
+
+  getBuddyRequests: async (): Promise<TravelBuddyRequest[]> => {
+    try {
+      return await mongoApiService.queryDocuments('travelBuddyRequests', {});
+    } catch (error) {
+      console.error('Error fetching travel buddy requests:', error);
       return [];
     }
   }
@@ -260,6 +289,97 @@ export const notificationsApi = {
       console.error('Error marking notification as read:', error);
       return false;
     }
+  },
+
+  createNotification: async (notification: { 
+    userId: string; 
+    type: string; 
+    content: string; 
+    relatedId?: string;
+  }): Promise<any> => {
+    try {
+      const newNotification = {
+        ...notification,
+        read: false,
+        createdAt: new Date().toISOString()
+      };
+      return await mongoApiService.insertDocument('notifications', newNotification);
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  }
+};
+
+// Define messaging API
+export const messagingApi = {
+  getConversations: async (userId: string): Promise<Conversation[]> => {
+    try {
+      return await mongoApiService.queryDocuments('conversations', {
+        participants: { $in: [userId] }
+      });
+    } catch (error) {
+      console.error('Error fetching user conversations:', error);
+      return [];
+    }
+  },
+
+  getMessages: async (conversationId: string): Promise<Message[]> => {
+    try {
+      const messages = await mongoApiService.queryDocuments('messages', { conversationId });
+      return messages.sort((a: any, b: any) => 
+        new Date(a.time).getTime() - new Date(b.time).getTime()
+      );
+    } catch (error) {
+      console.error('Error fetching conversation messages:', error);
+      return [];
+    }
+  },
+
+  sendMessage: async (message: { 
+    senderId: string; 
+    conversationId: string; 
+    text: string;
+    attachments?: any[];
+  }): Promise<Message> => {
+    try {
+      const newMessage = {
+        ...message,
+        time: new Date().toISOString(),
+        read: false
+      };
+
+      const result = await mongoApiService.insertDocument('messages', newMessage);
+      
+      // Update the conversation's last message
+      await mongoApiService.updateDocument('conversations', message.conversationId, {
+        lastMessage: message.text,
+        lastMessageTime: newMessage.time
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  },
+
+  createConversation: async (conversation: {
+    participants: string[];
+    isGroup: boolean;
+    name?: string;
+    avatar?: string;
+  }): Promise<Conversation> => {
+    try {
+      const newConversation = {
+        ...conversation,
+        createdAt: new Date().toISOString()
+      };
+      return await mongoApiService.insertDocument('conversations', newConversation);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      throw error;
+    }
   }
 };
 
@@ -270,5 +390,6 @@ export const communityApi = {
   events: communityEventsApi,
   matches: travelMatchesApi,
   payments: communityPaymentApi,
-  notifications: notificationsApi
+  notifications: notificationsApi,
+  messages: messagingApi
 };

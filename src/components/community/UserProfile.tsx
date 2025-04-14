@@ -1,18 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, MapPin, Calendar, Users, Bookmark, Settings, PlusCircle, Edit, Image as ImageIcon, Camera } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { CheckCircle, Edit2, MapPin, Globe, Calendar, Users, BriefcaseBusiness, Award, Heart } from 'lucide-react';
 import { communityApi } from '@/api/communityApiService';
-import { communityPostsApi } from '@/api/communityPostsService';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { CommunityUser } from '@/types/common';
 
 interface UserProfileProps {
@@ -20,547 +18,358 @@ interface UserProfileProps {
 }
 
 const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
-  const [activeTab, setActiveTab] = useState('posts');
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    bio: '',
-    location: '',
-    website: '',
-    travelStyles: [] as string[],
-    visitedCountries: [] as string[]
-  });
-  
+  const [formData, setFormData] = useState<Partial<CommunityUser>>({});
   const queryClient = useQueryClient();
-  const currentUserId = localStorage.getItem('community_user_id') || '';
-  const isOwnProfile = currentUserId === userId;
   
-  const { data: userData, isLoading } = useQuery({
+  // Fetch user data
+  const { data: userData, isLoading, isError } = useQuery({
     queryKey: ['communityUser', userId],
     queryFn: () => communityApi.users.getById(userId),
-    enabled: !!userId
+    enabled: !!userId,
+    meta: {
+      onSuccess: (data) => {
+        setFormData(data || {});
+      }
+    }
   });
-  
+
   useEffect(() => {
     if (userData) {
-      setFormData({
-        name: userData.name || '',
-        bio: userData.bio || '',
-        location: userData.location || '',
-        website: userData.website || '',
-        travelStyles: userData.travelStyles || [],
-        visitedCountries: userData.visitedCountries?.map(c => c.name) || []
-      });
+      setFormData(userData);
     }
   }, [userData]);
-  
-  const { data: userPosts = [], isLoading: isLoadingPosts } = useQuery({
-    queryKey: ['userPosts', userId],
-    queryFn: async () => {
-      const allPosts = await communityPostsApi.getAllPosts();
-      return allPosts.filter(post => post.userId === userId);
-    },
-    enabled: !!userId
-  });
-  
-  const { data: savedPosts = [], isLoading: isLoadingSaved } = useQuery({
-    queryKey: ['savedPosts', userId],
-    queryFn: () => isOwnProfile ? communityPostsApi.getSavedPosts(userId) : [],
-    enabled: isOwnProfile && !!userId && activeTab === 'saved'
-  });
-  
-  const updateProfileMutation = useMutation({
-    mutationFn: (profileData: any) => communityApi.users.update(userId, profileData),
+
+  const updateUserMutation = useMutation({
+    mutationFn: (updatedUser: Partial<CommunityUser>) => 
+      communityApi.users.update(userId, updatedUser),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['communityUser', userId] });
-      toast.success('Profile updated successfully');
+      toast.success('Profile updated successfully!');
       setIsEditing(false);
     },
-    onError: () => {
-      toast.error('Failed to update profile');
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile. Please try again.');
     }
   });
-  
-  const handleProfileUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateProfileMutation.mutate(formData);
-  };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
-  const handleAddTravelStyle = (style: string) => {
-    if (formData.travelStyles.includes(style)) {
-      setFormData(prev => ({
-        ...prev,
-        travelStyles: prev.travelStyles.filter(s => s !== style)
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        travelStyles: [...prev.travelStyles, style]
-      }));
-    }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateUserMutation.mutate(formData);
   };
-  
-  const handleAddCountry = (country: string) => {
-    if (!formData.visitedCountries.includes(country)) {
-      setFormData(prev => ({
-        ...prev,
-        visitedCountries: [...prev.visitedCountries, country]
-      }));
-    }
-  };
-  
-  const handleRemoveCountry = (country: string) => {
-    setFormData(prev => ({
-      ...prev,
-      visitedCountries: prev.visitedCountries.filter(c => c !== country)
-    }));
-  };
-  
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="p-8 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary mx-auto"></div>
+        <p className="mt-4">Loading profile...</p>
+      </div>
+    );
   }
-  
+
+  if (isError || !userData) {
+    return (
+      <div className="p-8 text-center">
+        <div className="text-destructive text-6xl mb-4">😕</div>
+        <h3 className="text-xl font-bold mb-2">User Not Found</h3>
+        <p className="text-muted-foreground">
+          This user profile could not be loaded. Please try again later.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="profile">
-      {!isEditing ? (
-        <div className="p-4">
-          <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
-            <div className="flex items-center">
-              <Avatar className="h-24 w-24 border-4 border-background">
-                {userData?.avatar ? (
-                  <AvatarImage src={userData.avatar} alt={userData?.name} />
-                ) : (
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                    {userData?.name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold">{userData?.name || 'User'}</h1>
-                {userData?.location && (
-                  <p className="text-sm text-muted-foreground flex items-center mt-1">
+    <div>
+      <div className="relative">
+        {/* Cover Photo */}
+        <div className="h-48 bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 rounded-t-xl"></div>
+        
+        {/* Profile Info Card */}
+        <div className="relative px-4 sm:px-6 pb-4">
+          <div className="absolute -top-12 left-4 sm:left-6">
+            <Avatar className="h-24 w-24 border-4 border-background shadow-md">
+              {userData.avatar ? (
+                <AvatarImage src={userData.avatar} alt={userData.name} />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                  {userData.name.charAt(0)}
+                </AvatarFallback>
+              )}
+            </Avatar>
+          </div>
+          
+          <div className="pt-14">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="font-bold text-2xl">{userData.name}</h1>
+                <p className="text-muted-foreground">@{userData.username}</p>
+                {userData.location && (
+                  <div className="flex items-center mt-1 text-sm text-muted-foreground">
                     <MapPin className="h-3 w-3 mr-1" />
                     {userData.location}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="text-sm">
-                    <span className="font-semibold">{userData?.connections?.length || 0}</span>
-                    <span className="text-muted-foreground ml-1">connections</span>
                   </div>
-                  <div className="text-sm">
-                    <span className="font-semibold">{userData?.visitedCountries?.length || 0}</span>
-                    <span className="text-muted-foreground ml-1">countries</span>
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-semibold">{userPosts.length}</span>
-                    <span className="text-muted-foreground ml-1">posts</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {isOwnProfile ? (
-              <Button 
-                variant="outline" 
-                className="flex items-center"
-                onClick={() => setIsEditing(true)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Profile
-              </Button>
-            ) : (
-              <Button 
-                className="flex items-center"
-                onClick={() => toast.success('Connection request sent!')}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Connect
-              </Button>
-            )}
-          </div>
-          
-          {userData?.bio ? (
-            <p className="mb-4">{userData.bio}</p>
-          ) : isOwnProfile ? (
-            <Button 
-              variant="ghost" 
-              className="text-muted-foreground mb-4"
-              onClick={() => setIsEditing(true)}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add bio
-            </Button>
-          ) : null}
-          
-          {userData?.travelStyles && userData.travelStyles.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-medium mb-2">Travel Style</h3>
-              <div className="flex flex-wrap gap-2">
-                {userData.travelStyles.map((style, index) => (
-                  <Badge key={index} variant="secondary">{style}</Badge>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {userData?.visitedCountries && userData.visitedCountries.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-sm font-medium mb-2 flex items-center">
-                <Globe className="h-4 w-4 mr-2" />
-                Countries Visited
-              </h3>
-              <ScrollArea className="whitespace-nowrap h-10">
-                <div className="flex gap-2">
-                  {userData.visitedCountries.map((country, index) => (
-                    <Badge key={index} variant="outline">{typeof country === 'string' ? country : country.name}</Badge>
-                  ))}
-                  {isOwnProfile && (
-                    <Badge 
-                      variant="outline" 
-                      className="bg-transparent border border-dashed border-muted-foreground text-muted-foreground hover:text-foreground cursor-pointer"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <PlusCircle className="h-3 w-3 mr-1" />
-                      Add
-                    </Badge>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          )}
-          
-          <Separator className="my-4" />
-          
-          <Tabs defaultValue="posts" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="posts">Posts</TabsTrigger>
-              {isOwnProfile && <TabsTrigger value="saved">Saved</TabsTrigger>}
-              <TabsTrigger value="trips">Trips</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="posts">
-              {isLoadingPosts ? (
-                <div className="space-y-4">
-                  {[1, 2].map((i) => (
-                    <Card key={i} className="mb-4">
-                      <CardHeader className="p-4">
-                        <div className="h-4 w-32 bg-secondary rounded animate-pulse"></div>
-                      </CardHeader>
-                      <CardContent className="px-4 pb-4">
-                        <div className="h-20 w-full bg-secondary rounded animate-pulse mb-3"></div>
-                        <div className="h-48 w-full bg-secondary rounded animate-pulse"></div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : userPosts.length > 0 ? (
-                <div className="space-y-4">
-                  {userPosts.map((post) => (
-                    <Card key={post._id} className="mb-4">
-                      <CardHeader className="py-3 px-4">
-                        <div className="flex items-center">
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(post.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric', month: 'short', day: 'numeric'
-                            })}
-                          </p>
-                          {post.location && (
-                            <p className="text-xs text-muted-foreground flex items-center ml-2">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              {post.location}
-                            </p>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="py-0 px-4">
-                        <p className="whitespace-pre-line mb-3">{post.content}</p>
-                        {post.images && post.images.length > 0 && (
-                          <div className={`grid gap-2 ${post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                            {post.images.map((image, idx) => (
-                              <img 
-                                key={idx} 
-                                src={image} 
-                                alt="Post" 
-                                className="rounded-md object-cover w-full h-64"
-                              />
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex justify-between text-xs text-muted-foreground mt-3">
-                          <span>{post.likes || 0} likes</span>
-                          <span>{post.comments || 0} comments</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center p-8">
-                  <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                  <h3 className="text-lg font-semibold mb-1">No Posts Yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {isOwnProfile 
-                      ? "Share your travel experiences and memories"
-                      : "This user hasn't shared any posts yet"}
-                  </p>
-                  {isOwnProfile && (
-                    <Button onClick={() => toast.info('Create post feature coming soon!')}>
-                      Create Post
-                    </Button>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-            
-            {isOwnProfile && (
-              <TabsContent value="saved">
-                {isLoadingSaved ? (
-                  <div className="space-y-4">
-                    {[1, 2].map((i) => (
-                      <Card key={i} className="mb-4">
-                        <CardHeader className="p-4">
-                          <div className="h-4 w-32 bg-secondary rounded animate-pulse"></div>
-                        </CardHeader>
-                        <CardContent className="px-4 pb-4">
-                          <div className="h-20 w-full bg-secondary rounded animate-pulse mb-3"></div>
-                          <div className="h-48 w-full bg-secondary rounded animate-pulse"></div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : savedPosts.length > 0 ? (
-                  <div className="space-y-4">
-                    {savedPosts.map((post) => (
-                      <Card key={post._id} className="mb-4">
-                        <CardHeader className="py-3 px-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <Avatar className="h-8 w-8 mr-2">
-                                {post.userAvatar ? (
-                                  <AvatarImage src={post.userAvatar} alt={post.userName} />
-                                ) : (
-                                  <AvatarFallback className="bg-primary/10 text-primary">
-                                    {post.userName.charAt(0)}
-                                  </AvatarFallback>
-                                )}
-                              </Avatar>
-                              <div>
-                                <p className="text-sm font-medium">{post.userName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(post.createdAt).toLocaleDateString('en-US', {
-                                    month: 'short', day: 'numeric'
-                                  })}
-                                </p>
-                              </div>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => toast.info('Unsave feature coming soon!')}
-                            >
-                              <Bookmark className="h-4 w-4 fill-primary text-primary" />
-                            </Button>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="py-0 px-4">
-                          <p className="whitespace-pre-line mb-3">{post.content}</p>
-                          {post.images && post.images.length > 0 && (
-                            <div className={`grid gap-2 ${post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                              {post.images.map((image, idx) => (
-                                <img 
-                                  key={idx} 
-                                  src={image} 
-                                  alt="Post" 
-                                  className="rounded-md object-cover w-full h-64"
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center p-8">
-                    <Bookmark className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                    <h3 className="text-lg font-semibold mb-1">No Saved Posts</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Save posts to view them later
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-            )}
-            
-            <TabsContent value="trips">
-              <div className="text-center p-8">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                <h3 className="text-lg font-semibold mb-1">Trip Plans</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {isOwnProfile 
-                    ? "Your upcoming and past trip plans will appear here"
-                    : "This user hasn't shared any trip plans yet"}
-                </p>
-                {isOwnProfile && (
-                  <Button onClick={() => toast.info('Trip planning feature coming soon!')}>
-                    Plan a Trip
-                  </Button>
                 )}
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      ) : (
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Edit Profile</h2>
-            <Button variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
-          </div>
-          
-          <form onSubmit={handleProfileUpdate} className="space-y-4">
-            <div className="flex flex-col items-center mb-6">
-              <Avatar className="h-24 w-24 border-4 border-background mb-3">
-                {userData?.avatar ? (
-                  <AvatarImage src={userData.avatar} alt={userData?.name} />
-                ) : (
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                    {userData?.name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center"
-                onClick={() => toast.info('Profile picture upload coming soon!')}
-                type="button"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Change Photo
-              </Button>
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">Name</label>
-              <Input 
-                id="name" 
-                name="name"
-                value={formData.name} 
-                onChange={handleInputChange}
-                className="bg-secondary/50"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="bio" className="text-sm font-medium">Bio</label>
-              <Textarea 
-                id="bio" 
-                name="bio"
-                value={formData.bio} 
-                onChange={handleInputChange}
-                className="bg-secondary/50 min-h-[100px]"
-                placeholder="Tell us about yourself and your travel interests..."
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="location" className="text-sm font-medium">Location</label>
-              <Input 
-                id="location" 
-                name="location"
-                value={formData.location} 
-                onChange={handleInputChange}
-                className="bg-secondary/50"
-                placeholder="City, Country"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="website" className="text-sm font-medium">Website</label>
-              <Input 
-                id="website" 
-                name="website"
-                value={formData.website} 
-                onChange={handleInputChange}
-                className="bg-secondary/50"
-                placeholder="https://yourwebsite.com"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Travel Style</label>
-              <div className="flex flex-wrap gap-2">
-                {['Adventure', 'Beach', 'Cultural', 'Eco-friendly', 'Food & Wine', 
-                  'Luxury', 'Budget', 'Backpacking', 'Solo', 'Family'].map((style) => (
-                  <Badge
-                    key={style}
-                    variant={formData.travelStyles.includes(style) ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => handleAddTravelStyle(style)}
-                  >
-                    {style}
+              
+              <div className="flex flex-col items-end">
+                <div className="flex items-center mb-2">
+                  <Badge variant="outline" className="mr-2">
+                    {userData.experienceLevel}
                   </Badge>
-                ))}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Countries Visited</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {formData.visitedCountries.map((country) => (
-                  <Badge key={country} variant="secondary" className="flex items-center gap-1">
-                    {country}
-                    <button 
-                      type="button" 
-                      className="ml-1 hover:text-destructive" 
-                      onClick={() => handleRemoveCountry(country)}
-                    >
-                      &times;
-                    </button>
+                  <Badge variant="secondary">
+                    {userData.connections?.length || 0} connections
                   </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input 
-                  id="newCountry"
-                  placeholder="Add country..."
-                  className="bg-secondary/50"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    const input = document.getElementById('newCountry') as HTMLInputElement;
-                    if (input.value.trim()) {
-                      handleAddCountry(input.value.trim());
-                      input.value = '';
-                    }
-                  }}
-                >
-                  Add
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}>
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  {isEditing ? 'Cancel' : 'Edit Profile'}
                 </Button>
               </div>
             </div>
             
-            <div className="pt-4">
-              <Button 
-                type="submit" 
-                className="w-full bg-primary hover:bg-primary/90"
-                disabled={updateProfileMutation.isPending}
-              >
-                {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
+            <div className="mt-4">
+              {isEditing ? (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Full Name</label>
+                      <Input 
+                        name="name" 
+                        value={formData.name || ''} 
+                        onChange={handleChange}
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Location</label>
+                      <Input 
+                        name="location" 
+                        value={formData.location || ''} 
+                        onChange={handleChange}
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Experience Level</label>
+                      <Input 
+                        name="experienceLevel" 
+                        value={formData.experienceLevel || ''} 
+                        onChange={handleChange}
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Website</label>
+                      <Input 
+                        name="website" 
+                        value={formData.website || ''} 
+                        onChange={handleChange}
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Bio</label>
+                    <Textarea 
+                      name="bio" 
+                      value={formData.bio || ''} 
+                      onChange={handleChange}
+                      rows={4}
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button type="submit" disabled={updateUserMutation.isPending}>
+                      {updateUserMutation.isPending ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <p className="text-sm">{userData.bio || 'No bio provided yet.'}</p>
+              )}
             </div>
-          </form>
+          </div>
         </div>
-      )}
+      </div>
+      
+      <Tabs defaultValue="about" className="mt-4">
+        <TabsList className="mb-4">
+          <TabsTrigger value="about">About</TabsTrigger>
+          <TabsTrigger value="trips">Trips</TabsTrigger>
+          <TabsTrigger value="photos">Photos</TabsTrigger>
+          <TabsTrigger value="badges">Badges</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="about">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            <Card>
+              <CardHeader className="pb-2">
+                <h3 className="text-lg font-semibold">Travel Styles</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {userData.travelStyles && userData.travelStyles.length > 0 ? (
+                    userData.travelStyles.map((style, index) => (
+                      <Badge key={index} variant="secondary">
+                        {style}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No travel styles added yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <h3 className="text-lg font-semibold">Interests</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {userData.interests && userData.interests.length > 0 ? (
+                    userData.interests.map((interest, index) => (
+                      <Badge key={index} variant="outline">
+                        {interest}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No interests added yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <h3 className="text-lg font-semibold">Countries Visited</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {userData.visitedCountries && userData.visitedCountries.length > 0 ? (
+                    userData.visitedCountries.map((country, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{country.name}</span>
+                        </div>
+                        <Badge variant="outline">{country.year}</Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No countries added yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <h3 className="text-lg font-semibold">Wishlist Destinations</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {userData.wishlistDestinations && userData.wishlistDestinations.length > 0 ? (
+                    userData.wishlistDestinations.map((destination, index) => (
+                      <Badge key={index} variant="outline" className="bg-secondary/50">
+                        <Heart className="h-3 w-3 mr-1 text-destructive" />
+                        {destination}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No wishlist destinations added yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="trips">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <div className="bg-secondary/50 p-4 rounded-full inline-block mb-4">
+                  <Calendar className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No Trips Yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Start adding your travel experiences and upcoming trips
+                </p>
+                <Button onClick={() => toast.info('Trip planning feature coming soon!')}>
+                  Create a Trip
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="photos">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <div className="bg-secondary/50 p-4 rounded-full inline-block mb-4">
+                  <Users className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No Photos Yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Share photos from your adventures and travels
+                </p>
+                <Button onClick={() => toast.info('Photo upload feature coming soon!')}>
+                  Upload Photos
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="badges">
+          <Card>
+            <CardContent className="pt-6">
+              {userData.badges && userData.badges.length > 0 ? (
+                <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                  {userData.badges.map((badge, index) => (
+                    <div key={index} className="flex flex-col items-center text-center p-4 bg-secondary/30 rounded-lg">
+                      <div className="w-16 h-16 bg-primary/10 rounded-full mb-3 flex items-center justify-center">
+                        <Award className="h-8 w-8 text-primary" />
+                      </div>
+                      <h4 className="font-semibold mb-1">{badge.name}</h4>
+                      <p className="text-xs text-muted-foreground">{badge.description}</p>
+                      {badge.dateEarned && (
+                        <Badge variant="outline" className="mt-2 text-xs">
+                          Earned {new Date(badge.dateEarned).toLocaleDateString()}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="bg-secondary/50 p-4 rounded-full inline-block mb-4">
+                    <Award className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No Badges Yet</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Complete activities and connect with other travelers to earn badges
+                  </p>
+                  <Button onClick={() => toast.info('Badge system coming soon!')}>
+                    Explore Achievements
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
