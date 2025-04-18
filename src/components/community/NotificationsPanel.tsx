@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,6 @@ interface NotificationsPanelProps {
   onClose?: () => void;
 }
 
-// Define the return type for markAllAsRead to resolve TypeScript errors
 interface MarkAllAsReadResponse {
   success: boolean;
   count: number;
@@ -30,12 +28,9 @@ interface MarkAllAsReadResponse {
 const NotificationsPanel = ({ userId, onClose }: NotificationsPanelProps) => {
   const queryClient = useQueryClient();
   
-  // Ensure we have the notifications API
   const { data: communityApi } = useQuery({
     queryKey: ['communityApiWithNotifications'],
     queryFn: async () => {
-      // This relies on the extension being loaded elsewhere
-      // In a real app, you'd want to ensure this is loaded properly
       const globalCommunityApi = (window as any).communityApi || {};
       if (!globalCommunityApi.notifications) {
         throw new Error('Notifications API not loaded');
@@ -44,14 +39,12 @@ const NotificationsPanel = ({ userId, onClose }: NotificationsPanelProps) => {
     }
   });
   
-  // Fetch notifications
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications', userId],
     queryFn: () => communityApi?.notifications?.getAll(userId) || [],
     enabled: !!userId && !!communityApi?.notifications,
   });
   
-  // Mark notification as read
   const markAsReadMutation = useMutation({
     mutationFn: (notificationId: string) => 
       communityApi?.notifications?.markAsRead(notificationId) || Promise.resolve({ success: false }),
@@ -60,7 +53,6 @@ const NotificationsPanel = ({ userId, onClose }: NotificationsPanelProps) => {
     }
   });
   
-  // Mark all as read with proper type annotation
   const markAllAsReadMutation = useMutation({
     mutationFn: () => 
       communityApi?.notifications?.markAllAsRead(userId) as Promise<MarkAllAsReadResponse> || Promise.resolve({ success: false, count: 0 }),
@@ -72,7 +64,6 @@ const NotificationsPanel = ({ userId, onClose }: NotificationsPanelProps) => {
     }
   });
   
-  // Delete notification
   const deleteNotificationMutation = useMutation({
     mutationFn: (notificationId: string) => 
       communityApi?.notifications?.delete(notificationId) || Promise.resolve({ success: false }),
@@ -81,7 +72,6 @@ const NotificationsPanel = ({ userId, onClose }: NotificationsPanelProps) => {
     }
   });
   
-  // Helper function to get notification icon based on type
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'content_warning':
@@ -96,7 +86,6 @@ const NotificationsPanel = ({ userId, onClose }: NotificationsPanelProps) => {
     }
   };
   
-  // Auto-mark viewed notifications as read
   useEffect(() => {
     if (notifications && notifications.length > 0) {
       notifications.forEach(notification => {

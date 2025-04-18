@@ -6,7 +6,7 @@ import { Helmet } from 'react-helmet';
 
 const AdminModeration = () => {
   return (
-    <AdminLayout activeItem="community">
+    <AdminLayout activeItem="moderation">
       <Helmet>
         <title>Content Moderation - Admin Dashboard</title>
       </Helmet>
