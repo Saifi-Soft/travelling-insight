@@ -106,13 +106,23 @@ export const contentModerationApi = {
       // Enhance warnings with user information
       const enhancedWarnings = [];
       for (const warning of warnings) {
-        const user = await mongoApiService.getDocumentById('communityUsers', warning.userId);
-        enhancedWarnings.push({
-          ...warning,
-          userName: user ? user.userName : 'Unknown User',
-          userEmail: user ? user.email : 'No email',
-          userStatus: user ? user.status : 'unknown'
-        });
+        try {
+          const user = await mongoApiService.getDocumentById('communityUsers', warning.userId);
+          enhancedWarnings.push({
+            ...warning,
+            userName: user ? user.userName : 'Unknown User',
+            userEmail: user ? user.email : 'No email',
+            userStatus: user ? user.status : 'unknown'
+          });
+        } catch (err) {
+          // If we can't get user info, still include the warning with default values
+          enhancedWarnings.push({
+            ...warning,
+            userName: 'Unknown User',
+            userEmail: 'No email',
+            userStatus: 'unknown'
+          });
+        }
       }
       
       return enhancedWarnings.sort((a, b) => 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { contentModerationApi } from '@/api/contentModerationService';
+import { toast } from 'sonner';
 
 const ContentModerationPanel = () => {
   const [selectedTab, setSelectedTab] = useState('warnings');
@@ -30,44 +31,35 @@ const ContentModerationPanel = () => {
   const [viewWarningDialog, setViewWarningDialog] = useState(false);
   const [blockUserConfirmDialog, setBlockUserConfirmDialog] = useState(false);
   
-  // Ensure we have the necessary APIs
-  const { data: api } = useQuery({
-    queryKey: ['communityApiWithModeration'],
-    queryFn: async () => {
-      // In a real app, you would ensure these APIs are properly loaded
-      const globalApi = (window as any).communityApi || {};
-      if (!globalApi.moderation) {
-        throw new Error('Moderation API not loaded');
-      }
-      return globalApi;
-    }
-  });
-  
   // Fetch warnings
-  const { data: contentWarnings = [], isLoading: warningsLoading } = useQuery({
+  const { data: contentWarnings = [], isLoading: warningsLoading, refetch: refetchWarnings } = useQuery({
     queryKey: ['contentWarnings'],
-    queryFn: () => api?.moderation?.getAllContentWarnings() || [],
-    enabled: !!api?.moderation,
+    queryFn: () => contentModerationApi.getAllContentWarnings(),
   });
   
-  // Fetch moderated posts
+  // Fetch moderated posts - placeholder until we implement this endpoint
   const { data: moderatedPosts = [], isLoading: postsLoading } = useQuery({
     queryKey: ['moderatedPosts'],
-    queryFn: () => api?.posts?.getModeratedPosts() || [],
-    enabled: !!api?.posts,
+    queryFn: async () => {
+      // For now, returning an empty array
+      // In a real implementation, this would call the API to get moderated posts
+      return [];
+    },
   });
   
   const handleBlockUser = async (userId: string) => {
     try {
-      if (api?.users?.updateStatus) {
-        await api.users.updateStatus(userId, 'blocked');
-        // In a real app you'd invalidate queries here
-      }
+      // Update user status to blocked in the database
+      await contentModerationApi.addWarningToUser(userId, 'manual_block', 'Manual block by administrator');
+      
+      // Refetch warnings to update the UI
+      refetchWarnings();
+      
       setBlockUserConfirmDialog(false);
-      // Show success message
+      toast.success('User has been blocked successfully');
     } catch (error) {
       console.error('Error blocking user:', error);
-      // Show error message
+      toast.error('Failed to block user');
     }
   };
   
