@@ -1,6 +1,7 @@
 // Updated version of the community posts service with additional functionality
 import { mongoApiService } from './mongoApiService';
 import { contentModerationApi } from './contentModerationService';
+import { toast } from 'sonner';
 
 // Define API for community posts
 export const communityPostsApi = {
@@ -13,12 +14,18 @@ export const communityPostsApi = {
       return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (error) {
       console.error('Error fetching community posts:', error);
+      toast.error('Failed to load community posts');
       return [];
     }
   },
   
   getPostById: async (id: string) => {
     try {
+      if (!id) {
+        console.error('Invalid post ID provided to getPostById');
+        return null;
+      }
+      
       return await mongoApiService.getDocumentById('communityPosts', id);
     } catch (error) {
       console.error(`Error fetching post with ID ${id}:`, error);
@@ -39,6 +46,11 @@ export const communityPostsApi = {
     comments?: number;
   }) => {
     try {
+      // Validate essential fields
+      if (!post.userId || !post.content) {
+        throw new Error('User ID and content are required');
+      }
+      
       // First, scan the content for inappropriate material
       const moderationResult = await contentModerationApi.scanContent(post.content);
       
@@ -72,6 +84,7 @@ export const communityPostsApi = {
       };
     } catch (error) {
       console.error('Error creating community post:', error);
+      toast.error('Failed to create post');
       throw error;
     }
   },
@@ -99,6 +112,10 @@ export const communityPostsApi = {
   
   likePost: async (id: string, userId: string) => {
     try {
+      if (!id || !userId) {
+        throw new Error('Post ID and User ID are required');
+      }
+      
       // First, check if the user already liked the post
       const postLikes = await mongoApiService.queryDocuments('postLikes', { 
         postId: id,
@@ -138,6 +155,7 @@ export const communityPostsApi = {
       }
     } catch (error) {
       console.error(`Error toggling like for post ${id}:`, error);
+      toast.error('Failed to update like status');
       throw error;
     }
   },
@@ -165,6 +183,7 @@ export const communityPostsApi = {
       }
     } catch (error) {
       console.error(`Error saving post ${id}:`, error);
+      toast.error('Failed to save post');
       throw error;
     }
   },
@@ -188,6 +207,7 @@ export const communityPostsApi = {
       return savedPosts;
     } catch (error) {
       console.error(`Error fetching saved posts for user ${userId}:`, error);
+      toast.error('Failed to load saved posts');
       return [];
     }
   },
@@ -220,12 +240,18 @@ export const communityPostsApi = {
       return result;
     } catch (error) {
       console.error(`Error adding comment to post ${comment.postId}:`, error);
+      toast.error('Failed to add comment');
       throw error;
     }
   },
   
   getPostComments: async (postId: string) => {
     try {
+      if (!postId) {
+        console.error('Invalid post ID provided to getPostComments');
+        return [];
+      }
+      
       // Get comments for a specific post, sorted by creation date
       const comments = await mongoApiService.queryDocuments('postComments', { postId });
       return comments.sort((a, b) => 
@@ -250,6 +276,7 @@ export const communityPostsApi = {
       return await mongoApiService.insertDocument('postShares', shareData);
     } catch (error) {
       console.error(`Error sharing post ${postId}:`, error);
+      toast.error('Failed to share post');
       throw error;
     }
   },
@@ -271,6 +298,7 @@ export const communityPostsApi = {
       ).slice(0, 10);
     } catch (error) {
       console.error('Error fetching trending posts:', error);
+      toast.error('Failed to load trending posts');
       return [];
     }
   },
@@ -288,6 +316,7 @@ export const communityPostsApi = {
       );
     } catch (error) {
       console.error(`Error searching posts for "${query}":`, error);
+      toast.error('Failed to search posts');
       return [];
     }
   },
@@ -298,6 +327,7 @@ export const communityPostsApi = {
       return posts.sort((a, b) => new Date(b.moderatedAt).getTime() - new Date(a.moderatedAt).getTime());
     } catch (error) {
       console.error('Error fetching moderated posts:', error);
+      toast.error('Failed to load moderated posts');
       return [];
     }
   }

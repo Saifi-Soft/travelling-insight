@@ -1,4 +1,3 @@
-
 // Content moderation service for detecting inappropriate content
 import { mongoApiService } from './mongoApiService';
 import { toast } from 'sonner';
@@ -14,6 +13,11 @@ export const contentModerationApi = {
   // Scan text content for inappropriate content
   scanContent: async (content: string): Promise<{isInappropriate: boolean, reason?: string}> => {
     try {
+      if (!content || typeof content !== 'string') {
+        console.warn('Invalid content provided to scanContent:', content);
+        return { isInappropriate: false };
+      }
+      
       // Convert content to lowercase for case-insensitive matching
       const lowercaseContent = content.toLowerCase();
       
@@ -43,6 +47,11 @@ export const contentModerationApi = {
     blocked: boolean
   }> => {
     try {
+      if (!userId || !reason) {
+        console.error('Invalid user ID or reason provided to addWarningToUser');
+        return { success: false, warningCount: 0, blocked: false };
+      }
+      
       // Create a new warning
       const warning = {
         userId,
@@ -97,7 +106,7 @@ export const contentModerationApi = {
       };
     }
   },
-
+  
   // Get all content warnings for admin panel
   getAllContentWarnings: async () => {
     try {
@@ -137,6 +146,11 @@ export const contentModerationApi = {
   // Get warnings for a specific user
   getUserWarnings: async (userId: string) => {
     try {
+      if (!userId) {
+        console.error('Invalid user ID provided to getUserWarnings');
+        return [];
+      }
+      
       const warnings = await mongoApiService.queryDocuments('contentWarnings', { userId });
       return warnings.sort((a, b) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -150,6 +164,11 @@ export const contentModerationApi = {
   // Mark a warning as acknowledged by the user
   acknowledgeWarning: async (warningId: string) => {
     try {
+      if (!warningId) {
+        console.error('Invalid warning ID provided to acknowledgeWarning');
+        return { success: false };
+      }
+      
       await mongoApiService.updateDocument('contentWarnings', warningId, {
         acknowledged: true,
         acknowledgedAt: new Date().toISOString()
@@ -158,6 +177,44 @@ export const contentModerationApi = {
     } catch (error) {
       console.error(`Error acknowledging warning ${warningId}:`, error);
       return { success: false };
+    }
+  },
+  
+  // Get moderated posts directly
+  getModeratedPosts: async () => {
+    try {
+      // Use mongoApiService to directly query posts that have been moderated
+      const posts = await mongoApiService.queryDocuments('communityPosts', { moderated: true });
+      
+      // Enhance with user information where possible
+      const enhancedPosts = [];
+      for (const post of posts) {
+        try {
+          const user = await mongoApiService.getDocumentById('communityUsers', post.userId);
+          enhancedPosts.push({
+            ...post,
+            userName: user ? user.userName : 'Unknown User',
+            userEmail: user ? user.email : 'No email',
+            userStatus: user ? user.status : 'unknown'
+          });
+        } catch (err) {
+          // If we can't get user info, still include the post with default values
+          enhancedPosts.push({
+            ...post,
+            userName: 'Unknown User',
+            userEmail: 'No email',
+            userStatus: 'unknown'
+          });
+        }
+      }
+      
+      // Sort by moderation date, most recent first
+      return enhancedPosts.sort((a, b) => 
+        new Date(b.moderatedAt || b.createdAt).getTime() - new Date(a.moderatedAt || a.createdAt).getTime()
+      );
+    } catch (error) {
+      console.error('Error getting moderated posts:', error);
+      return [];
     }
   }
 };

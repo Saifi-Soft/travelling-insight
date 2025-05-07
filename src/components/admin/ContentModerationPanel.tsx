@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,23 +33,54 @@ const ContentModerationPanel = () => {
   const [blockUserConfirmDialog, setBlockUserConfirmDialog] = useState(false);
   
   // Fetch warnings
-  const { data: contentWarnings = [], isLoading: warningsLoading, refetch: refetchWarnings } = useQuery({
+  const { 
+    data: contentWarnings = [], 
+    isLoading: warningsLoading, 
+    refetch: refetchWarnings,
+    error: warningsError 
+  } = useQuery({
     queryKey: ['contentWarnings'],
     queryFn: () => contentModerationApi.getAllContentWarnings(),
   });
   
-  // Fetch moderated posts - placeholder until we implement this endpoint
-  const { data: moderatedPosts = [], isLoading: postsLoading } = useQuery({
+  // Fetch moderated posts
+  const { 
+    data: moderatedPosts = [], 
+    isLoading: postsLoading,
+    error: postsError
+  } = useQuery({
     queryKey: ['moderatedPosts'],
     queryFn: async () => {
-      // For now, returning an empty array
-      // In a real implementation, this would call the API to get moderated posts
-      return [];
+      try {
+        // In a real implementation, this would call the API to get moderated posts
+        const posts = await contentModerationApi.getModeratedPosts?.() || [];
+        return posts;
+      } catch (error) {
+        console.error('Error fetching moderated posts:', error);
+        return [];
+      }
     },
   });
   
+  // Show error notifications for failed queries
+  React.useEffect(() => {
+    if (warningsError) {
+      toast.error('Failed to load content warnings');
+      console.error('Content warnings error:', warningsError);
+    }
+    if (postsError) {
+      toast.error('Failed to load moderated posts');
+      console.error('Moderated posts error:', postsError);
+    }
+  }, [warningsError, postsError]);
+  
   const handleBlockUser = async (userId: string) => {
     try {
+      if (!userId) {
+        toast.error('Invalid user ID');
+        return;
+      }
+      
       // Update user status to blocked in the database
       await contentModerationApi.addWarningToUser(userId, 'manual_block', 'Manual block by administrator');
       
@@ -69,6 +101,10 @@ const ContentModerationPanel = () => {
   };
   
   const confirmBlockUser = (user: any) => {
+    if (!user || !user.userId) {
+      toast.error('Invalid user information');
+      return;
+    }
     setSelectedContent(user);
     setBlockUserConfirmDialog(true);
   };
@@ -96,6 +132,10 @@ const ContentModerationPanel = () => {
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
+              ) : warningsError ? (
+                <div className="text-center py-8 text-destructive">
+                  Failed to load content warnings. Please try again.
+                </div>
               ) : contentWarnings.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No content warnings found
@@ -114,7 +154,7 @@ const ContentModerationPanel = () => {
                     </TableHeader>
                     <TableBody>
                       {contentWarnings.map((warning: any) => (
-                        <TableRow key={warning._id}>
+                        <TableRow key={warning._id || warning.id}>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-8 w-8">
@@ -132,7 +172,7 @@ const ContentModerationPanel = () => {
                             {warning.reason}
                           </TableCell>
                           <TableCell>
-                            {new Date(warning.createdAt).toLocaleDateString()}
+                            {warning.createdAt ? new Date(warning.createdAt).toLocaleDateString() : 'Unknown date'}
                           </TableCell>
                           <TableCell>
                             {warning.userStatus === 'blocked' ? (
@@ -274,7 +314,7 @@ const ContentModerationPanel = () => {
               <div className="space-y-2">
                 <div className="text-sm font-medium">Content</div>
                 <div className="bg-secondary/50 p-3 rounded-md">
-                  <p className="whitespace-pre-line">{selectedContent.content || selectedContent.reason}</p>
+                  <p className="whitespace-pre-line">{selectedContent.content || selectedContent.reason || 'No content available'}</p>
                 </div>
               </div>
               
@@ -282,7 +322,9 @@ const ContentModerationPanel = () => {
                 <div className="space-y-1">
                   <div className="text-sm font-medium">Date</div>
                   <div className="text-sm">
-                    {new Date(selectedContent.createdAt || selectedContent.moderatedAt).toLocaleString()}
+                    {selectedContent.createdAt || selectedContent.moderatedAt ? 
+                      new Date(selectedContent.createdAt || selectedContent.moderatedAt).toLocaleString() : 
+                      'Unknown date'}
                   </div>
                 </div>
                 
@@ -306,7 +348,7 @@ const ContentModerationPanel = () => {
             <Button variant="outline" onClick={() => setViewWarningDialog(false)}>
               Close
             </Button>
-            {selectedContent && selectedContent.userStatus !== 'blocked' && (
+            {selectedContent && selectedContent.userStatus !== 'blocked' && selectedContent.userId && (
               <Button 
                 variant="destructive" 
                 onClick={() => {
@@ -352,7 +394,8 @@ const ContentModerationPanel = () => {
             </Button>
             <Button 
               variant="destructive" 
-              onClick={() => selectedContent && handleBlockUser(selectedContent.userId)}
+              onClick={() => selectedContent?.userId && handleBlockUser(selectedContent.userId)}
+              disabled={!selectedContent?.userId}
             >
               <Ban className="h-4 w-4 mr-1" />
               Block User

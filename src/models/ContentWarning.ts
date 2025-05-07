@@ -9,4 +9,15 @@ const ContentWarningSchema = {
   acknowledgedAt: { type: Date },
 };
 
+// Interface for ContentWarning
+export interface ContentWarning {
+  _id?: string;
+  userId: string;
+  contentId: string;
+  reason: string;
+  createdAt: string;
+  acknowledged: boolean;
+  acknowledgedAt?: string;
+}
+
 export { ContentWarningSchema };

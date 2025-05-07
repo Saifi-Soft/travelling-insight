@@ -91,22 +91,37 @@ const CreatePost = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) {
+    
+    // Enhanced validation
+    if (!content || !content.trim()) {
       toast.error('Post content cannot be empty');
+      return;
+    }
+
+    if (!userId) {
+      toast.error('You must be logged in to post');
       return;
     }
 
     setIsSubmitting(true);
     
-    createPostMutation.mutate({
-      userId,
-      userName,
-      content,
-      images,
-      location: location || undefined,
-      tags: tags.length > 0 ? tags : undefined,
-      visibility
-    });
+    try {
+      const result = await createPostMutation.mutate({
+        userId,
+        userName: userName || 'Anonymous User',
+        content,
+        images,
+        location: location || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        visibility
+      });
+      
+      // The rest of the handling is in the mutation callbacks
+    } catch (error) {
+      console.error('Error submitting post:', error);
+      toast.error('Failed to publish post. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
