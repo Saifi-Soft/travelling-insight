@@ -12,14 +12,15 @@ import {
   Users,
   BarChart,
   Hash,
-  Palette
+  Palette,
+  ShieldAlert
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface AdminLayoutProps {
   children: ReactNode;
-  activeItem?: 'dashboard' | 'posts' | 'categories' | 'hashtags' | 'comments' | 'community' | 'settings' | 'ads' | 'appearance';
+  activeItem?: 'dashboard' | 'posts' | 'categories' | 'hashtags' | 'comments' | 'community' | 'settings' | 'ads' | 'appearance' | 'moderation';
 }
 
 const AdminLayout = ({ children, activeItem = 'dashboard' }: AdminLayoutProps) => {
@@ -61,6 +62,12 @@ const AdminLayout = ({ children, activeItem = 'dashboard' }: AdminLayoutProps) =
       label: 'Community',
       icon: <Users className="h-5 w-5" />,
       path: '/admin/community'
+    },
+    {
+      id: 'moderation',
+      label: 'Moderation',
+      icon: <ShieldAlert className="h-5 w-5" />,
+      path: '/admin/moderation'
     },
     {
       id: 'ads',

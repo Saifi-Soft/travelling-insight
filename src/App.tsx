@@ -27,6 +27,7 @@ import AdminCommunity from './pages/AdminCommunity';
 import AdminSettings from './pages/AdminSettings';
 import AdminAds from './pages/AdminAds';
 import AdminHashtags from './pages/AdminHashtags';
+import AdminModeration from './pages/AdminModeration';
 import { communityApi } from './api/communityApiService';
 import { toast } from 'sonner';
 // Import the Index component instead of Home
@@ -111,6 +112,14 @@ const App: React.FC = () => {
               element={
                 <AdminAuthGuard>
                   <AdminCommunity />
+                </AdminAuthGuard>
+              } 
+            />
+            <Route 
+              path="/admin/moderation" 
+              element={
+                <AdminAuthGuard>
+                  <AdminModeration />
                 </AdminAuthGuard>
               } 
             />
