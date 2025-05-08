@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -60,16 +59,16 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
       return;
     }
     
-    const price = values.price !== undefined ? Number(values.price) : undefined;
-    const guests = values.guests !== undefined ? Number(values.guests) : undefined;
+    // Transform string values to numbers using the schema's transform functions
+    const updatedValues = formSchema.parse(values);
     
     updateTrip({
       tripId: trip._id!,
       updates: {
-        title: values.title,
-        destinationLocation: values.destinationLocation,
-        price: price,
-        guests: guests,
+        title: updatedValues.title,
+        destinationLocation: updatedValues.destinationLocation,
+        price: updatedValues.price,
+        guests: updatedValues.guests,
         startDate: startDate || new Date(),
         endDate,
       }
