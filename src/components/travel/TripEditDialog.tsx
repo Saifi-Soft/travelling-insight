@@ -63,7 +63,7 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
     // Parse and transform the values through the Zod schema
     const processedValues = formSchema.parse(values);
     
-    // Ensure we're passing number types where numbers are expected
+    // Create updates object with properly typed values
     const updates = {
       title: processedValues.title,
       destinationLocation: processedValues.destinationLocation,
