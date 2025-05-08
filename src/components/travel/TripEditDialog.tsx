@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -64,7 +63,7 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
       return;
     }
     
-    // Parse and transform the values through the Zod schema
+    // Process values through the schema to ensure proper type conversion
     const processedValues = formSchema.parse(values);
     
     // Create updates object with properly typed values
@@ -195,7 +194,7 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
                   <FormItem>
                     <FormLabel>Price ({trip.details.currency || 'USD'})</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} disabled={viewOnly} />
+                      <Input {...field} disabled={viewOnly} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -208,7 +207,7 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
                   <FormItem>
                     <FormLabel>Number of Guests</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} min="1" disabled={viewOnly} />
+                      <Input {...field} min="1" disabled={viewOnly} />
                     </FormControl>
                   </FormItem>
                 )}
