@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { useSession } from '@/hooks/useSession';
 import { useTrips } from '@/hooks/useTrips';
 import { Trip } from '@/models/Trip';
-import TripEditDialog from '@/components/travel/TripEditDialog';
+import { TripEditDialog } from '@/components/travel/TripEditDialog';
 import { useToast } from '@/hooks/use-toast';
 
 const MyTrips: React.FC = () => {

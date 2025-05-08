@@ -1,31 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-
-interface Trip {
-  id: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  guests: number;
-  price: number;
-  image?: string;
-}
+import { Trip } from '@/models/Trip';
+import { useTrips } from '@/hooks/useTrips';
+import { useSession } from '@/hooks/useSession';
 
 interface TripEditDialogProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  trip?: Trip | null;
-  onSave: (trip: Trip) => void;
+  trip: Trip | null;
 }
 
-const tripSchema = z.object({
-  id: z.string(),
+// Define a schema for form validation that will handle type conversions
+const tripFormSchema = z.object({
   destination: z.string().min(1, "Destination is required"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
@@ -34,18 +26,32 @@ const tripSchema = z.object({
   image: z.string().optional()
 });
 
-export const TripEditDialog: React.FC<TripEditDialogProps> = ({ isOpen, onClose, trip, onSave }) => {
+export function TripEditDialog({ open, onClose, trip }: TripEditDialogProps) {
   const { toast } = useToast();
-  const [formData, setFormData] = useState<Trip>(
-    trip || {
-      id: Math.random().toString(36).substr(2, 9),
-      destination: '',
-      startDate: '',
-      endDate: '',
-      guests: 1,
-      price: 0,
+  const { session } = useSession();
+  const { updateTrip } = useTrips();
+  const [formData, setFormData] = useState({
+    destination: trip?.details.title || '',
+    startDate: trip?.details.startDate ? new Date(trip.details.startDate).toISOString().split('T')[0] : '',
+    endDate: trip?.details.endDate ? new Date(trip.details.endDate).toISOString().split('T')[0] : '',
+    guests: trip?.details.guests || 1,
+    price: trip?.details.price || 0,
+    image: trip?.details.image || '',
+  });
+
+  // Update form when trip changes
+  useEffect(() => {
+    if (trip) {
+      setFormData({
+        destination: trip.details.title || '',
+        startDate: trip.details.startDate ? new Date(trip.details.startDate).toISOString().split('T')[0] : '',
+        endDate: trip.details.endDate ? new Date(trip.details.endDate).toISOString().split('T')[0] : '',
+        guests: trip.details.guests || 1,
+        price: trip.details.price || 0,
+        image: trip.details.image || '',
+      });
     }
-  );
+  }, [trip]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,20 +61,36 @@ export const TripEditDialog: React.FC<TripEditDialogProps> = ({ isOpen, onClose,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      // Parse and validate the form data, this will also convert strings to numbers for price and guests
-      const validatedTrip = tripSchema.parse(formData);
+      // Parse and validate the form data, this will also convert strings to numbers
+      const validatedData = tripFormSchema.parse(formData);
       
-      // Save the validated trip data
-      onSave(validatedTrip);
-      toast({
-        title: trip ? 'Trip Updated' : 'Trip Created',
-        description: `Your trip to ${validatedTrip.destination} has been ${trip ? 'updated' : 'created'}.`,
-      });
-      onClose();
+      if (trip && trip._id && session.user?.id) {
+        // Update the trip with validated data
+        updateTrip({
+          tripId: trip._id,
+          updates: {
+            title: validatedData.destination,
+            destinationLocation: validatedData.destination,
+            startDate: new Date(validatedData.startDate),
+            endDate: new Date(validatedData.endDate),
+            price: validatedData.price,
+            guests: validatedData.guests,
+            image: validatedData.image
+          }
+        });
+        
+        toast({
+          title: 'Trip Updated',
+          description: `Your trip to ${validatedData.destination} has been updated.`,
+        });
+        onClose();
+      } else {
+        throw new Error("Missing trip ID or user ID");
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         // Display the first error message
@@ -89,10 +111,10 @@ export const TripEditDialog: React.FC<TripEditDialogProps> = ({ isOpen, onClose,
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{trip ? 'Edit Trip' : 'Add New Trip'}</DialogTitle>
+          <DialogTitle>Edit Trip</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -160,17 +182,17 @@ export const TripEditDialog: React.FC<TripEditDialogProps> = ({ isOpen, onClose,
             <Input 
               id="image" 
               name="image" 
-              value={formData.image || ''}
+              value={formData.image}
               onChange={handleChange}
               placeholder="https://example.com/image.jpg"
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">{trip ? 'Update Trip' : 'Create Trip'}</Button>
+            <Button type="submit">Update Trip</Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
-};
+}
