@@ -11,10 +11,16 @@ import { useNavigate } from 'react-router-dom';
 import BetweenPostsAd from '@/components/ads/BetweenPostsAd';
 import VerticalAd from '@/components/ads/VerticalAd';
 import PopupAd from '@/components/ads/PopupAd';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const TravelPlanner = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [tourDate, setTourDate] = useState<Date | undefined>(new Date());
+  const [guideDestination, setGuideDestination] = useState('');
   
   // Mock destinations for featured section
   const featuredDestinations = [
@@ -34,6 +40,16 @@ const TravelPlanner = () => {
       description: 'Experience the perfect blend of tradition and innovation',
     },
   ];
+
+  // Handle guide search
+  const handleGuideSearch = () => {
+    const params = new URLSearchParams();
+    params.append('destination', guideDestination);
+    params.append('date', tourDate ? format(tourDate, 'yyyy-MM-dd') : '');
+    params.append('people', '1'); // Default to 1 person
+    
+    navigate(`/travel/guides?${params.toString()}`);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -120,33 +136,7 @@ const TravelPlanner = () => {
                     <p className="text-muted-foreground">Enhance your trip with knowledgeable local guides who can show you the best experiences.</p>
                   </div>
                   
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <MapPin className="h-5 w-5 text-muted-foreground" />
-                      <div className="flex-grow">
-                        <input 
-                          type="text" 
-                          className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                          placeholder="Where do you need a guide?" 
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <CalendarClock className="h-5 w-5 text-muted-foreground" />
-                      <div className="flex-grow">
-                        <input 
-                          type="text" 
-                          className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                          placeholder="When do you need a guide?" 
-                        />
-                      </div>
-                    </div>
-                    
-                    <Button className="w-full">
-                      <Search className="mr-2 h-4 w-4" /> Find Tour Guides
-                    </Button>
-                  </div>
+                  <TravelSearch type="guides" />
                 </TabsContent>
               </Tabs>
             </CardContent>

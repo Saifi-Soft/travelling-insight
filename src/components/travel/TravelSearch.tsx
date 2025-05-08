@@ -57,18 +57,24 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
 
     try {
       // Try to fetch from MongoDB API
-      const response = await fetch(`/api/locations?query=${encodeURIComponent(query)}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        isDestination ? setDestinationOptions(data) : setDepartureOptions(data);
-      } else {
-        // Fallback to mock data if API fails
-        const filteredLocations = MOCK_LOCATIONS.filter(location => 
-          location.name.toLowerCase().includes(query.toLowerCase())
-        );
-        isDestination ? setDestinationOptions(filteredLocations) : setDepartureOptions(filteredLocations);
+      try {
+        const response = await fetch(`/api/locations?query=${encodeURIComponent(query)}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          isDestination ? setDestinationOptions(data) : setDepartureOptions(data);
+          return;
+        }
+      } catch (error) {
+        console.error("Error fetching from API:", error);
+        // Continue to fallback data
       }
+      
+      // Fallback to mock data if API fails
+      const filteredLocations = MOCK_LOCATIONS.filter(location => 
+        location.name.toLowerCase().includes(query.toLowerCase())
+      );
+      isDestination ? setDestinationOptions(filteredLocations) : setDepartureOptions(filteredLocations);
     } catch (error) {
       console.error("Error fetching locations:", error);
       // Fallback to mock data
@@ -84,14 +90,16 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
   // Debounced search for locations
   useEffect(() => {
     const timer = setTimeout(() => {
-      searchLocations(destination);
+      if (destination.length > 0) {
+        searchLocations(destination);
+      }
     }, 300);
 
     return () => clearTimeout(timer);
   }, [destination]);
 
   useEffect(() => {
-    if (type === 'flights') {
+    if (type === 'flights' && departure.length > 0) {
       const timer = setTimeout(() => {
         searchLocations(departure, false);
       }, 300);
@@ -133,6 +141,7 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
     <Card className="w-full">
       <CardContent className="pt-6">
         <div className="grid gap-4">
+          {/* Hotel search destination */}
           {type === 'hotels' && (
             <div className="grid gap-4">
               <div>
@@ -148,12 +157,13 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                         placeholder="City, region, or specific hotel"
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
-                        onFocus={() => setIsDestinationOpen(true)}
                         className="pl-10 w-full"
+                        onClick={() => setIsDestinationOpen(true)}
                       />
                       {destination && (
                         <button 
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setDestination('');
                             setDestinationOptions([]);
                           }}
@@ -165,7 +175,7 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                       )}
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[300px] md:w-[400px]" align="start">
+                  <PopoverContent className="p-0 w-[300px] md:w-[400px] h-[200px] overflow-y-auto" align="start">
                     <Command>
                       <CommandInput placeholder="Search destinations..." />
                       <CommandList>
@@ -202,6 +212,7 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
             </div>
           )}
           
+          {/* Flight search - departure and destination */}
           {type === 'flights' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -217,12 +228,13 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                         placeholder="City or airport"
                         value={departure}
                         onChange={(e) => setDeparture(e.target.value)}
-                        onFocus={() => setIsDepartureOpen(true)}
                         className="pl-10 w-full"
+                        onClick={() => setIsDepartureOpen(true)}
                       />
                       {departure && (
                         <button 
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setDeparture('');
                             setDepartureOptions([]);
                           }}
@@ -234,7 +246,7 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                       )}
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[300px] md:w-[400px]" align="start">
+                  <PopoverContent className="p-0 w-[300px] md:w-[400px] h-[200px] overflow-y-auto" align="start">
                     <Command>
                       <CommandInput placeholder="Search departure locations..." />
                       <CommandList>
@@ -281,12 +293,13 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                         placeholder="City or airport"
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
-                        onFocus={() => setIsDestinationOpen(true)}
                         className="pl-10 w-full"
+                        onClick={() => setIsDestinationOpen(true)}
                       />
                       {destination && (
                         <button 
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setDestination('');
                             setDestinationOptions([]);
                           }}
@@ -298,7 +311,7 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                       )}
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[300px] md:w-[400px]" align="start">
+                  <PopoverContent className="p-0 w-[300px] md:w-[400px] h-[200px] overflow-y-auto" align="start">
                     <Command>
                       <CommandInput placeholder="Search destinations..." />
                       <CommandList>
@@ -335,6 +348,7 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
             </div>
           )}
           
+          {/* Tour guide search */}
           {type === 'guides' && (
             <div className="grid gap-4">
               <div>
@@ -350,12 +364,13 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                         placeholder="Where do you need a guide?"
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
-                        onFocus={() => setIsDestinationOpen(true)}
                         className="pl-10 w-full"
+                        onClick={() => setIsDestinationOpen(true)}
                       />
                       {destination && (
                         <button 
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setDestination('');
                             setDestinationOptions([]);
                           }}
@@ -367,7 +382,7 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                       )}
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[300px] md:w-[400px]" align="start">
+                  <PopoverContent className="p-0 w-[300px] md:w-[400px] h-[200px] overflow-y-auto" align="start">
                     <Command>
                       <CommandInput placeholder="Search destinations..." />
                       <CommandList>
@@ -455,7 +470,7 @@ const TravelSearch = ({ type }: TravelSearchProps) => {
                       initialFocus
                       disabled={(date) => 
                         date < new Date(new Date().setHours(0, 0, 0, 0)) || 
-                        (!!date && date < date)
+                        (!!date && !!date && date < date)
                       }
                       className={cn("p-3 pointer-events-auto")}
                     />
