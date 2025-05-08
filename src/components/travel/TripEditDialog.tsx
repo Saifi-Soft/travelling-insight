@@ -36,12 +36,12 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
   const formSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters"),
     destinationLocation: z.string().min(2, "Destination is required"),
-    price: z.string().optional().refine(val => !val || !isNaN(Number(val)), {
-      message: "Price must be a valid number"
-    }).transform(val => val ? Number(val) : undefined),
-    guests: z.string().optional().refine(val => !val || !isNaN(Number(val)), {
-      message: "Guests must be a valid number"
-    }).transform(val => val ? Number(val) : undefined)
+    price: z.string().optional()
+      .transform(val => val ? Number(val) : undefined)
+      .pipe(z.number().optional()),
+    guests: z.string().optional()
+      .transform(val => val ? Number(val) : undefined)
+      .pipe(z.number().optional())
   });
   
   // Create a type for the form values that matches the schema
@@ -63,15 +63,12 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
       return;
     }
     
-    // Process values through the schema to ensure proper type conversion
-    const processedValues = formSchema.parse(values);
-    
     // Create updates object with properly typed values
     const updates = {
-      title: processedValues.title,
-      destinationLocation: processedValues.destinationLocation,
-      price: processedValues.price,
-      guests: processedValues.guests,
+      title: values.title,
+      destinationLocation: values.destinationLocation,
+      price: values.price,
+      guests: values.guests,
       startDate: startDate || new Date(),
       endDate,
     };
