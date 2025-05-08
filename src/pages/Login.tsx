@@ -8,125 +8,67 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { mongoApiService } from '@/api/mongoApiService';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon } from 'lucide-react';
+import { InfoIcon, Loader2 } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setSession } = useSession();
+  const { login, session, isLoading } = useSession();
   const [email, setEmail] = useState('demo@example.com');
   const [password, setPassword] = useState('password123');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get the intended destination from state or default to home page
   const from = location.state?.from || '/';
 
   useEffect(() => {
     // Check if user is already logged in
-    const userId = localStorage.getItem('userId');
-    if (userId) {
+    if (session.isAuthenticated) {
       // If already logged in, redirect to the intended destination
       navigate(from);
     }
-  }, [navigate, from]);
+  }, [session.isAuthenticated, navigate, from]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     
     try {
-      // Check if user exists in MongoDB
-      const users = await mongoApiService.queryDocuments('users', { email: email });
+      const success = await login(email, password);
       
-      // For demo purposes with MongoDB, we'll just check email (no password hashing for demo)
-      if (users.length > 0) {
-        // Store user ID in localStorage
-        localStorage.setItem('community_user_id', users[0]._id);
-        localStorage.setItem('userId', users[0]._id);
-        localStorage.setItem('userName', users[0].name || 'Demo User');
-        localStorage.setItem('userEmail', email);
-        
-        // Update the session context
-        setSession({
-          user: {
-            id: users[0]._id,
-            name: users[0].name || 'Demo User',
-            email: email,
-            role: users[0].role || 'user'
-          },
-          isAuthenticated: true
-        });
-        
-        toast.success('Login successful!');
+      if (success) {
+        // Redirect to the page they were trying to access
         setTimeout(() => {
-          // Redirect to the page they were trying to access
           navigate(from);
-        }, 1000);
-      } else {
-        // If no user found, create a new one for demo purposes
-        const newUser = await mongoApiService.insertDocument('users', {
-          name: 'Demo User',
-          email,
-          password: 'hashed_would_go_here',
-          role: 'user',
-          isSubscribed: true, // Make demo user subscribed by default
-          createdAt: new Date(),
-        });
-        
-        localStorage.setItem('community_user_id', newUser.insertedId);
-        localStorage.setItem('userId', newUser.insertedId);
-        localStorage.setItem('userName', 'Demo User');
-        localStorage.setItem('userEmail', email);
-        
-        // Update the session context
-        setSession({
-          user: {
-            id: newUser.insertedId,
-            name: 'Demo User',
-            email: email,
-            role: 'user'
-          },
-          isAuthenticated: true
-        });
-        
-        // Create a subscription for the demo user
-        try {
-          await mongoApiService.insertDocument('subscriptions', {
-            userId: newUser.insertedId,
-            planType: 'monthly',
-            status: 'active',
-            paymentMethod: {
-              method: 'credit_card',
-              cardLastFour: '4242',
-              expiryDate: '12/25'
-            },
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-            amount: 9.99,
-            autoRenew: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
-        } catch (subError) {
-          console.error('Error creating subscription:', subError);
-        }
-        
-        toast.success('Demo account created and logged in!');
-        setTimeout(() => {
-          // Redirect to the page they were trying to access
-          navigate(from);
-        }, 1000);
+        }, 500);
       }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Login failed. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  // Show loading state while checking session
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary mb-4" />
+            <p className="text-lg">Checking your session...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -163,6 +105,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className="space-y-2">
@@ -179,10 +122,16 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Signing in...' : 'Sign In'}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : 'Sign In'}
                 </Button>
               </form>
             </CardContent>

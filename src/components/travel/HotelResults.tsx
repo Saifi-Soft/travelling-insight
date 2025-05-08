@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, MapPin, Check, ExternalLink } from 'lucide-react';
+import { Star, MapPin, Check, ExternalLink, RefreshCw } from 'lucide-react';
 import { hotelApi } from '@/api/travelService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,36 +36,40 @@ const HotelResults = () => {
   const checkOut = query.get('checkOut') || '';
   const guests = query.get('guests') || '1';
 
-  useEffect(() => {
-    const fetchHotels = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Call our API service
-        const result = await hotelApi.searchHotels({
-          destination,
-          checkIn,
-          checkOut,
-          guests: parseInt(guests, 10)
-        });
-        
+  const fetchHotels = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Call our API service
+      const result = await hotelApi.searchHotels({
+        destination,
+        checkIn,
+        checkOut,
+        guests: parseInt(guests, 10)
+      });
+      
+      if (result && result.hotels) {
         setHotels(result.hotels);
-      } catch (error) {
-        console.error("Error fetching hotels:", error);
-        setError('Failed to load hotels. Please try again.');
-        toast({
-          title: "Error",
-          description: "Failed to load hotels. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+      } else {
+        throw new Error('No hotels returned from API');
       }
-    };
+    } catch (error) {
+      console.error("Error fetching hotels:", error);
+      setError('Failed to load hotels. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load hotels. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchHotels();
-  }, [destination, checkIn, checkOut, guests, toast]);
+  }, [destination, checkIn, checkOut, guests]);
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -124,7 +128,9 @@ const HotelResults = () => {
       <Card className="text-center p-8 mt-6">
         <h3 className="text-xl font-semibold mb-2">Error</h3>
         <p className="text-muted-foreground mb-4">{error}</p>
-        <Button onClick={() => window.location.reload()}>Try Again</Button>
+        <Button onClick={() => fetchHotels()} className="flex items-center">
+          <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+        </Button>
       </Card>
     );
   }
@@ -150,6 +156,10 @@ const HotelResults = () => {
                 src={hotel.image} 
                 alt={hotel.name} 
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://placehold.co/600x400?text=Hotel+Image";
+                }}
               />
             </div>
             <div className="flex-1 p-6">
@@ -169,7 +179,7 @@ const HotelResults = () => {
               </CardHeader>
               <CardContent className="px-0 py-2">
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {hotel.amenities.map((amenity, index) => (
+                  {hotel.amenities?.map((amenity, index) => (
                     <Badge key={index} variant="outline" className="flex items-center">
                       <Check className="h-3 w-3 mr-1" /> {amenity}
                     </Badge>

@@ -1,11 +1,13 @@
+
 // This file handles all API calls to travel partners and affiliate networks
+import { mongoApiService } from '@/api/mongoApiService';
 
 // API configurations - in a real app, these should be environment variables
 const SKYSCANNER_API_KEY = 'sk-test-api-key';
 const BOOKING_PARTNER_ID = 'booking-test-partner';
 const TRIPADVISOR_AFFILIATE_ID = 'tripadvisor-test-affiliate';
 
-// Hotel API integration with Booking.com or similar
+// Hotel API integration with MongoDB and Booking.com
 const hotelApi = {
   searchHotels: async (params: {
     destination: string,
@@ -14,21 +16,34 @@ const hotelApi = {
     guests: number
   }) => {
     try {
-      // In a real app, this would call the actual Booking.com API with your affiliate ID
       console.log('Searching hotels with params:', params);
       
-      // Example API call to Booking.com
-      // const response = await fetch(
-      //   `https://distribution-xml.booking.com/json/bookings?destination=${params.destination}&checkin=${params.checkIn}&checkout=${params.checkOut}&guests=${params.guests}&partner_id=${BOOKING_PARTNER_ID}`,
-      //   { headers: { 'Authorization': `Bearer ${BOOKING_API_KEY}` } }
-      // );
+      // First try to fetch from MongoDB
+      let hotels = [];
+      try {
+        // Query for hotels matching the destination (case-insensitive)
+        const query = params.destination ? 
+          { location: { $regex: params.destination, $options: 'i' } } : 
+          {};
+          
+        hotels = await mongoApiService.queryDocuments('hotels', query);
+        
+        // If we have hotels in MongoDB, return them
+        if (hotels && hotels.length > 0) {
+          console.log('Found hotels in MongoDB:', hotels.length);
+          return { hotels };
+        }
+      } catch (mongoError) {
+        console.error('Error fetching from MongoDB:', mongoError);
+        // Continue to fallback data if MongoDB fails
+      }
       
-      // Mock data for development
-      const hotels = [
+      // Fallback to mock data if no MongoDB results
+      const mockHotels = [
         {
           id: "hotel-1",
           name: "Grand Plaza Hotel",
-          location: params.destination,
+          location: params.destination || "Popular Destination",
           price: 199,
           currency: "USD",
           rating: 4.8,
@@ -40,7 +55,7 @@ const hotelApi = {
         {
           id: "hotel-2",
           name: "Ocean View Resort",
-          location: params.destination,
+          location: params.destination || "Popular Destination",
           price: 299,
           currency: "USD",
           rating: 4.9,
@@ -51,10 +66,22 @@ const hotelApi = {
         }
       ];
       
-      // Add delay to simulate network request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Store mock data in MongoDB for future use if we don't have data
+      if (hotels.length === 0) {
+        try {
+          for (const hotel of mockHotels) {
+            await mongoApiService.insertDocument('hotels', hotel);
+          }
+          console.log('Stored mock hotels in MongoDB');
+        } catch (insertError) {
+          console.error('Error inserting mock hotels to MongoDB:', insertError);
+        }
+      }
       
-      return { hotels };
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      return { hotels: mockHotels };
     } catch (error) {
       console.error('Error fetching hotels:', error);
       throw new Error('Failed to fetch hotels. Please try again.');
@@ -64,10 +91,20 @@ const hotelApi = {
   // Get hotel details with affiliate link
   getHotelDetails: async (id: string) => {
     try {
-      // In a real app, fetch specific hotel details
       console.log('Fetching hotel details for:', id);
       
-      // Mock data for development
+      // First try to fetch from MongoDB
+      try {
+        const hotel = await mongoApiService.queryDocuments('hotels', { id: id });
+        if (hotel && hotel.length > 0) {
+          return { hotel: hotel[0] };
+        }
+      } catch (mongoError) {
+        console.error('Error fetching hotel from MongoDB:', mongoError);
+        // Continue to fallback data if MongoDB fails
+      }
+      
+      // Mock data for development (fallback)
       const hotel = {
         id,
         name: id === "hotel-1" ? "Grand Plaza Hotel" : "Ocean View Resort",
@@ -82,7 +119,8 @@ const hotelApi = {
         affiliateUrl: `https://www.booking.com/hotel/us/${id}.html?aid=${BOOKING_PARTNER_ID}`
       };
       
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       return { hotel };
     } catch (error) {
@@ -92,7 +130,7 @@ const hotelApi = {
   }
 };
 
-// Flight API integration with Skyscanner or similar
+// Flight API integration with MongoDB and Skyscanner
 const flightApi = {
   searchFlights: async (params: {
     departure: string,
@@ -102,17 +140,34 @@ const flightApi = {
     passengers: number
   }) => {
     try {
-      // In a real app, this would call the Skyscanner API
       console.log('Searching flights with params:', params);
       
-      // Example API call to Skyscanner
-      // const response = await fetch(
-      //   `https://partners.api.skyscanner.net/apiservices/v3/flights/search?originplace=${params.departure}&destinationplace=${params.destination}&outbounddate=${params.departDate}&inbounddate=${params.returnDate}&adults=${params.passengers}`,
-      //   { headers: { 'x-api-key': SKYSCANNER_API_KEY } }
-      // );
+      // First try to fetch from MongoDB
+      let flights = [];
+      try {
+        // Create a query based on departure and destination
+        const query = {};
+        if (params.departure) {
+          query['departure.code'] = { $regex: params.departure, $options: 'i' };
+        }
+        if (params.destination) {
+          query['arrival.code'] = { $regex: params.destination, $options: 'i' };
+        }
+        
+        flights = await mongoApiService.queryDocuments('flights', query);
+        
+        // If we have flights in MongoDB, return them
+        if (flights && flights.length > 0) {
+          console.log('Found flights in MongoDB:', flights.length);
+          return { flights };
+        }
+      } catch (mongoError) {
+        console.error('Error fetching from MongoDB:', mongoError);
+        // Continue to fallback data if MongoDB fails
+      }
       
       // Mock data for development
-      const flights = [
+      const mockFlights = [
         {
           id: "flight-1",
           airline: "American Airlines",
@@ -157,9 +212,22 @@ const flightApi = {
         }
       ];
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Store mock data in MongoDB for future use
+      if (flights.length === 0) {
+        try {
+          for (const flight of mockFlights) {
+            await mongoApiService.insertDocument('flights', flight);
+          }
+          console.log('Stored mock flights in MongoDB');
+        } catch (insertError) {
+          console.error('Error inserting mock flights to MongoDB:', insertError);
+        }
+      }
       
-      return { flights };
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      return { flights: mockFlights };
     } catch (error) {
       console.error('Error fetching flights:', error);
       throw new Error('Failed to fetch flights. Please try again.');
@@ -171,6 +239,18 @@ const flightApi = {
     try {
       console.log('Fetching flight details for:', id);
       
+      // First try to fetch from MongoDB
+      try {
+        const flight = await mongoApiService.queryDocuments('flights', { id: id });
+        if (flight && flight.length > 0) {
+          return { flight: flight[0] };
+        }
+      } catch (mongoError) {
+        console.error('Error fetching flight from MongoDB:', mongoError);
+        // Continue to fallback data if MongoDB fails
+      }
+      
+      // Fallback to mock data
       const flight = {
         id,
         airline: id === "flight-1" ? "American Airlines" : "Delta",
@@ -192,7 +272,8 @@ const flightApi = {
         affiliateUrl: `https://www.skyscanner.com/transport/flights/jfk/lax/?adults=1&partner=${SKYSCANNER_API_KEY}`
       };
       
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       return { flight };
     } catch (error) {
@@ -202,7 +283,7 @@ const flightApi = {
   }
 };
 
-// Tour Guide API integration with TripAdvisor or similar
+// Tour Guide API integration with MongoDB and TripAdvisor
 const guideApi = {
   searchGuides: async (params: {
     destination: string,
@@ -212,14 +293,28 @@ const guideApi = {
     try {
       console.log('Searching guides with params:', params);
       
-      // Example API call to TripAdvisor
-      // const response = await fetch(
-      //   `https://api.tripadvisor.com/guides?location=${params.destination}&date=${params.date}&group_size=${params.people}&affiliate_id=${TRIPADVISOR_AFFILIATE_ID}`,
-      //   { headers: { 'Authorization': 'Bearer ...' } }
-      // );
+      // First try to fetch from MongoDB
+      let guides = [];
+      try {
+        // Query for guides matching the destination
+        const query = params.destination ? 
+          { location: { $regex: params.destination, $options: 'i' } } : 
+          {};
+          
+        guides = await mongoApiService.queryDocuments('guides', query);
+        
+        // If we have guides in MongoDB, return them
+        if (guides && guides.length > 0) {
+          console.log('Found guides in MongoDB:', guides.length);
+          return { guides };
+        }
+      } catch (mongoError) {
+        console.error('Error fetching from MongoDB:', mongoError);
+        // Continue to fallback data if MongoDB fails
+      }
       
       // Mock data for development
-      const guides = [
+      const mockGuides = [
         {
           id: "guide-1",
           name: "Elena Martinez",
@@ -252,9 +347,22 @@ const guideApi = {
         }
       ];
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Store mock data in MongoDB for future use
+      if (guides.length === 0) {
+        try {
+          for (const guide of mockGuides) {
+            await mongoApiService.insertDocument('guides', guide);
+          }
+          console.log('Stored mock guides in MongoDB');
+        } catch (insertError) {
+          console.error('Error inserting mock guides to MongoDB:', insertError);
+        }
+      }
       
-      return { guides };
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      return { guides: mockGuides };
     } catch (error) {
       console.error('Error fetching guides:', error);
       throw new Error('Failed to fetch guides. Please try again.');
@@ -266,6 +374,18 @@ const guideApi = {
     try {
       console.log('Fetching guide details for:', id);
       
+      // First try to fetch from MongoDB
+      try {
+        const guide = await mongoApiService.queryDocuments('guides', { id: id });
+        if (guide && guide.length > 0) {
+          return { guide: guide[0] };
+        }
+      } catch (mongoError) {
+        console.error('Error fetching guide from MongoDB:', mongoError);
+        // Continue to fallback data if MongoDB fails
+      }
+      
+      // Fallback to mock data
       const guide = {
         id,
         name: id === "guide-1" ? "Elena Martinez" : "Hiroshi Tanaka",
@@ -287,7 +407,8 @@ const guideApi = {
         affiliateUrl: `https://www.tripadvisor.com/Attraction_Review-d${id === "guide-1" ? "12345" : "67890"}?affiliate_id=${TRIPADVISOR_AFFILIATE_ID}`
       };
       
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       return { guide };
     } catch (error) {
