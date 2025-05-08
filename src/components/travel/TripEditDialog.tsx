@@ -23,7 +23,7 @@ const tripFormSchema = z.object({
   endDate: z.string().min(1, "End date is required"),
   price: z.coerce.number().min(1, "Price must be a positive number"),
   guests: z.coerce.number().min(1, "Guests must be at least 1"),
-  image: z.string().optional()
+  imageUrl: z.string().optional()
 });
 
 export function TripEditDialog({ open, onClose, trip }: TripEditDialogProps) {
@@ -36,7 +36,7 @@ export function TripEditDialog({ open, onClose, trip }: TripEditDialogProps) {
     endDate: trip?.details.endDate ? new Date(trip.details.endDate).toISOString().split('T')[0] : '',
     guests: trip?.details.guests || 1,
     price: trip?.details.price || 0,
-    image: trip?.details.image || '',
+    imageUrl: '',  // Changed from image to imageUrl
   });
 
   // Update form when trip changes
@@ -48,7 +48,7 @@ export function TripEditDialog({ open, onClose, trip }: TripEditDialogProps) {
         endDate: trip.details.endDate ? new Date(trip.details.endDate).toISOString().split('T')[0] : '',
         guests: trip.details.guests || 1,
         price: trip.details.price || 0,
-        image: trip.details.image || '',
+        imageUrl: '', // Changed from image to imageUrl
       });
     }
   }, [trip]);
@@ -79,7 +79,7 @@ export function TripEditDialog({ open, onClose, trip }: TripEditDialogProps) {
             endDate: new Date(validatedData.endDate),
             price: validatedData.price,
             guests: validatedData.guests,
-            image: validatedData.image
+            // Removed the image property as it doesn't exist in the Trip details type
           }
         });
         
@@ -178,11 +178,11 @@ export function TripEditDialog({ open, onClose, trip }: TripEditDialogProps) {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="image">Image URL (optional)</Label>
+            <Label htmlFor="imageUrl">Image URL (optional)</Label>
             <Input 
-              id="image" 
-              name="image" 
-              value={formData.image}
+              id="imageUrl" 
+              name="imageUrl" 
+              value={formData.imageUrl}
               onChange={handleChange}
               placeholder="https://example.com/image.jpg"
             />
