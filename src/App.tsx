@@ -35,6 +35,11 @@ import Index from './pages/Index';
 
 // Add the import for AdminAppearance
 import AdminAppearance from './pages/AdminAppearance';
+// Import the MyTrips page
+import MyTrips from './pages/MyTrips';
+// Import BookingPage and BookingConfirmationPage
+import BookingPage from './pages/BookingPage';
+import BookingConfirmationPage from './pages/BookingConfirmationPage';
 
 const App: React.FC = () => {
   return (
@@ -48,6 +53,9 @@ const App: React.FC = () => {
             <Route path="/post/:slug" element={<Post />} />
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/travel/planner" element={<TravelPlanner />} />
+            <Route path="/my-trips" element={<MyTrips />} />
+            <Route path="/travel/booking/:type/:id" element={<BookingPage />} />
+            <Route path="/travel/confirmation/:type/:id" element={<BookingConfirmationPage />} />
             <Route path="/community" element={<CommunityRouter />} />
             <Route path="/community-hub" element={<CommunityHub />} /> {/* Removed CommunityAuthGuard wrapper */}
             <Route path="/about" element={<About />} />
