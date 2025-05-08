@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -41,7 +40,10 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
     guests: z.string().optional().transform((val) => val ? Number(val) : undefined)
   });
   
-  const form = useForm<z.infer<typeof formSchema>>({
+  // Create a type for the form values that matches the schema
+  type FormValues = z.infer<typeof formSchema>;
+  
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: trip.details.title,
@@ -51,7 +53,7 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
     }
   });
   
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: FormValues) => {
     if (viewOnly) {
       onClose();
       return;
@@ -318,4 +320,3 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
 };
 
 export default TripEditDialog;
-
