@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Edit, Trash2, Award, Info, Plane, Hotel, HelpingHand } from 'lucide-react';
+import { Calendar, Check, Edit, Trash2, Award, Info, Plane, Hotel, HelpingHand } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSession } from '@/hooks/useSession';
 import { useTrips } from '@/hooks/useTrips';
