@@ -37,10 +37,10 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
     title: z.string().min(3, "Title must be at least 3 characters"),
     destinationLocation: z.string().min(2, "Destination is required"),
     price: z.string().optional()
-      .transform(val => val ? Number(val) : undefined)
+      .transform(val => val === '' ? undefined : Number(val))
       .pipe(z.number().optional()),
     guests: z.string().optional()
-      .transform(val => val ? Number(val) : undefined)
+      .transform(val => val === '' ? undefined : Number(val))
       .pipe(z.number().optional())
   });
   
@@ -63,12 +63,15 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
       return;
     }
     
+    // Parse the values through the schema to ensure proper type conversion
+    const parsedValues = formSchema.parse(values);
+    
     // Create updates object with properly typed values
     const updates = {
-      title: values.title,
-      destinationLocation: values.destinationLocation,
-      price: values.price,
-      guests: values.guests,
+      title: parsedValues.title,
+      destinationLocation: parsedValues.destinationLocation,
+      price: parsedValues.price,
+      guests: parsedValues.guests,
       startDate: startDate || new Date(),
       endDate,
     };

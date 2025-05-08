@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -7,16 +7,31 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { mongoApiService } from '@/api/mongoApiService';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { InfoIcon } from 'lucide-react';
+import { useSession } from '@/hooks/useSession';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { setSession } = useSession();
   const [email, setEmail] = useState('demo@example.com');
   const [password, setPassword] = useState('password123');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get the intended destination from state or default to home page
+  const from = location.state?.from || '/';
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      // If already logged in, redirect to the intended destination
+      navigate(from);
+    }
+  }, [navigate, from]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +49,21 @@ const Login = () => {
         localStorage.setItem('userName', users[0].name || 'Demo User');
         localStorage.setItem('userEmail', email);
         
+        // Update the session context
+        setSession({
+          user: {
+            id: users[0]._id,
+            name: users[0].name || 'Demo User',
+            email: email,
+            role: users[0].role || 'user'
+          },
+          isAuthenticated: true
+        });
+        
         toast.success('Login successful!');
         setTimeout(() => {
-          // Return to community page if that's where they came from
-          const previousPage = document.referrer.includes('/community') ? '/community' : '/';
-          navigate(previousPage);
+          // Redirect to the page they were trying to access
+          navigate(from);
         }, 1000);
       } else {
         // If no user found, create a new one for demo purposes
@@ -55,6 +80,17 @@ const Login = () => {
         localStorage.setItem('userId', newUser.insertedId);
         localStorage.setItem('userName', 'Demo User');
         localStorage.setItem('userEmail', email);
+        
+        // Update the session context
+        setSession({
+          user: {
+            id: newUser.insertedId,
+            name: 'Demo User',
+            email: email,
+            role: 'user'
+          },
+          isAuthenticated: true
+        });
         
         // Create a subscription for the demo user
         try {
@@ -80,9 +116,8 @@ const Login = () => {
         
         toast.success('Demo account created and logged in!');
         setTimeout(() => {
-          // Return to community page if that's where they came from
-          const previousPage = document.referrer.includes('/community') ? '/community' : '/';
-          navigate(previousPage);
+          // Redirect to the page they were trying to access
+          navigate(from);
         }, 1000);
       }
     } catch (error) {

@@ -16,6 +16,7 @@ interface Session {
 interface SessionContextType {
   session: Session;
   setSession: React.Dispatch<React.SetStateAction<Session>>;
+  logout: () => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -26,7 +27,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   });
   
   useEffect(() => {
-    // Check for user session in localStorage or cookies
+    // Check for user session in localStorage
     const userId = localStorage.getItem('userId');
     const userName = localStorage.getItem('userName');
     const userEmail = localStorage.getItem('userEmail');
@@ -45,8 +46,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   
+  // Add a logout function to clear session data
+  const logout = () => {
+    // Clear all localStorage items related to session
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('community_user_id');
+    
+    // Update state
+    setSession({
+      isAuthenticated: false
+    });
+  };
+  
   return (
-    <SessionContext.Provider value={{ session, setSession }}>
+    <SessionContext.Provider value={{ session, setSession, logout }}>
       {children}
     </SessionContext.Provider>
   );

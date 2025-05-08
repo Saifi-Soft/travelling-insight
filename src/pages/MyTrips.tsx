@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const MyTrips: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session } = useSession();
   const { toast } = useToast();
   const { 
@@ -36,24 +37,28 @@ const MyTrips: React.FC = () => {
   const [tripToDelete, setTripToDelete] = useState<string | null>(null);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [canCreateTrip, setCanCreateTrip] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   
   useEffect(() => {
-    if (!session.isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please login to view your trips",
-        variant: "destructive",
-      });
-      navigate("/login", { state: { from: "/my-trips" } });
-    } else {
-      // Check if user can create more trips
-      const checkPermission = async () => {
+    const checkAuth = async () => {
+      if (!session.isAuthenticated) {
+        toast({
+          title: "Authentication required",
+          description: "Please login to view your trips",
+          variant: "destructive",
+        });
+        // Pass the current location so we can return here after login
+        navigate("/login", { state: { from: location.pathname } });
+      } else {
+        // Check if user can create more trips
         const canCreate = await checkCanCreateTrip();
         setCanCreateTrip(canCreate);
-      };
-      checkPermission();
-    }
-  }, [session, navigate, toast]);
+        setAuthChecked(true);
+      }
+    };
+    
+    checkAuth();
+  }, [session.isAuthenticated, navigate, location.pathname, toast, checkCanCreateTrip]);
   
   const filteredTrips = trips.filter(trip => {
     if (activeTab === 'all') return true;
@@ -86,10 +91,20 @@ const MyTrips: React.FC = () => {
     }
   };
 
-  if (!session.isAuthenticated) {
-    return null; // Will redirect in useEffect
+  // Don't render anything until we've checked auth status
+  if (!authChecked && !session.isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <p>Loading...</p>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
+  // Continue with the rest of the component
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
