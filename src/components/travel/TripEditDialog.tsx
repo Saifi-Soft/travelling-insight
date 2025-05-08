@@ -64,8 +64,8 @@ const TripEditDialog: React.FC<TripEditDialogProps> = ({ trip, open, onClose }) 
       updates: {
         title: values.title,
         destinationLocation: values.destinationLocation,
-        price: values.price, // Now correctly transformed by zod
-        guests: values.guests, // Now correctly transformed by zod
+        price: values.price,
+        guests: values.guests,
         startDate: startDate || new Date(),
         endDate,
       }
