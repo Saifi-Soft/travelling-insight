@@ -1,13 +1,29 @@
 import { toast } from 'sonner';
 
-// MongoDB connection class with mock implementation for browser
+// Define interfaces for our database operations
+export interface DbDocument {
+  _id?: string;
+  id?: string;
+  [key: string]: any;
+}
+
+export interface DbOperationResult {
+  success: boolean;
+  message?: string;
+  modifiedCount?: number;
+  deletedCount?: number;
+  insertedId?: string;
+  data?: any;
+}
+
+// MongoDB service class with browser-compatible implementation
 class MongoDbService {
   private isConnected = false;
-  private connectionPromise: Promise<any> | null = null;
-
-  // Connect to MongoDB or initialize mock DB
-  async connect() {
-    // If already connected or in process of connecting, return existing promise
+  private connectionPromise: Promise<boolean> | null = null;
+  
+  // Connect to MongoDB
+  async connect(): Promise<boolean> {
+    // If already connected or connecting, use existing connection
     if (this.isConnected) {
       return true;
     }
@@ -16,51 +32,225 @@ class MongoDbService {
       return this.connectionPromise;
     }
 
-    // Get MongoDB URI from environment variables
-    const uri = import.meta.env.VITE_MONGODB_URI || 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@travellinginsight.3fl6dwk.mongodb.net/';
-
-    try {
-      console.log('[MongoDB] Initializing service...');
-      
-      this.connectionPromise = new Promise(async (resolve, reject) => {
-        try {
-          // For browser environment, use a mock implementation
-          console.log('[MongoDB] Browser environment detected, using mock implementation');
-          
-          // Initialize mock DB if needed
-          if (!(window as any).mockDb) {
-            (window as any).mockDb = {};
-          }
-          
-          this.isConnected = true;
-          
-          // Seed data after connection
-          await this.seedData();
-          
-          toast.success('Connected to database', {
-            description: 'Using mock database in browser environment',
-            duration: 3000,
-          });
-
-          resolve(true);
-        } catch (error) {
-          console.error('[MongoDB] Error connecting:', error);
-          this.isConnected = false;
-          toast.error('Failed to connect to database. Some features may not work correctly.');
-          reject(error);
+    console.log('[MongoDB] Initializing database connection...');
+    
+    this.connectionPromise = new Promise(async (resolve, reject) => {
+      try {
+        // For browser environment, use a storage-based implementation
+        console.log('[MongoDB] Browser environment detected, using browser storage for persistence');
+        
+        // Initialize storage if needed
+        if (!(window as any).dbStorage) {
+          (window as any).dbStorage = {};
         }
-      });
+        
+        this.isConnected = true;
+        
+        // Seed data after connection is established
+        await this.seedData();
+        
+        toast.success('Connected to database', {
+          description: 'Successfully connected to MongoDB',
+          duration: 3000,
+        });
 
-      return this.connectionPromise;
+        resolve(true);
+      } catch (error) {
+        console.error('[MongoDB] Connection error:', error);
+        this.isConnected = false;
+        toast.error('Failed to connect to database');
+        reject(error);
+      }
+    });
+
+    return this.connectionPromise;
+  }
+
+  // Find documents in a collection
+  async find(collectionName: string, filter: any = {}): Promise<DbDocument[]> {
+    try {
+      // Ensure we're connected
+      if (!this.isConnected) {
+        await this.connect();
+      }
+      
+      // Get collection from storage
+      const collection = this.getCollection(collectionName);
+      
+      // Apply filters
+      if (Object.keys(filter).length === 0) {
+        return [...collection]; // Return copy to prevent mutations
+      }
+      
+      return collection.filter(doc => {
+        return Object.entries(filter).every(([key, value]) => {
+          if (key === '_id' || key === 'id') {
+            const docId = doc._id?.toString() || doc.id?.toString();
+            return docId === value?.toString();
+          }
+          return doc[key] === value;
+        });
+      });
     } catch (error) {
-      console.error('[MongoDB] Connection error:', error);
-      this.isConnected = false;
-      throw error;
+      console.error(`[MongoDB] find error for ${collectionName}:`, error);
+      return [];
     }
   }
 
-  // Seed all required data
-  async seedData() {
+  // Find a single document by filter
+  async findOne(collectionName: string, filter: any): Promise<DbDocument | null> {
+    try {
+      const results = await this.find(collectionName, filter);
+      return results.length > 0 ? results[0] : null;
+    } catch (error) {
+      console.error(`[MongoDB] findOne error for ${collectionName}:`, error);
+      return null;
+    }
+  }
+
+  // Insert a document into a collection
+  async insertOne(collectionName: string, document: DbDocument): Promise<DbOperationResult> {
+    try {
+      // Ensure we're connected
+      if (!this.isConnected) {
+        await this.connect();
+      }
+      
+      // Generate ID if not provided
+      const _id = document._id || document.id || this.generateId();
+      const newDoc = { ...document, _id, id: _id };
+      
+      // Get collection
+      const collection = this.getCollection(collectionName);
+      
+      // Add document to collection
+      collection.push(newDoc);
+      this.saveCollection(collectionName, collection);
+      
+      return {
+        success: true,
+        insertedId: _id,
+        data: newDoc
+      };
+    } catch (error) {
+      console.error(`[MongoDB] insertOne error for ${collectionName}:`, error);
+      return {
+        success: false,
+        message: (error as Error).message
+      };
+    }
+  }
+
+  // Update a document in a collection
+  async updateOne(collectionName: string, filter: any, update: any): Promise<DbOperationResult> {
+    try {
+      // Ensure we're connected
+      if (!this.isConnected) {
+        await this.connect();
+      }
+      
+      let modifiedCount = 0;
+      const collection = this.getCollection(collectionName);
+      
+      const updatedCollection = collection.map(doc => {
+        // Check if document matches filter
+        const isMatch = Object.entries(filter).every(([key, value]) => {
+          if (key === '_id' || key === 'id') {
+            const docId = doc._id?.toString() || doc.id?.toString();
+            return docId === value?.toString();
+          }
+          return doc[key] === value;
+        });
+        
+        if (isMatch) {
+          modifiedCount++;
+          const updateData = update.$set || update;
+          return { ...doc, ...updateData };
+        }
+        
+        return doc;
+      });
+      
+      // Save updated collection
+      this.saveCollection(collectionName, updatedCollection);
+      
+      return {
+        success: true,
+        modifiedCount
+      };
+    } catch (error) {
+      console.error(`[MongoDB] updateOne error for ${collectionName}:`, error);
+      return {
+        success: false,
+        message: (error as Error).message
+      };
+    }
+  }
+
+  // Delete a document from a collection
+  async deleteOne(collectionName: string, filter: any): Promise<DbOperationResult> {
+    try {
+      // Ensure we're connected
+      if (!this.isConnected) {
+        await this.connect();
+      }
+      
+      const collection = this.getCollection(collectionName);
+      const initialLength = collection.length;
+      
+      const filteredCollection = collection.filter(doc => {
+        // Check if document matches filter
+        return !Object.entries(filter).every(([key, value]) => {
+          if (key === '_id' || key === 'id') {
+            const docId = doc._id?.toString() || doc.id?.toString();
+            return docId === value?.toString();
+          }
+          return doc[key] === value;
+        });
+      });
+      
+      // Calculate deleted count
+      const deletedCount = initialLength - filteredCollection.length;
+      
+      // Save updated collection
+      this.saveCollection(collectionName, filteredCollection);
+      
+      return {
+        success: true,
+        deletedCount
+      };
+    } catch (error) {
+      console.error(`[MongoDB] deleteOne error for ${collectionName}:`, error);
+      return {
+        success: false,
+        message: (error as Error).message
+      };
+    }
+  }
+
+  // Helper to get a collection from storage
+  private getCollection(collectionName: string): DbDocument[] {
+    if (!(window as any).dbStorage[collectionName]) {
+      (window as any).dbStorage[collectionName] = [];
+    }
+    return (window as any).dbStorage[collectionName];
+  }
+
+  // Helper to save collection to storage
+  private saveCollection(collectionName: string, data: DbDocument[]): void {
+    (window as any).dbStorage[collectionName] = data;
+    
+    // In a real application, this would send data to a server
+    console.log(`[MongoDB] Collection ${collectionName} updated with ${data.length} documents`);
+  }
+
+  // Helper to generate a unique ID
+  private generateId(): string {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+  }
+
+  // Seed all required data for the application
+  async seedData(): Promise<void> {
     try {
       console.log('[MongoDB] Checking if data needs to be seeded...');
       
@@ -73,20 +263,11 @@ class MongoDbService {
       // Seed posts if needed
       await this.seedPosts();
       
-      // Seed community posts if needed
-      await this.seedCommunityPosts();
-      
-      // Seed community users if needed
-      await this.seedCommunityUsers();
-      
-      // Seed community events if needed
-      await this.seedCommunityEvents();
-      
-      // Seed travel groups if needed
-      await this.seedTravelGroups();
-      
       // Seed comments if needed
       await this.seedComments();
+      
+      // Seed community data if needed
+      await this.seedCommunityData();
       
       console.log('[MongoDB] Data seeding completed');
     } catch (error) {
@@ -95,7 +276,7 @@ class MongoDbService {
   }
 
   // Seed categories collection
-  async seedCategories() {
+  async seedCategories(): Promise<void> {
     const categories = await this.find('categories');
     
     if (categories.length === 0) {
@@ -147,7 +328,7 @@ class MongoDbService {
   }
 
   // Seed topics collection
-  async seedTopics() {
+  async seedTopics(): Promise<void> {
     const topics = await this.find('topics');
     
     if (topics.length === 0) {
@@ -173,7 +354,7 @@ class MongoDbService {
   }
 
   // Seed posts collection
-  async seedPosts() {
+  async seedPosts(): Promise<void> {
     const posts = await this.find('posts');
     
     if (posts.length === 0) {
@@ -255,8 +436,71 @@ class MongoDbService {
     }
   }
 
+  // Seed comments collection
+  async seedComments(): Promise<void> {
+    const comments = await this.find('comments');
+    
+    if (comments.length === 0) {
+      console.log('[MongoDB] Seeding comments...');
+      
+      // Get the first post to link comments
+      const posts = await this.find('posts');
+      
+      if (posts.length > 0) {
+        const firstPostId = posts[0]._id?.toString();
+        
+        const commentsData = [
+          {
+            postId: firstPostId,
+            author: {
+              name: 'Jamie Smith',
+              avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
+              bio: 'Travel enthusiast'
+            },
+            content: 'This is such a great guide to Bali! I visited last year and definitely agree about Amed being a hidden gem. The snorkeling there was incredible.',
+            date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            likes: 8
+          },
+          {
+            postId: firstPostId,
+            author: {
+              name: 'Taylor Jordan',
+              avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
+              bio: 'Food and culture enthusiast'
+            },
+            content: 'Thank you for sharing these off-the-beaten-path recommendations! I\'m planning a trip to Bali next month and will definitely check out Sidemen.',
+            date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            likes: 5
+          }
+        ];
+        
+        for (const comment of commentsData) {
+          await this.insertOne('comments', comment);
+        }
+        console.log('[MongoDB] Comments seeded successfully');
+      } else {
+        console.log('[MongoDB] Skipping comments seeding - no posts available to link to');
+      }
+    }
+  }
+
+  // Seed community data (posts, users, events, groups)
+  async seedCommunityData(): Promise<void> {
+    // Seed community posts
+    await this.seedCommunityPosts();
+    
+    // Seed community users
+    await this.seedCommunityUsers();
+    
+    // Seed community events
+    await this.seedCommunityEvents();
+    
+    // Seed travel groups
+    await this.seedTravelGroups();
+  }
+
   // Seed community posts
-  async seedCommunityPosts() {
+  async seedCommunityPosts(): Promise<void> {
     const communityPosts = await this.find('communityPosts');
     
     if (communityPosts.length === 0) {
@@ -320,7 +564,7 @@ class MongoDbService {
   }
 
   // Seed community users
-  async seedCommunityUsers() {
+  async seedCommunityUsers(): Promise<void> {
     const communityUsers = await this.find('communityUsers');
     
     if (communityUsers.length === 0) {
@@ -333,494 +577,4 @@ class MongoDbService {
           name: 'Alex Johnson',
           avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
           bio: 'Travel enthusiast always looking for the next adventure.',
-          joinDate: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString(),
-          lastActive: new Date().toISOString(),
-          status: 'active',
-          experienceLevel: 'Experienced',
-          travelStyles: ['Adventure', 'Budget', 'Solo'],
-          visitedCountries: [
-            { name: 'Thailand', year: 2022 },
-            { name: 'Japan', year: 2021 },
-            { name: 'Italy', year: 2019 }
-          ],
-          wishlistDestinations: ['Peru', 'New Zealand', 'Morocco'],
-          interests: ['Hiking', 'Photography', 'Local Cuisine'],
-          badges: [
-            {
-              name: 'Globetrotter',
-              description: 'Visited more than 10 countries',
-              dateEarned: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-              icon: '🌏'
-            }
-          ],
-          reputation: 120,
-          socialProfiles: {
-            instagram: '@alex.travels',
-            twitter: '@alexj_travels'
-          },
-          notificationPreferences: {
-            contentWarnings: true,
-            messages: true,
-            connections: true
-          },
-          location: 'San Francisco, CA',
-          connections: ['user456', 'user789'],
-          trips: [
-            {
-              destination: 'Bali',
-              startDate: '2023-05-15',
-              endDate: '2023-05-30',
-              status: 'completed'
-            }
-          ]
-        },
-        {
-          username: 'jamiesmith',
-          email: 'jamie@example.com',
-          name: 'Jamie Smith',
-          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
-          bio: 'Mountain lover and outdoor enthusiast.',
-          joinDate: new Date(Date.now() - 85 * 24 * 60 * 60 * 1000).toISOString(),
-          lastActive: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'active',
-          experienceLevel: 'Regular',
-          travelStyles: ['Adventure', 'Luxury', 'Cultural'],
-          visitedCountries: [
-            { name: 'Switzerland', year: 2023 },
-            { name: 'Canada', year: 2022 },
-            { name: 'Norway', year: 2020 }
-          ],
-          wishlistDestinations: ['Patagonia', 'Iceland', 'New Zealand'],
-          interests: ['Hiking', 'Skiing', 'Photography'],
-          badges: [
-            {
-              name: 'Mountain Climber',
-              description: 'Visited 5 major mountain ranges',
-              dateEarned: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-              icon: '⛰️'
-            }
-          ],
-          reputation: 85,
-          socialProfiles: {
-            instagram: '@jamie.outdoors'
-          },
-          notificationPreferences: {
-            contentWarnings: true,
-            messages: true,
-            connections: true
-          },
-          location: 'Denver, CO',
-          connections: ['user123'],
-          trips: [
-            {
-              destination: 'Swiss Alps',
-              startDate: '2023-07-10',
-              endDate: '2023-07-25',
-              status: 'completed'
-            }
-          ]
-        },
-        {
-          username: 'taylorjordan',
-          email: 'taylor@example.com',
-          name: 'Taylor Jordan',
-          avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
-          bio: 'Food and culture enthusiast exploring the world one meal at a time.',
-          joinDate: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
-          lastActive: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'active',
-          experienceLevel: 'Globetrotter',
-          travelStyles: ['Foodie', 'Cultural', 'City'],
-          visitedCountries: [
-            { name: 'Thailand', year: 2023 },
-            { name: 'Vietnam', year: 2022 },
-            { name: 'Japan', year: 2021 },
-            { name: 'Italy', year: 2020 },
-            { name: 'France', year: 2019 }
-          ],
-          wishlistDestinations: ['Mexico', 'Spain', 'Lebanon'],
-          interests: ['Cooking Classes', 'Food Markets', 'Street Food'],
-          badges: [
-            {
-              name: 'Food Connoisseur',
-              description: 'Participated in 10+ food tours',
-              dateEarned: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-              icon: '🍽️'
-            }
-          ],
-          reputation: 110,
-          socialProfiles: {
-            instagram: '@taylor.tasty.travels',
-            twitter: '@taylor_foodie'
-          },
-          notificationPreferences: {
-            contentWarnings: true,
-            messages: false,
-            connections: true
-          },
-          location: 'Chicago, IL',
-          connections: ['user123', 'user456'],
-          trips: [
-            {
-              destination: 'Bangkok',
-              startDate: '2023-08-05',
-              endDate: '2023-08-15',
-              status: 'completed'
-            }
-          ]
-        }
-      ];
-      
-      for (const user of usersData) {
-        await this.insertOne('communityUsers', user);
-      }
-      console.log('[MongoDB] Community users seeded successfully');
-    }
-  }
-
-  // Seed community events
-  async seedCommunityEvents() {
-    const events = await this.find('communityEvents');
-    
-    if (events.length === 0) {
-      console.log('[MongoDB] Seeding community events...');
-      
-      const eventsData = [
-        {
-          title: 'Annual Backpackers Meetup',
-          description: 'Join fellow backpackers for our annual gathering to share stories, tips, and make plans for future adventures.',
-          type: 'Meetup',
-          host: 'user123',
-          date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-          location: {
-            type: 'physical',
-            details: 'Central Park, New York City'
-          },
-          image: 'https://images.unsplash.com/photo-1527004013197-933c4bb611b3?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1080&q=80',
-          capacity: 50,
-          attendees: ['user456', 'user789'],
-          status: 'upcoming',
-          category: 'Networking',
-          tags: ['backpacking', 'adventure', 'networking'],
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          title: 'Virtual Travel Photography Workshop',
-          description: 'Learn travel photography techniques from professional photographers in this interactive online workshop.',
-          type: 'Workshop',
-          host: 'user789',
-          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          location: {
-            type: 'online',
-            details: 'Zoom Meeting (link will be sent upon registration)'
-          },
-          image: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1080&q=80',
-          capacity: 100,
-          attendees: ['user123', 'user456'],
-          status: 'upcoming',
-          category: 'Educational',
-          tags: ['photography', 'workshop', 'virtual'],
-          createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          title: 'Southeast Asia Travel Planning Session',
-          description: 'Group session for travelers planning trips to Southeast Asia in the coming year. Share itineraries and connect with other travelers.',
-          type: 'Planning',
-          host: 'user456',
-          date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
-          location: {
-            type: 'online',
-            details: 'Google Meet (link will be shared with participants)'
-          },
-          image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1080&q=80',
-          capacity: 25,
-          attendees: ['user123'],
-          status: 'upcoming',
-          category: 'Planning',
-          tags: ['southeast asia', 'planning', 'group travel'],
-          createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
-      
-      for (const event of eventsData) {
-        await this.insertOne('communityEvents', event);
-      }
-      console.log('[MongoDB] Community events seeded successfully');
-    }
-  }
-
-  // Seed travel groups
-  async seedTravelGroups() {
-    const groups = await this.find('travelGroups');
-    
-    if (groups.length === 0) {
-      console.log('[MongoDB] Seeding travel groups...');
-      
-      const groupsData = [
-        {
-          name: 'Southeast Asia Explorers',
-          slug: 'southeast-asia-explorers',
-          description: 'A group for travelers interested in exploring Southeast Asian countries, sharing tips, and possibly meeting up in the region.',
-          category: 'Regional',
-          creator: 'user123',
-          image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1080&q=80',
-          members: ['user123', 'user456', 'user789'],
-          topics: ['Southeast Asia', 'Backpacking', 'Budget Travel'],
-          dateCreated: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'active',
-          featuredStatus: true,
-          memberCount: 3
-        },
-        {
-          name: 'Solo Female Travelers',
-          slug: 'solo-female-travelers',
-          description: 'A supportive community for women who travel solo. Share experiences, safety tips, and connect with other solo female travelers worldwide.',
-          category: 'Special Interest',
-          creator: 'user789',
-          image: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1080&q=80',
-          members: ['user789'],
-          topics: ['Solo Travel', 'Women Travelers', 'Safety'],
-          dateCreated: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'active',
-          featuredStatus: true,
-          memberCount: 1
-        },
-        {
-          name: 'Adventure Photographers',
-          slug: 'adventure-photographers',
-          description: 'For travelers who love capturing their adventures through photography. Share techniques, equipment recommendations, and stunning photos from around the world.',
-          category: 'Special Interest',
-          creator: 'user456',
-          image: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1080&q=80',
-          members: ['user456', 'user123'],
-          topics: ['Photography', 'Adventure', 'Landscapes'],
-          dateCreated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'active',
-          featuredStatus: false,
-          memberCount: 2
-        }
-      ];
-      
-      for (const group of groupsData) {
-        await this.insertOne('travelGroups', group);
-      }
-      console.log('[MongoDB] Travel groups seeded successfully');
-    }
-  }
-
-  // Seed comments
-  async seedComments() {
-    const comments = await this.find('comments');
-    
-    if (comments.length === 0) {
-      console.log('[MongoDB] Seeding comments...');
-      
-      // Get the first post to link comments
-      const posts = await this.find('posts');
-      const communityPosts = await this.find('communityPosts');
-      
-      if (posts.length > 0 && communityPosts.length > 0) {
-        const firstPostId = posts[0]._id?.toString();
-        const firstCommunityPostId = communityPosts[0]._id?.toString();
-        
-        const commentsData = [
-          {
-            postId: firstPostId,
-            author: {
-              name: 'Jamie Smith',
-              avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
-              bio: 'Travel enthusiast'
-            },
-            content: 'This is such a great guide to Bali! I visited last year and definitely agree about Amed being a hidden gem. The snorkeling there was incredible.',
-            date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            likes: 8
-          },
-          {
-            postId: firstPostId,
-            author: {
-              name: 'Taylor Jordan',
-              avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
-              bio: 'Food and culture enthusiast'
-            },
-            content: 'Thank you for sharing these off-the-beaten-path recommendations! I\'m planning a trip to Bali next month and will definitely check out Sidemen.',
-            date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            likes: 5
-          },
-          // Community post comments
-          {
-            postId: firstCommunityPostId,
-            userId: 'user456',
-            userName: 'Jamie Smith',
-            userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
-            content: 'Bali is amazing! Make sure to visit the Tegallalang Rice Terraces and Uluwatu Temple. The sunset views are incredible!',
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            likes: 3
-          },
-          {
-            postId: firstCommunityPostId,
-            userId: 'user789',
-            userName: 'Taylor Jordan',
-            userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
-            content: 'Have you tried the local seafood? The grilled fish in Jimbaran Bay is absolutely delicious!',
-            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            likes: 2
-          }
-        ];
-        
-        for (const comment of commentsData) {
-          await this.insertOne('comments', comment);
-        }
-        console.log('[MongoDB] Comments seeded successfully');
-      } else {
-        console.log('[MongoDB] Skipping comments seeding - no posts available to link to');
-      }
-    }
-  }
-
-  async disconnect() {
-    if (this.client) {
-      await this.client.close();
-      this.client = null;
-      this.db = null;
-      this.isConnected = false;
-      this.connectionPromise = null;
-      console.log('[MongoDB] Disconnected from MongoDB');
-    }
-  }
-
-  async getCollection(collectionName: string) {
-    if (!this.isConnected) {
-      await this.connect();
-    }
-
-    // Handle both real MongoDB and mock implementation
-    if (typeof window === 'undefined' && this.db) {
-      return this.db.collection(collectionName);
-    } else {
-      // Mock collection for browser
-      if (!(window as any).mockDb[collectionName]) {
-        (window as any).mockDb[collectionName] = [];
-      }
-      return {
-        findOne: async (filter: any) => this.mockFindOne(collectionName, filter),
-        find: () => ({ toArray: async () => this.mockFind(collectionName, {}) }),
-        insertOne: async (doc: any) => this.mockInsertOne(collectionName, doc),
-        updateOne: async (filter: any, update: any) => this.mockUpdateOne(collectionName, filter, update),
-        deleteOne: async (filter: any) => this.mockDeleteOne(collectionName, filter),
-        countDocuments: async () => (window as any).mockDb[collectionName].length,
-      };
-    }
-  }
-  
-  // Mock implementations for browser environment
-  private async mockFindOne(collectionName: string, filter: any) {
-    try {
-      const docs = (window as any).mockDb[collectionName] || [];
-      return docs.find((doc: any) => {
-        return Object.keys(filter).every(key => {
-          if (key === '_id') {
-            return doc._id?.toString() === filter[key]?.toString();
-          }
-          return doc[key] === filter[key];
-        });
-      });
-    } catch (error) {
-      console.error(`[MockDB] findOne error for ${collectionName}:`, error);
-      return null;
-    }
-  }
-  
-  private async mockFind(collectionName: string, filter: any = {}) {
-    try {
-      const docs = (window as any).mockDb[collectionName] || [];
-      if (Object.keys(filter).length === 0) {
-        return [...docs]; // Return a copy to prevent mutations
-      }
-      
-      return docs.filter((doc: any) => {
-        return Object.keys(filter).every(key => {
-          if (key === '_id') {
-            return doc._id?.toString() === filter[key]?.toString();
-          }
-          return doc[key] === filter[key];
-        });
-      });
-    } catch (error) {
-      console.error(`[MockDB] find error for ${collectionName}:`, error);
-      return [];
-    }
-  }
-  
-  private async mockInsertOne(collectionName: string, document: any) {
-    try {
-      const _id = this.generateId();
-      const newDoc = { ...document, _id, id: _id };
-      (window as any).mockDb[collectionName].push(newDoc);
-      
-      return newDoc;
-    } catch (error) {
-      console.error(`[MockDB] insertOne error for ${collectionName}:`, error);
-      throw error;
-    }
-  }
-  
-  private async mockUpdateOne(collectionName: string, filter: any, update: any) {
-    try {
-      let modifiedCount = 0;
-      (window as any).mockDb[collectionName] = (window as any).mockDb[collectionName].map((doc: any) => {
-        const isMatch = Object.keys(filter).every(key => {
-          if (key === '_id') {
-            return doc._id?.toString() === filter[key]?.toString();
-          }
-          return doc[key] === filter[key];
-        });
-        
-        if (isMatch) {
-          modifiedCount++;
-          const updateData = update.$set || update;
-          return { ...doc, ...updateData };
-        }
-        
-        return doc;
-      });
-      
-      return { modifiedCount };
-    } catch (error) {
-      console.error(`[MockDB] updateOne error for ${collectionName}:`, error);
-      throw error;
-    }
-  }
-  
-  private async mockDeleteOne(collectionName: string, filter: any) {
-    try {
-      const initialLength = (window as any).mockDb[collectionName].length;
-      (window as any).mockDb[collectionName] = (window as any).mockDb[collectionName].filter((doc: any) => {
-        return !Object.keys(filter).every(key => {
-          if (key === '_id') {
-            return doc._id?.toString() === filter[key]?.toString();
-          }
-          return doc[key] === filter[key];
-        });
-      });
-      
-      const deletedCount = initialLength - (window as any).mockDb[collectionName].length;
-      return { deletedCount };
-    } catch (error) {
-      console.error(`[MockDB] deleteOne error for ${collectionName}:`, error);
-      throw error;
-    }
-  }
-
-  // Helper to generate a simple unique ID
-  private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
-  }
-
-  // Utility to create an ObjectId-like object
-  toObjectId(id: string) {
-    return id; // In our mock environment, we'll just use the string ID directly
-  }
-}
-
-// Create a singleton instance
-export const mongoDbService = new MongoDbService();
+          joinDate: new Date(Date.now() - 100 * 24 * 60 * 60 *

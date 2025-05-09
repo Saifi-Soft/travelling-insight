@@ -9,7 +9,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 // Import MongoDB API service
-import { mongoApiService } from './api/mongoApiService';
+import { initMongoApi } from './api/mongoApi.ts';
+import { mongoApiService } from './api/mongoApiService.ts';
 import { Toaster } from 'sonner';
 
 // Create a new QueryClient instance with retry configuration
@@ -23,7 +24,11 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize MongoDB API service
+// First initialize the MongoDB API connection
+console.log('Initializing MongoDB connection...');
+initMongoApi();
+
+// Then initialize the MongoDB API service
 console.log('Initializing MongoDB API service...');
 mongoApiService.initialize()
   .then(() => {

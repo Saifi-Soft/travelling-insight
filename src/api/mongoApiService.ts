@@ -1,7 +1,6 @@
-
 // Mock API service for MongoDB operations in the browser
 import { toast } from 'sonner';
-import { mongoDbService } from './mongoDbService';
+import { mongoDbService, DbDocument, DbOperationResult } from './mongoDbService';
 
 // MongoDB API service
 class MongoApiService {
@@ -28,7 +27,7 @@ class MongoApiService {
   }
 
   // Generic query to get all documents from a collection
-  async queryDocuments(collectionName: string, query: any = {}) {
+  async queryDocuments(collectionName: string, query: any = {}): Promise<DbDocument[]> {
     try {
       return await mongoDbService.find(collectionName, query);
     } catch (error) {
@@ -38,7 +37,7 @@ class MongoApiService {
   }
 
   // Get a document by ID
-  async getDocumentById(collectionName: string, id: string) {
+  async getDocumentById(collectionName: string, id: string): Promise<DbDocument | null> {
     try {
       // Check if id is a valid string
       if (!id || typeof id !== 'string') {
@@ -60,11 +59,15 @@ class MongoApiService {
   }
 
   // Insert a new document
-  async insertDocument(collectionName: string, data: any) {
+  async insertDocument(collectionName: string, data: any): Promise<DbDocument> {
     try {
       const result = await mongoDbService.insertOne(collectionName, data);
-      // Result object should already have _id and id properties from our mockDb implementation
-      return result;
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to insert document');
+      }
+      
+      return result.data;
     } catch (error) {
       console.error(`[MongoDB API] Error inserting document into ${collectionName}:`, error);
       throw error;
@@ -72,7 +75,7 @@ class MongoApiService {
   }
 
   // Update a document
-  async updateDocument(collectionName: string, id: string, data: any) {
+  async updateDocument(collectionName: string, id: string, data: any): Promise<any> {
     try {
       // Check if we should search by _id or id
       let filter;
@@ -83,6 +86,11 @@ class MongoApiService {
       }
       
       const result = await mongoDbService.updateOne(collectionName, filter, data);
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to update document');
+      }
+      
       return { id, ...data, updated: result.modifiedCount > 0 };
     } catch (error) {
       console.error(`[MongoDB API] Error updating document in ${collectionName}:`, error);
@@ -91,7 +99,7 @@ class MongoApiService {
   }
 
   // Delete a document
-  async deleteDocument(collectionName: string, id: string) {
+  async deleteDocument(collectionName: string, id: string): Promise<any> {
     try {
       // Check if we should search by _id or id
       let filter;
@@ -102,6 +110,11 @@ class MongoApiService {
       }
       
       const result = await mongoDbService.deleteOne(collectionName, filter);
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to delete document');
+      }
+      
       return { id, deleted: result.deletedCount > 0 };
     } catch (error) {
       console.error(`[MongoDB API] Error deleting document from ${collectionName}:`, error);
