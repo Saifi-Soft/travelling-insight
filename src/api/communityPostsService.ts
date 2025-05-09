@@ -113,5 +113,87 @@ export const communityPostsApi = {
       toast.error('Failed to update post');
       throw error;
     }
+  },
+  
+  // Save post (bookmark functionality)
+  savePost: async (postId: string, userId: string) => {
+    try {
+      if (!postId || !userId) {
+        throw new Error('Post ID and User ID are required');
+      }
+      
+      // Check if post is already saved
+      const savedPosts = await mongoApiService.queryDocuments('savedPosts', { userId, postId });
+      
+      if (savedPosts.length > 0) {
+        // Post is already saved, so unsave it
+        await mongoApiService.deleteDocument('savedPosts', savedPosts[0]._id);
+        return { saved: false };
+      } else {
+        // Save the post
+        await mongoApiService.insertDocument('savedPosts', {
+          userId, 
+          postId,
+          savedAt: new Date().toISOString()
+        });
+        return { saved: true };
+      }
+    } catch (error) {
+      console.error('Error saving/unsaving post:', error);
+      toast.error('Failed to save post');
+      throw error;
+    }
+  },
+  
+  // Get comments for a post
+  getComments: async (postId: string) => {
+    try {
+      const comments = await mongoApiService.queryDocuments('comments', { postId });
+      return comments.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    } catch (error) {
+      console.error(`Error getting comments for post ${postId}:`, error);
+      toast.error('Failed to load comments');
+      return [];
+    }
+  },
+  
+  // Add a comment to a post
+  addComment: async (postId: string, comment: {
+    userId: string;
+    userName: string;
+    content: string;
+    userAvatar?: string;
+  }) => {
+    try {
+      if (!postId || !comment.userId || !comment.userName || !comment.content) {
+        throw new Error('Missing required fields for comment');
+      }
+      
+      const post = await mongoApiService.getDocumentById('communityPosts', postId);
+      if (!post) {
+        throw new Error('Post not found');
+      }
+      
+      const newComment = {
+        ...comment,
+        postId,
+        createdAt: new Date().toISOString(),
+        likes: 0
+      };
+      
+      // Insert comment
+      const result = await mongoApiService.insertDocument('comments', newComment);
+      
+      // Update post comment count
+      await mongoApiService.updateDocument('communityPosts', postId, {
+        comments: (post.comments || 0) + 1
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment');
+      throw error;
+    }
   }
 };

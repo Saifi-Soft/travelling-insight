@@ -1,4 +1,5 @@
 
+// Mock API service for MongoDB operations in the browser
 import { toast } from 'sonner';
 
 // Mock API service for MongoDB operations that works in browser environments
@@ -168,4 +169,94 @@ class MongoApiService {
   }
 }
 
+// Create a singleton instance
 export const mongoApiService = new MongoApiService();
+
+// Add API services for specific collections
+export const postsApi = {
+  getAll: async () => {
+    return await mongoApiService.queryDocuments('posts', {});
+  },
+  
+  getById: async (id: string) => {
+    return await mongoApiService.getDocumentById('posts', id);
+  },
+  
+  create: async (post: any) => {
+    return await mongoApiService.insertDocument('posts', post);
+  },
+  
+  update: async (id: string, post: any) => {
+    return await mongoApiService.updateDocument('posts', id, post);
+  },
+  
+  delete: async (id: string) => {
+    return await mongoApiService.deleteDocument('posts', id);
+  }
+};
+
+export const commentsApi = {
+  getAll: async () => {
+    return await mongoApiService.queryDocuments('comments', {});
+  },
+  
+  getByPostId: async (postId: string) => {
+    return await mongoApiService.queryDocuments('comments', { postId });
+  },
+  
+  create: async (comment: any) => {
+    return await mongoApiService.insertDocument('comments', comment);
+  },
+  
+  update: async (id: string, comment: any) => {
+    return await mongoApiService.updateDocument('comments', id, comment);
+  },
+  
+  delete: async (id: string) => {
+    return await mongoApiService.deleteDocument('comments', id);
+  }
+};
+
+export const categoriesApi = {
+  getAll: async () => {
+    return await mongoApiService.queryDocuments('categories', {});
+  },
+  
+  getById: async (id: string) => {
+    return await mongoApiService.getDocumentById('categories', id);
+  },
+  
+  create: async (category: any) => {
+    return await mongoApiService.insertDocument('categories', category);
+  },
+  
+  update: async (id: string, category: any) => {
+    return await mongoApiService.updateDocument('categories', id, category);
+  },
+  
+  delete: async (id: string) => {
+    return await mongoApiService.deleteDocument('categories', id);
+  }
+};
+
+export const topicsApi = {
+  getAll: async () => {
+    return await mongoApiService.queryDocuments('topics', {});
+  },
+  
+  getById: async (id: string) => {
+    return await mongoApiService.getDocumentById('topics', id);
+  },
+  
+  create: async (topic: any) => {
+    return await mongoApiService.insertDocument('topics', topic);
+  },
+  
+  update: async (id: string, topic: any) => {
+    return await mongoApiService.updateDocument('topics', id, topic);
+  },
+  
+  delete: async (id: string) => {
+    return await mongoApiService.deleteDocument('topics', id);
+  }
+};

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { CreditCard, Lock, CheckCircle2 } from 'lucide-react';
-import { communityPaymentApi } from '@/api/communityApiService';
+import { communityApi } from '@/api/communityApiService';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -107,7 +108,7 @@ const SubscriptionModal = ({ open, onOpenChange, onSubscribe }: SubscriptionModa
         endDate.setFullYear(today.getFullYear() + 1);
       }
       
-      await communityPaymentApi.createSubscription(
+      await communityApi.payments.createSubscription(
         userId,
         selectedPlan,
         {

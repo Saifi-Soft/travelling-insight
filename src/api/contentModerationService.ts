@@ -1,220 +1,125 @@
-// Content moderation service for detecting inappropriate content
+
 import { mongoApiService } from './mongoApiService';
 import { toast } from 'sonner';
-
-// List of keywords that might indicate adult content - this is very basic
-// In a production environment, you would use a more sophisticated AI-based solution
-const adultContentKeywords = [
-  'xxx', 'porn', 'adult content', 'explicit content', 'nsfw',
-  'sexual', 'naked', 'nude', '18+', 'adult only', 'xxx',
-];
+import { notificationsApi } from './notificationsService';
 
 export const contentModerationApi = {
-  // Scan text content for inappropriate content
-  scanContent: async (content: string): Promise<{isInappropriate: boolean, reason?: string}> => {
+  // Check content for inappropriate terms
+  checkContent: async (content: string): Promise<{isInappropriate: boolean, reason?: string}> => {
     try {
-      if (!content || typeof content !== 'string') {
-        console.warn('Invalid content provided to scanContent:', content);
-        return { isInappropriate: false };
-      }
+      // Basic inappropriate content detection (in a real app, this would be more sophisticated)
+      const inappropriateTerms = ['xxx', 'explicit', 'adult content', 'obscene'];
       
-      // Convert content to lowercase for case-insensitive matching
-      const lowercaseContent = content.toLowerCase();
-      
-      // Check for adult content keywords
-      for (const keyword of adultContentKeywords) {
-        if (lowercaseContent.includes(keyword)) {
-          return { 
-            isInappropriate: true, 
-            reason: `Contains prohibited keyword: ${keyword}` 
+      for (const term of inappropriateTerms) {
+        if (content.toLowerCase().includes(term)) {
+          return {
+            isInappropriate: true,
+            reason: `Contains inappropriate term: "${term}"`
           };
         }
       }
       
       return { isInappropriate: false };
     } catch (error) {
-      console.error('Error scanning content:', error);
-      // If the moderation service fails, we allow the content by default
-      // but log the error - in production you might want different behavior
+      console.error('Error checking content:', error);
       return { isInappropriate: false };
     }
   },
   
-  // Record a warning for a user
-  addWarningToUser: async (userId: string, contentId: string, reason: string): Promise<{
-    success: boolean, 
-    warningCount: number,
-    blocked: boolean
-  }> => {
+  // Flag a post as inappropriate
+  flagPost: async (postId: string, reporterId: string, reason: string) => {
     try {
-      if (!userId || !reason) {
-        console.error('Invalid user ID or reason provided to addWarningToUser');
-        return { success: false, warningCount: 0, blocked: false };
+      const post = await mongoApiService.getDocumentById('communityPosts', postId);
+      
+      if (!post) {
+        throw new Error('Post not found');
       }
       
-      // Create a new warning
-      const warning = {
-        userId,
-        contentId,
+      // Create a report
+      const report = {
+        itemType: 'post',
+        itemId: postId,
+        reporterId,
         reason,
-        createdAt: new Date().toISOString(),
-        acknowledged: false
+        status: 'pending',
+        createdAt: new Date().toISOString()
       };
       
-      await mongoApiService.insertDocument('contentWarnings', warning);
+      await mongoApiService.insertDocument('moderationReports', report);
       
-      // Count user's existing warnings
-      const userWarnings = await mongoApiService.queryDocuments('contentWarnings', { userId });
-      const warningCount = userWarnings.length;
+      // Notify the reporter
+      await notificationsApi.create({
+        userId: reporterId,
+        type: 'moderation_report',
+        title: 'Report Received',
+        message: 'Thank you for reporting content. Our moderation team will review it shortly.'
+      });
       
-      // If this is the third or more warning, block the user
-      let blocked = false;
-      if (warningCount >= 3) {
-        await mongoApiService.updateDocument('communityUsers', userId, {
-          status: 'blocked',
-          blockReason: 'Multiple content warnings (3 or more)',
-          blockedAt: new Date().toISOString()
+      return true;
+    } catch (error) {
+      console.error('Error flagging post:', error);
+      return false;
+    }
+  },
+  
+  // Get all moderation reports for admin
+  getReports: async (status: string = 'all') => {
+    try {
+      let query = {};
+      if (status !== 'all') {
+        query = { status };
+      }
+      
+      const reports = await mongoApiService.queryDocuments('moderationReports', query);
+      return reports.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } catch (error) {
+      console.error('Error fetching moderation reports:', error);
+      return [];
+    }
+  },
+  
+  // Moderate content (approve or reject)
+  moderateContent: async (reportId: string, decision: 'approve' | 'reject', adminId: string, notes?: string) => {
+    try {
+      const report = await mongoApiService.getDocumentById('moderationReports', reportId);
+      
+      if (!report) {
+        throw new Error('Report not found');
+      }
+      
+      // Update the report status
+      await mongoApiService.updateDocument('moderationReports', reportId, {
+        status: decision === 'approve' ? 'approved' : 'rejected',
+        adminId,
+        adminNotes: notes || '',
+        resolvedAt: new Date().toISOString()
+      });
+      
+      if (decision === 'approve' && report.itemType === 'post') {
+        // Mark the post as moderated
+        await mongoApiService.updateDocument('communityPosts', report.itemId, {
+          moderated: true,
+          moderationReason: report.reason,
+          moderatedAt: new Date().toISOString()
         });
-        blocked = true;
-      }
-      
-      // Create notification to inform user about the warning
-      const notificationText = blocked 
-        ? 'Your account has been blocked due to multiple content warnings for posting inappropriate content.'
-        : `Warning: Your post was removed for containing inappropriate content. Warning ${warningCount}/3.`;
-      
-      await mongoApiService.insertDocument('notifications', {
-        userId,
-        type: blocked ? 'account_blocked' : 'content_warning',
-        message: notificationText,
-        relatedContentId: contentId,
-        createdAt: new Date().toISOString(),
-        read: false
-      });
-      
-      return {
-        success: true,
-        warningCount,
-        blocked
-      };
-    } catch (error) {
-      console.error('Error adding warning to user:', error);
-      return {
-        success: false,
-        warningCount: 0,
-        blocked: false
-      };
-    }
-  },
-  
-  // Get all content warnings for admin panel
-  getAllContentWarnings: async () => {
-    try {
-      const warnings = await mongoApiService.queryDocuments('contentWarnings', {});
-      
-      // Enhance warnings with user information
-      const enhancedWarnings = [];
-      for (const warning of warnings) {
-        try {
-          const user = await mongoApiService.getDocumentById('communityUsers', warning.userId);
-          enhancedWarnings.push({
-            ...warning,
-            userName: user ? user.userName : 'Unknown User',
-            userEmail: user ? user.email : 'No email',
-            userStatus: user ? user.status : 'unknown'
-          });
-        } catch (err) {
-          // If we can't get user info, still include the warning with default values
-          enhancedWarnings.push({
-            ...warning,
-            userName: 'Unknown User',
-            userEmail: 'No email',
-            userStatus: 'unknown'
+        
+        // Notify the post creator
+        const post = await mongoApiService.getDocumentById('communityPosts', report.itemId);
+        if (post) {
+          await notificationsApi.create({
+            userId: post.userId,
+            type: 'content_warning',
+            title: 'Content Warning',
+            message: 'Your post was removed for violating our community guidelines.',
+            data: { postId: post.id }
           });
         }
       }
       
-      return enhancedWarnings.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      return true;
     } catch (error) {
-      console.error('Error getting content warnings:', error);
-      return [];
-    }
-  },
-  
-  // Get warnings for a specific user
-  getUserWarnings: async (userId: string) => {
-    try {
-      if (!userId) {
-        console.error('Invalid user ID provided to getUserWarnings');
-        return [];
-      }
-      
-      const warnings = await mongoApiService.queryDocuments('contentWarnings', { userId });
-      return warnings.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    } catch (error) {
-      console.error(`Error getting warnings for user ${userId}:`, error);
-      return [];
-    }
-  },
-  
-  // Mark a warning as acknowledged by the user
-  acknowledgeWarning: async (warningId: string) => {
-    try {
-      if (!warningId) {
-        console.error('Invalid warning ID provided to acknowledgeWarning');
-        return { success: false };
-      }
-      
-      await mongoApiService.updateDocument('contentWarnings', warningId, {
-        acknowledged: true,
-        acknowledgedAt: new Date().toISOString()
-      });
-      return { success: true };
-    } catch (error) {
-      console.error(`Error acknowledging warning ${warningId}:`, error);
-      return { success: false };
-    }
-  },
-  
-  // Get moderated posts directly
-  getModeratedPosts: async () => {
-    try {
-      // Use mongoApiService to directly query posts that have been moderated
-      const posts = await mongoApiService.queryDocuments('communityPosts', { moderated: true });
-      
-      // Enhance with user information where possible
-      const enhancedPosts = [];
-      for (const post of posts) {
-        try {
-          const user = await mongoApiService.getDocumentById('communityUsers', post.userId);
-          enhancedPosts.push({
-            ...post,
-            userName: user ? user.userName : 'Unknown User',
-            userEmail: user ? user.email : 'No email',
-            userStatus: user ? user.status : 'unknown'
-          });
-        } catch (err) {
-          // If we can't get user info, still include the post with default values
-          enhancedPosts.push({
-            ...post,
-            userName: 'Unknown User',
-            userEmail: 'No email',
-            userStatus: 'unknown'
-          });
-        }
-      }
-      
-      // Sort by moderation date, most recent first
-      return enhancedPosts.sort((a, b) => 
-        new Date(b.moderatedAt || b.createdAt).getTime() - new Date(a.moderatedAt || a.createdAt).getTime()
-      );
-    } catch (error) {
-      console.error('Error getting moderated posts:', error);
-      return [];
+      console.error('Error moderating content:', error);
+      return false;
     }
   }
 };

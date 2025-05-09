@@ -1,118 +1,175 @@
 
+// Type definitions for the application
+
+// MongoDB operators
 export interface MongoOperators {
   $eq?: any;
-  $gt?: number | Date;
-  $gte?: number | Date;
-  $lt?: number | Date;
-  $lte?: number | Date;
+  $gt?: any;
+  $gte?: any;
   $in?: any[];
-  $nin?: any[];
+  $lt?: any;
+  $lte?: any;
   $ne?: any;
+  $nin?: any[];
+  $and?: any[];
+  $not?: any;
+  $nor?: any[];
+  $or?: any[];
   $exists?: boolean;
+  $regex?: string;
+  $options?: string;
 }
 
+// Post type
 export interface Post {
   id: string;
   title: string;
-  content?: string;
+  slug: string;
   excerpt: string;
-  slug?: string;
+  content: string;
+  coverImage?: string;
+  featuredImage?: string;
   author: {
+    id: string;
     name: string;
-    avatar: string;
+    avatar?: string;
   };
-  category: string;
-  coverImage: string;
-  date: string;
-  readTime: string;
-  likes: number;
-  comments: number;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
   tags?: string[];
+  publishedAt: string;
+  status: 'draft' | 'published' | 'archived';
+  seo?: {
+    title?: string;
+    description?: string;
+    keywords?: string[];
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
+// Category type
 export interface Category {
   id: string;
   name: string;
   slug: string;
-  icon: string;
-  count: number;
-  image: string;
+  description?: string;
+  parentId?: string;
+  image?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
+// Topic/Hashtag type
 export interface Topic {
   id: string;
   name: string;
   slug: string;
-  count?: number;
+  postCount: number;
+  followerCount: number;
+  isPromoted?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
+// Comment type
 export interface Comment {
   id: string;
   postId: string;
-  author: {
-    name: string;
-    avatar: string;
-  };
+  userId: string;
+  userName: string;
+  userAvatar?: string;
   content: string;
-  date: string;
+  status: 'pending' | 'approved' | 'rejected';
+  parentId?: string;
   likes: number;
+  createdAt: string;
+  updatedAt?: string;
 }
 
+// Community user type
 export interface CommunityUser {
   id: string;
   name: string;
-  email: string;
-  avatar: string;
+  email?: string;
+  avatar?: string;
   bio?: string;
-  status: 'active' | 'blocked' | 'pending';
+  location?: string;
   travelStyles?: string[];
-  interests: string[];
-  joinedDate: string;
+  visitedCountries?: string[];
+  connections?: string[];
+  trips?: string[];
+  createdAt: string;
+  updatedAt?: string;
 }
 
+// Travel group type
 export interface TravelGroup {
   id: string;
   name: string;
   description: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  members: string[]; // User IDs
-  capacity: number;
-  createdBy: string; // User ID
   coverImage?: string;
-  tags: string[];
+  members: Array<{
+    userId: string;
+    name: string;
+    role: 'admin' | 'moderator' | 'member';
+    joinedAt: string;
+  }>;
+  isPrivate: boolean;
+  tags?: string[];
+  createdAt: string;
+  updatedAt?: string;
 }
 
+// Community event type
 export interface CommunityEvent {
   id: string;
   title: string;
   description: string;
-  location: string;
   date: string;
-  time: string;
-  attendees: string[]; // User IDs
-  capacity: number;
-  organizer: string; // User ID
-  coverImage?: string;
-  type: 'meetup' | 'workshop' | 'trip' | 'online';
+  endDate?: string;
+  location: {
+    type: 'online' | 'in-person';
+    details: string;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
+  };
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  attendees: Array<{
+    id: string;
+    name: string;
+  }>;
+  organizer: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt?: string;
 }
 
-export interface TravelMatch {
-  userId: string;
-  name: string;
-  avatar: string;
-  compatibilityScore: number;
-  destinations: string[];
-  travelStyles: string[];
-  interests: string[];
-}
-
-export interface AdminUser {
+// Hashtag type for management
+export interface Hashtag {
   id: string;
-  username: string;
-  passwordHash: string; // In a real app, this would be properly hashed
-  role: 'admin' | 'editor' | 'superadmin';
-  createdAt: Date;
-  lastLogin: Date;
+  name: string;
+  count: number;
+  trending?: boolean;
+  createdAt: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  linkTo?: string;
+  data?: any;
+  createdAt: string;
+  readAt?: string;
 }
