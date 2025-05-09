@@ -8,6 +8,9 @@ import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
+// Import MongoDB API service
+import { mongoApiService } from './api/mongoApiService';
+
 // Create a new QueryClient instance with retry configuration
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,13 +22,32 @@ const queryClient = new QueryClient({
   },
 });
 
-// Create root and render app
-console.log('Initializing application...');
-createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+// Initialize MongoDB API service
+console.log('Initializing MongoDB API service...');
+mongoApiService.initialize()
+  .then(() => {
+    console.log('MongoDB API service initialized successfully');
+    
+    // Create root and render app
+    createRoot(document.getElementById("root")!).render(
+      <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <App />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </React.StrictMode>
+    );
+  })
+  .catch(error => {
+    console.error('Failed to initialize MongoDB API service:', error);
+    
+    // Still render the app, it will use fallback data
+    createRoot(document.getElementById("root")!).render(
+      <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <App />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </React.StrictMode>
+    );
+  });
