@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, ShieldAlert } from 'lucide-react';
-import { mongoDbService } from '@/api/mongoDbService';
+import { mongoApiService } from '@/api/mongoApiService';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -42,16 +42,18 @@ const AdminLogin = () => {
 
     try {
       // Check if admin user exists in MongoDB
-      const adminUser = await mongoDbService.findOne('adminUsers', {
+      const adminUsers = await mongoApiService.queryDocuments('adminUsers', {
         username: username
       });
+      
+      const adminUser = adminUsers.length > 0 ? adminUsers[0] : null;
 
       // If there's no admin user yet, accept hardcoded credentials
       if (!adminUser) {
         // Hardcoded credentials for first login
         if (username === 'admin' && password === 'password') {
           // Store the first admin in the database
-          await mongoDbService.insertOne('adminUsers', {
+          await mongoApiService.insertDocument('adminUsers', {
             username: 'admin',
             passwordHash: 'password', // In a real app, you'd hash this
             role: 'superadmin',
@@ -80,8 +82,8 @@ const AdminLogin = () => {
         // Verify against stored admin user
         if (adminUser && adminUser.passwordHash === password) { // In real app, compare hashed passwords
           // Update last login time
-          await mongoDbService.updateOne('adminUsers', { _id: adminUser._id }, {
-            $set: { lastLogin: new Date() }
+          await mongoApiService.updateDocument('adminUsers', adminUser.id || adminUser._id, {
+            lastLogin: new Date()
           });
           
           localStorage.setItem('adminAuth', 'true');
