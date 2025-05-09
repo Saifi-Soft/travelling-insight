@@ -2,11 +2,35 @@
 // Common types for the application
 import { DbDocument } from '@/api/mongoDbService';
 
+// MongoDB operators
+export interface MongoOperators {
+  $eq?: any;
+  $gt?: any;
+  $gte?: any;
+  $in?: any[];
+  $lt?: any;
+  $lte?: any;
+  $ne?: any;
+  $nin?: any[];
+  $and?: any[];
+  $not?: any;
+  $nor?: any[];
+  $or?: any[];
+  $exists?: boolean;
+  $regex?: string;
+  $options?: string;
+}
+
 // Topic type
 export interface Topic extends DbDocument {
   name: string;
   count?: number;
   slug: string;
+  postCount?: number;
+  followerCount?: number;
+  isPromoted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Category type
@@ -17,6 +41,9 @@ export interface Category extends DbDocument {
   count: number;
   image?: string;
   description?: string;
+  parentId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Post author type
@@ -25,6 +52,7 @@ export interface Author {
   avatar?: string;
   bio?: string;
   role?: string;
+  id?: string;
 }
 
 // Post type
@@ -33,14 +61,29 @@ export interface Post extends DbDocument {
   excerpt?: string;
   content?: string;
   author: Author | string;
-  category?: string;
+  category?: string | {
+    id: string;
+    name: string;
+    slug: string;
+  };
   coverImage?: string;
+  featuredImage?: string;
   likes: number;
   date: string;
   readTime?: string;
   comments: number;
   topics?: string[];
   tags?: string[];
+  slug?: string;
+  status?: 'draft' | 'published' | 'archived';
+  seo?: {
+    title?: string;
+    description?: string;
+    keywords?: string[];
+  };
+  publishedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Comment type
@@ -48,17 +91,25 @@ export interface Comment extends DbDocument {
   postId: string;
   userId: string;
   userName: string;
+  userAvatar?: string;
   content: string;
   date: string;
   likes: number;
   replies?: Comment[];
   parentId?: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Community Event Location
 export interface EventLocation {
   type: 'online' | 'in-person';
   details: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 // Community Event Attendee
@@ -72,11 +123,13 @@ export interface CommunityEvent extends DbDocument {
   title: string;
   description: string;
   date: string;
+  endDate?: string;
   location: EventLocation;
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   attendees: EventAttendee[] | string[];
   organizer: EventAttendee;
   createdAt: string;
+  updatedAt?: string;
   image?: string;
 }
 
@@ -125,6 +178,7 @@ export interface CommunityUser extends DbDocument {
   trips?: string[];
   badges?: UserBadge[];
   createdAt?: string;
+  updatedAt?: string;
 }
 
 // Hashtag type
@@ -132,6 +186,8 @@ export interface Hashtag extends DbDocument {
   name: string;
   slug: string;
   count?: number;
+  trending?: boolean;
+  createdAt?: string;
 }
 
 // Site Settings
@@ -185,4 +241,59 @@ export interface SiteSettings extends DbDocument {
   };
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+// Travel Group type
+export interface TravelGroup {
+  id: string;
+  name: string;
+  description: string;
+  coverImage?: string;
+  members: Array<{
+    userId: string;
+    name: string;
+    role: 'admin' | 'moderator' | 'member';
+    joinedAt: string;
+  }>;
+  isPrivate: boolean;
+  tags?: string[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Travel Match type
+export interface TravelMatch {
+  id: string;
+  userId: string;
+  matchUserId: string;
+  compatibilityScore: number;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
+// Buddy Match type
+export interface BuddyMatch {
+  id: string;
+  userId: string;
+  matchUserId: string;
+  userName: string;
+  matchUserName: string;
+  compatibilityScore: number;
+  matchedInterests: string[];
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
+// Notification type
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  linkTo?: string;
+  data?: any;
+  createdAt: string;
+  readAt?: string;
 }

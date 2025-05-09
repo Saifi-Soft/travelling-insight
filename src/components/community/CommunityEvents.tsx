@@ -1,285 +1,421 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { CommunityEvent, EventLocation } from '@/types/common';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, MapPin, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
-import { communityApi } from '@/api/communityApiService';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CommunityEvent } from '@/types/common';
+import { Calendar, MapPin, User, Users, Clock, Check, X, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mongoApiService } from '@/api/mongoApiService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 import { DbDocument } from '@/api/mongoDbService';
 
-const CommunityEvents = () => {
-  const { data: events, isLoading, error, refetch } = useQuery({
-    queryKey: ['communityEvents'],
-    queryFn: async () => {
-      try {
-        const mongoEvents = await mongoApiService.queryDocuments('communityEvents', {});
-        
-        if (mongoEvents && mongoEvents.length > 0) {
-          console.log("Found events in MongoDB:", mongoEvents);
-          return mongoEvents as CommunityEvent[];
-        }
-        
-        console.log("No events in MongoDB, using API service");
-        return await communityApi.events.getAll();
-      } catch (error) {
-        console.error("Error fetching events:", error);
-        throw error;
-      }
+// Default empty event
+const DEFAULT_EVENT: Omit<CommunityEvent, 'id' | 'createdAt' | '_id'> = {
+  title: '',
+  description: '',
+  date: '',
+  location: {
+    type: 'online',
+    details: '',
+  },
+  status: 'upcoming',
+  attendees: [],
+  organizer: {
+    id: '1',  // This should be the current user's ID in a real app
+    name: 'Current User',  // This should be the current user's name
+  },
+};
+
+interface EventDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  event?: CommunityEvent | null;
+}
+
+// Event creation/edit dialog component
+const EventDialog: React.FC<EventDialogProps> = ({ open, onOpenChange, event }) => {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState<Omit<CommunityEvent, 'id' | 'createdAt' | '_id'>>(
+    event || DEFAULT_EVENT
+  );
+  
+  // Create event mutation
+  const createEventMutation = useMutation({
+    mutationFn: async (eventData: Omit<CommunityEvent, 'id' | 'createdAt' | '_id'>) => {
+      const result = await mongoApiService.insertDocument('communityEvents', {
+        ...eventData,
+        createdAt: new Date().toISOString(),
+      });
+      return result;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['communityEvents'] });
+      toast.success('Event created successfully!');
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error('Error creating event:', error);
+      toast.error('Failed to create event. Please try again.');
+    }
+  });
+  
+  // Update event mutation
+  const updateEventMutation = useMutation({
+    mutationFn: async ({ id, eventData }: { id: string, eventData: Partial<CommunityEvent> }) => {
+      const result = await mongoApiService.updateDocument('communityEvents', id, eventData);
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['communityEvents'] });
+      toast.success('Event updated successfully!');
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error('Error updating event:', error);
+      toast.error('Failed to update event. Please try again.');
+    }
   });
 
-  useEffect(() => {
-    const createDemoEvents = async () => {
-      try {
-        const existingEvents = await mongoApiService.queryDocuments('communityEvents', {});
-        
-        if (!existingEvents || existingEvents.length === 0) {
-          console.log("No events found in MongoDB, creating demo events");
-          
-          const demoEvents = [
-            {
-              title: "Annual Backpackers Meetup",
-              description: "Join fellow backpackers for our annual gathering to share stories, tips, and make plans for future adventures.",
-              date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              location: { type: "in-person", details: "Central Park, New York City" },
-              status: "upcoming",
-              attendees: [
-                { id: "user1", name: "Alex Johnson" },
-                { id: "user2", name: "Sam Peterson" }
-              ],
-              organizer: { id: "admin1", name: "Travel Community Admin" },
-              createdAt: new Date().toISOString()
-            },
-            {
-              title: "Virtual Travel Photography Workshop",
-              description: "Learn travel photography techniques from professional photographers in this interactive online workshop.",
-              date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-              location: { type: "online", details: "Zoom Meeting" },
-              status: "upcoming",
-              attendees: [
-                { id: "user3", name: "Jamie Smith" },
-                { id: "user4", name: "Robin Williams" },
-                { id: "user5", name: "Taylor Johnson" }
-              ],
-              organizer: { id: "photo1", name: "PhotoTravelPro" },
-              createdAt: new Date().toISOString()
-            },
-            {
-              title: "Southeast Asia Travel Planning Session",
-              description: "Group session for travelers planning trips to Southeast Asia in the coming year. Share itineraries and connect with other travelers.",
-              date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-              location: { type: "online", details: "Google Meet" },
-              status: "upcoming",
-              attendees: [
-                { id: "user6", name: "Jordan Lee" }
-              ],
-              organizer: { id: "user7", name: "Asia Travel Expert" },
-              createdAt: new Date().toISOString()
-            }
-          ];
-          
-          for (const event of demoEvents) {
-            await mongoApiService.insertDocument('communityEvents', event);
-          }
-          
-          console.log("Created demo events in MongoDB");
-          refetch();
-        }
-      } catch (error) {
-        console.error("Error creating demo events:", error);
-      }
-    };
-    
-    createDemoEvents();
-  }, [refetch]);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  const handleCreateEvent = async () => {
-    try {
-      const userId = localStorage.getItem('userId');
-      const userName = localStorage.getItem('userName') || 'Community Member';
-      
-      if (!userId) {
-        toast.error("You need to be logged in to create an event");
-        return;
-      }
-      
-      const newEvent = {
-        title: "Community Meetup: " + new Date().toLocaleDateString(),
-        description: "Join us for a community meetup to discuss travel plans and share experiences.",
-        date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-        location: { type: "online", details: "Zoom Meeting (link will be shared)" },
-        status: "upcoming",
-        attendees: [{ id: userId, name: userName }],
-        organizer: { id: userId, name: userName },
-        createdAt: new Date().toISOString()
-      };
-      
-      await mongoApiService.insertDocument('communityEvents', newEvent);
-      toast.success("Event created successfully!");
-      refetch();
-    } catch (error) {
-      console.error("Error creating event:", error);
-      toast.error("Failed to create event. Please try again.");
+  const handleLocationTypeChange = (value: 'online' | 'in-person') => {
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        type: value,
+      },
+    }));
+  };
+
+  const handleLocationDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        details: e.target.value,
+      },
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (event && (event._id || event.id)) {
+      updateEventMutation.mutate({ 
+        id: (event._id || event.id) as string, 
+        eventData: formData 
+      });
+    } else {
+      createEventMutation.mutate(formData);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 text-red-800 p-4 rounded-lg">
-        <h3 className="font-bold">Error loading events</h3>
-        <p>There was a problem loading community events. Please try again later.</p>
-        <Button onClick={() => refetch()} className="mt-2">Retry</Button>
-      </div>
-    );
-  }
-
-  const upcomingEvents = events?.filter(event => 
-    new Date(event.date) > new Date()
-  ) || [];
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Upcoming Events</h2>
-        <Button variant="outline" onClick={handleCreateEvent}>Create Event</Button>
-      </div>
-
-      {upcomingEvents.length === 0 ? (
-        <Card className="text-center p-8">
-          <div className="flex flex-col items-center gap-4">
-            <Calendar className="h-12 w-12 text-gray-300" />
-            <div>
-              <h3 className="text-xl font-medium mb-2">No upcoming events</h3>
-              <p className="text-gray-500">Be the first to create a travel event for the community!</p>
-            </div>
-            <Button onClick={handleCreateEvent}>Create an Event</Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>{event ? 'Edit Event' : 'Create New Event'}</DialogTitle>
+          <DialogDescription>
+            Fill out the details below to {event ? 'update the' : 'create a new'} community event.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Event Title</Label>
+            <Input 
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              placeholder="Enter event title"
+              required
+            />
           </div>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {upcomingEvents.map((event, index) => (
-            <EventCard key={event._id || event.id || index} event={event as CommunityEvent} />
-          ))}
-        </div>
-      )}
-    </div>
+          
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Describe the event"
+              rows={3}
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="date">Event Date</Label>
+            <Input 
+              id="date"
+              name="date"
+              type="datetime-local"
+              value={formData.date}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <div>
+            <Label>Location Type</Label>
+            <RadioGroup 
+              value={formData.location.type} 
+              onValueChange={(value) => handleLocationTypeChange(value as 'online' | 'in-person')}
+              className="flex space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="online" id="online" />
+                <Label htmlFor="online">Online</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="in-person" id="in-person" />
+                <Label htmlFor="in-person">In-person</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <div>
+            <Label htmlFor="locationDetails">
+              {formData.location.type === 'online' ? 'Meeting Link' : 'Location Address'}
+            </Label>
+            <Input 
+              id="locationDetails"
+              name="locationDetails"
+              value={formData.location.details}
+              onChange={handleLocationDetailsChange}
+              placeholder={formData.location.type === 'online' ? 'Enter meeting link' : 'Enter address'}
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="status">Event Status</Label>
+            <Select 
+              value={formData.status} 
+              onValueChange={(value: string) => {
+                setFormData(prev => ({ ...prev, status: value as CommunityEvent['status'] }))
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="upcoming">Upcoming</SelectItem>
+                <SelectItem value="ongoing">Ongoing</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              {event ? 'Update Event' : 'Create Event'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-const EventCard = ({ event }: { event: CommunityEvent }) => {
-  const eventDate = new Date(event.date);
-  
-  const formattedDate = eventDate.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-  
-  const formattedTime = eventDate.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+// Event Card component
+const EventCard: React.FC<{ event: CommunityEvent }> = ({ event }) => {
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'upcoming':
+        return 'bg-blue-100 text-blue-800';
+      case 'ongoing':
+        return 'bg-green-100 text-green-800';
+      case 'completed':
+        return 'bg-gray-100 text-gray-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
-  const handleAttend = async () => {
+  const formatDate = (dateString: string) => {
     try {
-      const userId = localStorage.getItem('userId');
-      const userName = localStorage.getItem('userName') || 'Community Member';
-      
-      if (!userId) {
-        toast.error("You need to be logged in to attend events");
-        return;
-      }
-      
-      const isAttending = event.attendees?.some(attendee => {
-        if (typeof attendee === 'string') {
-          return attendee === userId;
-        }
-        return attendee.id === userId;
-      });
-      
-      if (isAttending) {
-        toast.info("You're already attending this event");
-        return;
-      }
-      
-      const updatedAttendees = [...(event.attendees || []), { id: userId, name: userName }];
-      
-      // Use either _id or id property, whichever is available
-      const eventId = event._id || event.id;
-      
-      if (eventId) {
-        await mongoApiService.updateDocument('communityEvents', eventId, {
-          attendees: updatedAttendees
-        });
-        toast.success("You're now attending this event!");
-      }
-    } catch (error) {
-      console.error("Error attending event:", error);
-      toast.error("Failed to attend event. Please try again.");
+      return format(new Date(dateString), 'PPP p');
+    } catch (e) {
+      return dateString;
     }
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2">
+    <Card className="overflow-hidden transition-all hover:shadow-md">
+      {event.image && (
+        <div className="h-40 overflow-hidden">
+          <img 
+            src={event.image} 
+            alt={event.title} 
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      
+      <CardHeader>
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl mb-1">{event.title}</CardTitle>
-            <div className="flex items-center text-sm text-gray-500">
-              <Calendar className="h-4 w-4 mr-1" />
-              {formattedDate} at {formattedTime}
-            </div>
-          </div>
-          <Badge 
-            variant={
-              event.status === 'upcoming' ? 'outline' : 
-              event.status === 'ongoing' ? 'secondary' :
-              'destructive'
-            }
-          >
+          <CardTitle className="text-xl">{event.title}</CardTitle>
+          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(event.status)}`}>
             {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-          </Badge>
+          </span>
         </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-gray-600 mb-4">{event.description}</p>
+      
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
         
-        <div className="flex flex-col space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center text-sm">
-            <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-            <span>
-              {event.location.type === 'online' ? 'Online Event' : event.location.details}
-            </span>
+            <Calendar className="h-4 w-4 mr-2 text-primary" />
+            <span>{formatDate(event.date)}</span>
           </div>
           
           <div className="flex items-center text-sm">
-            <Users className="h-4 w-4 mr-2 text-gray-500" />
-            <span>
-              {event.attendees?.length || 0} {(event.attendees?.length || 0) === 1 ? 'attendee' : 'attendees'}
-            </span>
+            <MapPin className="h-4 w-4 mr-2 text-primary" />
+            <span>{event.location.type === 'online' ? 'Online Event' : event.location.details}</span>
+          </div>
+          
+          <div className="flex items-center text-sm">
+            <User className="h-4 w-4 mr-2 text-primary" />
+            <span>Organized by {event.organizer.name}</span>
+          </div>
+          
+          <div className="flex items-center text-sm">
+            <Users className="h-4 w-4 mr-2 text-primary" />
+            <span>{Array.isArray(event.attendees) ? event.attendees.length : 0} attendees</span>
           </div>
         </div>
         
-        <div className="mt-4 flex justify-between">
-          <Button variant="outline" size="sm">View Details</Button>
-          <Button size="sm" onClick={handleAttend}>Attend</Button>
+        <div className="pt-4 flex space-x-2">
+          <Button size="sm" variant="outline" className="flex-1">
+            <Check className="h-4 w-4 mr-1" /> Attend
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1">
+            View Details
+          </Button>
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+// Main CommunityEvents component
+const CommunityEvents: React.FC = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState<CommunityEvent | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('all');
+
+  // Fetch events from the MongoDB service
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ['communityEvents'],
+    queryFn: async () => {
+      try {
+        const result = await mongoApiService.queryDocuments('communityEvents', {});
+        // Convert DbDocument to CommunityEvent
+        return result.map(doc => ({ ...doc } as CommunityEvent));
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        return [];
+      }
+    }
+  });
+
+  // Filter events based on the selected tab
+  const filteredEvents = events.filter((event) => {
+    if (activeTab === 'all') return true;
+    return event.status === activeTab;
+  });
+
+  const handleCreateEvent = () => {
+    setCurrentEvent(null);
+    setIsDialogOpen(true);
+  };
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Community Events</h2>
+        <Button onClick={handleCreateEvent} className="bg-primary hover:bg-primary/90">
+          <Plus className="mr-2 h-4 w-4" /> Create Event
+        </Button>
+      </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="all">All Events</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardHeader>
+                <div className="h-6 w-2/3 bg-gray-200 rounded animate-pulse"></div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div key={j} className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredEvents.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEvents.map((event) => (
+            <EventCard key={event.id || event._id} event={event} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <Clock className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-medium">No events found</h3>
+          <p className="mt-2 text-muted-foreground">
+            {activeTab === 'all' 
+              ? 'There are no community events yet.' 
+              : `There are no ${activeTab} events at the moment.`
+            }
+          </p>
+          <Button onClick={handleCreateEvent} className="mt-4">
+            Create the first event
+          </Button>
+        </div>
+      )}
+      
+      <EventDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+        event={currentEvent} 
+      />
+    </div>
   );
 };
 

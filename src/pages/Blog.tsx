@@ -1,208 +1,388 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import BlogHeader from '@/components/BlogHeader';
-import BlogContent from '@/components/BlogContent';
-import HeaderAd from '@/components/ads/HeaderAd';
-import FooterAd from '@/components/ads/FooterAd';
-import SidebarAd from '@/components/ads/SidebarAd';
-import { Loader2 } from 'lucide-react';
-import { Post, Category, Topic } from '@/types/common';
-import { toast } from 'sonner';
-
-// Import the mongoApiService for direct query access
+import { useLocation, useNavigate } from 'react-router-dom';
 import { mongoApiService } from '@/api/mongoApiService';
-
-// Define wrapper functions to match the expected types
-const postsApi = {
-  getAll: async (): Promise<Post[]> => {
-    return await mongoApiService.queryDocuments('posts', {});
-  },
-  
-  getTrending: async (): Promise<Post[]> => {
-    const posts = await mongoApiService.queryDocuments('posts', {});
-    // Sort posts by likes to get trending
-    return posts.sort((a: Post, b: Post) => b.likes - a.likes).slice(0, 10);
-  },
-  
-  getByCategory: async (categorySlug: string): Promise<Post[]> => {
-    try {
-      const categories = await mongoApiService.queryDocuments('categories', {});
-      const category = categories.find((cat: Category) => cat.slug === categorySlug);
-      
-      if (!category) {
-        throw new Error(`Category with slug ${categorySlug} not found`);
-      }
-      
-      const posts = await mongoApiService.queryDocuments('posts', {
-        category: category.name
-      });
-      
-      return posts;
-    } catch (error) {
-      console.error(`Error fetching posts for category ${categorySlug}:`, error);
-      toast.error("Couldn't load category posts");
-      return [];
-    }
-  },
-  
-  getByTag: async (tagSlug: string): Promise<Post[]> => {
-    try {
-      const topics = await mongoApiService.queryDocuments('topics', {});
-      const topic = topics.find((t: Topic) => t.slug === tagSlug);
-      
-      if (!topic) {
-        throw new Error(`Topic with slug ${tagSlug} not found`);
-      }
-      
-      const posts = await mongoApiService.queryDocuments('posts', {});
-      return posts.filter((post: Post) => post.topics && post.topics.includes(topic.name));
-    } catch (error) {
-      console.error(`Error fetching posts for tag ${tagSlug}:`, error);
-      toast.error("Couldn't load tag posts");
-      return [];
-    }
-  }
-};
-
-const categoriesApi = {
-  getAll: async (): Promise<Category[]> => {
-    return await mongoApiService.queryDocuments('categories', {});
-  }
-};
-
-const topicsApi = {
-  getTrending: async (): Promise<Topic[]> => {
-    return await mongoApiService.queryDocuments('topics', {});
-  }
-};
+import { Post, Category, Topic } from '@/types/common';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DbDocument } from '@/api/mongoDbService';
+import PostCard from '@/components/PostCard';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Filter, X } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Blog = () => {
-  const [searchParams] = useSearchParams();
-  const isTrending = searchParams.get("trending") === "true";
-  const categorySlug = searchParams.get("category");
-  const tagSlug = searchParams.get("tag");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
   
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
+  // State for filters
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    queryParams.get('category')
+  );
+  const [selectedTag, setSelectedTag] = useState<string | null>(
+    queryParams.get('tag')
+  );
+  const [searchQuery, setSearchQuery] = useState<string>(
+    queryParams.get('search') || ''
+  );
   
-  // Determine which API call to make based on search parameters
-  const fetchPosts = async () => {
-    if (categorySlug) {
-      return postsApi.getByCategory(categorySlug);
-    } else if (tagSlug) {
-      return postsApi.getByTag(tagSlug);
-    } else if (isTrending) {
-      return postsApi.getTrending();
+  // Fetch posts with the mongoApiService
+  const { data: postsData, isLoading: isPostsLoading } = useQuery({
+    queryKey: ['posts', selectedCategory, selectedTag, searchQuery],
+    queryFn: async () => {
+      try {
+        let query = {};
+        
+        if (selectedCategory) {
+          query = { category: selectedCategory };
+        }
+        
+        if (selectedTag) {
+          query = { ...query, topics: selectedTag };
+        }
+        
+        const result = await mongoApiService.queryDocuments('posts', query);
+        return result.map(doc => ({ ...doc } as Post));
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        return [];
+      }
+    }
+  });
+  
+  // Fetch categories
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      try {
+        const result = await mongoApiService.queryDocuments('categories', {});
+        return result.map(doc => ({ ...doc } as Category));
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+      }
+    }
+  });
+  
+  // Fetch topics
+  const { data: topicsData, isLoading: isTopicsLoading } = useQuery({
+    queryKey: ['topics'],
+    queryFn: async () => {
+      try {
+        const result = await mongoApiService.queryDocuments('topics', {});
+        return result.map(doc => ({ ...doc } as Topic));
+      } catch (error) {
+        console.error('Error fetching topics:', error);
+        return [];
+      }
+    }
+  });
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (selectedCategory) {
+      params.set('category', selectedCategory);
+    }
+    
+    if (selectedTag) {
+      params.set('tag', selectedTag);
+    }
+    
+    if (searchQuery) {
+      params.set('search', searchQuery);
+    }
+    
+    const newUrl = `${location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+    navigate(newUrl, { replace: true });
+  }, [selectedCategory, selectedTag, searchQuery, navigate, location.pathname]);
+  
+  // Helper to handle category selection
+  const handleCategorySelect = (categorySlug: string) => {
+    if (selectedCategory === categorySlug) {
+      setSelectedCategory(null);
     } else {
-      return postsApi.getAll();
+      setSelectedCategory(categorySlug);
+      setSelectedTag(null); // Reset tag when category changes
     }
   };
   
-  // Fetch posts using react-query
-  const { data: posts = [], isLoading: postsLoading } = useQuery({
-    queryKey: ['posts', isTrending, categorySlug, tagSlug],
-    queryFn: fetchPosts,
-  });
-  
-  // Fetch categories using react-query
-  const { data: categoriesData = [], isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: categoriesApi.getAll,
-  });
-
-  // Fetch trending topics/hashtags
-  const { data: trendingTopics = [], isLoading: topicsLoading } = useQuery({
-    queryKey: ['trending-topics'],
-    queryFn: topicsApi.getTrending,
-  });
-  
-  // Set page title based on parameters
-  useEffect(() => {
-    if (categorySlug) {
-      const category = categoriesData.find((c: Category) => c.slug === categorySlug);
-      document.title = category ? `${category.name} - Travel Blog` : "Travel Blog";
-    } else if (tagSlug) {
-      const tag = trendingTopics.find((t: Topic) => t.slug === tagSlug);
-      document.title = tag ? `#${tag.name} - Travel Blog` : "Travel Blog";
-    } else if (isTrending) {
-      document.title = "Trending Articles - Travel Blog";
+  // Helper to handle tag selection
+  const handleTagSelect = (tagSlug: string) => {
+    if (selectedTag === tagSlug) {
+      setSelectedTag(null);
     } else {
-      document.title = "Blog - Travel Blog";
+      setSelectedTag(tagSlug);
     }
-  }, [isTrending, categorySlug, tagSlug, categoriesData, trendingTopics]);
+  };
   
-  // Transform categories data to include "All" as first option
-  const categories = ["All", ...(categoriesData as Category[]).map(category => category.name)];
+  // Handle search input
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Search is already updated via the input onChange
+  };
   
-  // Filter posts based on category and search query
-  const filteredPosts = (posts as Post[]).filter(post => {
-    const matchesCategory = activeCategory === "All" || post.category === activeCategory;
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const isLoading = postsLoading || categoriesLoading || topicsLoading;
-
-  if (isLoading) {
+  // Clear all filters
+  const clearFilters = () => {
+    setSelectedCategory(null);
+    setSelectedTag(null);
+    setSearchQuery('');
+  };
+  
+  // Convert DbDocument to required types
+  const posts = Array.isArray(postsData) ? postsData.map(doc => doc as Post) : [];
+  const categories = Array.isArray(categoriesData) ? categoriesData.map(doc => doc as Category) : [];
+  const topics = Array.isArray(topicsData) ? topicsData.map(doc => doc as Topic) : [];
+  
+  // Filter posts by search query
+  const filteredPosts = posts.filter(post => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-custom-green mx-auto" />
-            <p className="mt-4 text-lg text-gray-600">Loading content...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      post.title.toLowerCase().includes(query) ||
+      (post.excerpt && post.excerpt.toLowerCase().includes(query)) ||
+      (post.content && post.content.toLowerCase().includes(query))
     );
-  }
-
+  });
+  
+  // Get active filters count for mobile
+  const activeFiltersCount = [selectedCategory, selectedTag, searchQuery].filter(Boolean).length;
+  
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <main className="flex-grow">
-        <BlogHeader 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
-          categories={categories}
-          isTrending={isTrending}
-        />
+    <div className="container-custom py-12">
+      <div className="flex flex-col space-y-6">
+        <div className="text-center max-w-3xl mx-auto">
+          <h1 className="text-4xl font-bold mb-4">Travel Blog</h1>
+          <p className="text-muted-foreground">
+            Explore our collection of travel stories, tips, and guides from around the world
+          </p>
+        </div>
         
-        <div className="container mx-auto px-4 mt-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Main content */}
-            <div className="w-full lg:w-2/3">
-              <BlogContent 
-                filteredPosts={filteredPosts} 
-                isLoading={isLoading}
-              />
-            </div>
-            
-            {/* Sidebar for ad */}
-            <div className="w-full lg:w-1/3 space-y-8">
-              <div className="sticky top-4">
-                <SidebarAd />
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Mobile filters */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="md:hidden flex items-center">
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+                {activeFiltersCount > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {activeFiltersCount}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle>Filters</SheetTitle>
+              </SheetHeader>
+              <ScrollArea className="h-[calc(100vh-8rem)] py-4">
+                <div className="space-y-6">
+                  {/* Categories */}
+                  <div>
+                    <h3 className="font-medium mb-3">Categories</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {isCategoriesLoading ? (
+                        Array(6).fill(0).map((_, i) => (
+                          <Skeleton key={i} className="h-8 w-24" />
+                        ))
+                      ) : (
+                        categories.map((category) => (
+                          <Badge
+                            key={category.id || category._id}
+                            variant={selectedCategory === category.slug ? "default" : "outline"}
+                            className="cursor-pointer"
+                            onClick={() => handleCategorySelect(category.slug)}
+                          >
+                            {category.name}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  {/* Topics/Tags */}
+                  <div>
+                    <h3 className="font-medium mb-3">Topics</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {isTopicsLoading ? (
+                        Array(8).fill(0).map((_, i) => (
+                          <Skeleton key={i} className="h-8 w-20" />
+                        ))
+                      ) : (
+                        topics.map((topic) => (
+                          <Badge
+                            key={topic.id || topic._id}
+                            variant={selectedTag === topic.slug ? "default" : "outline"}
+                            className="cursor-pointer"
+                            onClick={() => handleTagSelect(topic.slug)}
+                          >
+                            {topic.name}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <Button onClick={clearFilters} variant="outline" className="w-full">
+                    Clear All Filters
+                  </Button>
+                </div>
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
+          
+          {/* Desktop sidebar */}
+          <div className="hidden md:block w-64 space-y-6">
+            <div>
+              <h3 className="font-medium mb-3">Categories</h3>
+              <div className="flex flex-wrap gap-2">
+                {isCategoriesLoading ? (
+                  Array(6).fill(0).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-24" />
+                  ))
+                ) : (
+                  categories.map((category) => (
+                    <Badge
+                      key={category.id || category._id}
+                      variant={selectedCategory === category.slug ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => handleCategorySelect(category.slug)}
+                    >
+                      {category.name}
+                    </Badge>
+                  ))
+                )}
               </div>
             </div>
+            
+            <Separator />
+            
+            <div>
+              <h3 className="font-medium mb-3">Topics</h3>
+              <div className="flex flex-wrap gap-2">
+                {isTopicsLoading ? (
+                  Array(8).fill(0).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-20" />
+                  ))
+                ) : (
+                  topics.map((topic) => (
+                    <Badge
+                      key={topic.id || topic._id}
+                      variant={selectedTag === topic.slug ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => handleTagSelect(topic.slug)}
+                    >
+                      {topic.name}
+                    </Badge>
+                  ))
+                )}
+              </div>
+            </div>
+            
+            {(selectedCategory || selectedTag || searchQuery) && (
+              <>
+                <Separator />
+                <Button onClick={clearFilters} variant="outline" className="w-full">
+                  Clear All Filters
+                </Button>
+              </>
+            )}
+          </div>
+          
+          {/* Main content */}
+          <div className="flex-1">
+            {/* Search bar */}
+            <form onSubmit={handleSearch} className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search articles..."
+                  className="pl-10 pr-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+            </form>
+            
+            {/* Active filters */}
+            {(selectedCategory || selectedTag) && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {selectedCategory && categories.find(c => c.slug === selectedCategory) && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Category: {categories.find(c => c.slug === selectedCategory)?.name}
+                    <button onClick={() => setSelectedCategory(null)}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                
+                {selectedTag && topics.find(t => t.slug === selectedTag) && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Topic: {topics.find(t => t.slug === selectedTag)?.name}
+                    <button onClick={() => setSelectedTag(null)}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+              </div>
+            )}
+            
+            {/* Posts grid */}
+            {isPostsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Array(4).fill(0).map((_, i) => (
+                  <div key={i} className="space-y-3">
+                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <div className="flex justify-between">
+                      <Skeleton className="h-8 w-24" />
+                      <Skeleton className="h-8 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredPosts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {filteredPosts.map((post) => (
+                  <PostCard key={post.id || post._id} post={post} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-5xl mb-4">🔍</div>
+                <h3 className="text-xl font-medium mb-2">No posts found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your filters or search query
+                </p>
+                <Button onClick={clearFilters}>Clear All Filters</Button>
+              </div>
+            )}
           </div>
         </div>
-        
-        {/* Footer ad at bottom of content */}
-        <div className="container mx-auto px-4 my-12">
-          <FooterAd />
-        </div>
-      </main>
-      
-      <Footer />
+      </div>
     </div>
   );
 };

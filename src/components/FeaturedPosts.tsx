@@ -69,6 +69,23 @@ const FeaturedPosts = () => {
 
   // Always have data to render, use placeholder data before real data loads
   const postsToDisplay = featuredPosts || FEATURED_POSTS;
+  
+  // Helper functions to get author data
+  const getAuthorName = (post: Post) => {
+    if (typeof post.author === 'string') {
+      return post.author;
+    } else if (post.author && typeof post.author === 'object') {
+      return post.author.name;
+    }
+    return 'Unknown Author';
+  };
+
+  const getAuthorAvatar = (post: Post) => {
+    if (typeof post.author === 'object' && post.author && post.author.avatar) {
+      return post.author.avatar;
+    }
+    return 'https://via.placeholder.com/40x40?text=Author';
+  };
 
   return (
     <section className="py-16 bg-gradient-to-b from-theme-primary/10 to-background">
@@ -117,7 +134,7 @@ const FeaturedPosts = () => {
                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-4 left-4 bg-theme-primary text-white text-xs font-medium px-3 py-1.5 rounded-full">
-                      {post.category}
+                      {post.category && (typeof post.category === 'object' ? post.category.name : post.category)}
                     </div>
                   </div>
                   
@@ -133,12 +150,12 @@ const FeaturedPosts = () => {
                     
                     <div className="flex items-center space-x-3 mb-4">
                       <img 
-                        src={post.author.avatar} 
-                        alt={post.author.name}
+                        src={getAuthorAvatar(post)} 
+                        alt={getAuthorName(post)}
                         className="w-8 h-8 rounded-full object-cover ring-2 ring-theme-primary/20"
                       />
                       <div>
-                        <p className="text-sm font-medium">{post.author.name}</p>
+                        <p className="text-sm font-medium">{getAuthorName(post)}</p>
                       </div>
                     </div>
                   </CardContent>

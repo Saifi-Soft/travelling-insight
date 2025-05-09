@@ -2,7 +2,7 @@
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { Calendar, MessageSquare, Heart } from 'lucide-react';
-import { Post } from '@/types/common';
+import { Post, Author } from '@/types/common';
 
 interface PostCardProps {
   post: Post;
@@ -10,6 +10,23 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post, variant = 'default' }: PostCardProps) => {
+  // Helper function to get author info
+  const getAuthorName = () => {
+    if (typeof post.author === 'string') {
+      return post.author;
+    } else if (post.author && typeof post.author === 'object') {
+      return post.author.name;
+    }
+    return 'Unknown Author';
+  };
+
+  const getAuthorAvatar = () => {
+    if (typeof post.author === 'object' && post.author && post.author.avatar) {
+      return post.author.avatar;
+    }
+    return 'https://via.placeholder.com/40x40?text=Author';
+  };
+
   if (variant === 'horizontal') {
     return (
       <Link to={`/blog/${post.id}`} className="group">
@@ -22,7 +39,7 @@ const PostCard = ({ post, variant = 'default' }: PostCardProps) => {
                 className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute top-4 left-4 bg-custom-green text-white text-xs font-medium px-2 py-1 rounded-md">
-                {post.category}
+                {post.category && (typeof post.category === 'object' ? post.category.name : post.category)}
               </div>
             </div>
             
@@ -39,12 +56,12 @@ const PostCard = ({ post, variant = 'default' }: PostCardProps) => {
                 
                 <div className="flex items-center space-x-3 mb-4">
                   <img 
-                    src={post.author.avatar} 
-                    alt={post.author.name}
+                    src={getAuthorAvatar()}
+                    alt={getAuthorName()}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                   <div>
-                    <p className="text-sm font-medium">{post.author.name}</p>
+                    <p className="text-sm font-medium">{getAuthorName()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -84,7 +101,7 @@ const PostCard = ({ post, variant = 'default' }: PostCardProps) => {
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute top-4 left-4 bg-custom-green text-white text-xs font-medium px-2 py-1 rounded-md">
-            {post.category}
+            {post.category && (typeof post.category === 'object' ? post.category.name : post.category)}
           </div>
         </div>
         
@@ -100,12 +117,12 @@ const PostCard = ({ post, variant = 'default' }: PostCardProps) => {
           
           <div className="flex items-center space-x-3 mb-4">
             <img 
-              src={post.author.avatar} 
-              alt={post.author.name}
+              src={getAuthorAvatar()} 
+              alt={getAuthorName()}
               className="w-8 h-8 rounded-full object-cover"
             />
             <div>
-              <p className="text-sm font-medium">{post.author.name}</p>
+              <p className="text-sm font-medium">{getAuthorName()}</p>
             </div>
           </div>
         </CardContent>

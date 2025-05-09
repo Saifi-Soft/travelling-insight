@@ -1,3 +1,4 @@
+
 import { Post, Topic, Category } from '@/types/common';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -183,7 +184,12 @@ export const postsApi = {
   },
   
   getByCategory: (category: string) => {
-    const filtered = posts.filter(post => post.category.toLowerCase() === category.toLowerCase());
+    const filtered = posts.filter(post => {
+      if (typeof post.category === 'object') {
+        return post.category.slug === category;
+      }
+      return post.category?.toLowerCase() === category.toLowerCase();
+    });
     return fetchAPI<Post[]>(`/posts/category/${category}`, undefined, filtered);
   },
   
@@ -198,7 +204,10 @@ export const postsApi = {
     const newPost = {
       ...post,
       id: Date.now().toString(),
-    };
+      likes: post.likes || 0,
+      comments: post.comments || 0,
+      date: post.date || new Date().toISOString()
+    } as Post;
     
     try {
       const result = await fetchAPI<Post>(
@@ -221,7 +230,7 @@ export const postsApi = {
       // Find and update the post in our mock data
       const index = posts.findIndex(p => p.id === id);
       if (index !== -1) {
-        const updatedPost = { ...posts[index], ...post };
+        const updatedPost = { ...posts[index], ...post } as Post;
         posts[index] = updatedPost;
         
         return fetchAPI<Post>(
@@ -268,12 +277,14 @@ export const categoriesApi = {
   },
   
   // Admin operations
-  create: async (category: Omit<Category, 'id'>) => {
+  create: async (categoryData: Omit<Category, 'id'>) => {
     const newCategory = {
-      ...category,
+      ...categoryData,
       id: Date.now().toString(), 
-      count: 0
-    };
+      name: categoryData.name,
+      slug: categoryData.slug,
+      count: categoryData.count || 0
+    } as Category;
     
     try {
       const result = await fetchAPI<Category>(
@@ -296,7 +307,7 @@ export const categoriesApi = {
       // Find and update the category in our mock data
       const index = categories.findIndex(c => c.id === id);
       if (index !== -1) {
-        const updatedCategory = { ...categories[index], ...category };
+        const updatedCategory = { ...categories[index], ...category } as Category;
         categories[index] = updatedCategory;
         
         return fetchAPI<Category>(
@@ -344,12 +355,14 @@ export const topicsApi = {
   },
   
   // Admin operations
-  create: async (topic: Omit<Topic, 'id'>) => {
+  create: async (topicData: Omit<Topic, 'id'>) => {
     const newTopic = {
-      ...topic,
+      ...topicData,
       id: Date.now().toString(),
-      count: 0
-    };
+      name: topicData.name,
+      slug: topicData.slug,
+      count: topicData.count || 0
+    } as Topic;
     
     try {
       const result = await fetchAPI<Topic>(
@@ -372,7 +385,7 @@ export const topicsApi = {
       // Find and update the topic in our mock data
       const index = topics.findIndex(t => t.id === id);
       if (index !== -1) {
-        const updatedTopic = { ...topics[index], ...topic };
+        const updatedTopic = { ...topics[index], ...topic } as Topic;
         topics[index] = updatedTopic;
         
         return fetchAPI<Topic>(
