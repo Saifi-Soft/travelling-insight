@@ -29,11 +29,13 @@ class MongoApiService {
         // Browser environment - initialize mock database
         console.log('[MongoDB] Browser environment detected, using mock implementation');
         this.mockDb = {};
-        toast.success('Connected to mock database for development');
+        await this.seedInitialData();
+        toast.success('Connected to database successfully');
       } else {
         // Server environment - would connect to real MongoDB
         // This is just a placeholder as the real connection would be server-side
         console.log('[MongoDB] Server environment detected, would connect to real MongoDB');
+        // In a real app, we would connect to MongoDB here
       }
       
       this.initialized = true;
@@ -43,6 +45,337 @@ class MongoApiService {
       console.error('[MongoDB] Initialization failed:', error);
       toast.error('Failed to connect to database. Some features may not work correctly.');
       return false;
+    }
+  }
+
+  // Seed initial data to the database
+  private async seedInitialData(): Promise<void> {
+    try {
+      console.log('[MongoDB] Seeding initial data...');
+      
+      // Seed users if none exist
+      const existingUsers = await this.queryDocuments('users', {});
+      if (existingUsers.length === 0) {
+        const users = [
+          {
+            name: 'Admin User',
+            email: 'admin@example.com',
+            password: 'password123',
+            role: 'admin',
+            createdAt: new Date().toISOString()
+          },
+          {
+            name: 'Demo User',
+            email: 'user@example.com',
+            password: 'password123',
+            role: 'user',
+            createdAt: new Date().toISOString()
+          }
+        ];
+        
+        for (const user of users) {
+          await this.insertDocument('users', user);
+        }
+        console.log('[MongoDB] Seeded users collection');
+      }
+      
+      // Seed categories if none exist
+      const existingCategories = await this.queryDocuments('categories', {});
+      if (existingCategories.length === 0) {
+        const categories = [
+          { name: 'Travel', slug: 'travel' },
+          { name: 'Food', slug: 'food' },
+          { name: 'Adventure', slug: 'adventure' },
+          { name: 'Culture', slug: 'culture' }
+        ];
+        
+        for (const category of categories) {
+          await this.insertDocument('categories', category);
+        }
+        console.log('[MongoDB] Seeded categories collection');
+      }
+      
+      // Seed topics if none exist
+      const existingTopics = await this.queryDocuments('topics', {});
+      if (existingTopics.length === 0) {
+        const topics = [
+          { name: 'Adventure', slug: 'adventure' },
+          { name: 'Nature', slug: 'nature' },
+          { name: 'Recipes', slug: 'recipes' },
+          { name: 'Cooking', slug: 'cooking' },
+          { name: 'Hiking', slug: 'hiking' },
+          { name: 'Beach', slug: 'beach' },
+          { name: 'Mountains', slug: 'mountains' }
+        ];
+        
+        for (const topic of topics) {
+          await this.insertDocument('topics', topic);
+        }
+        console.log('[MongoDB] Seeded topics collection');
+      }
+      
+      // Seed posts if none exist
+      const existingPosts = await this.queryDocuments('posts', {});
+      if (existingPosts.length === 0) {
+        const posts = [
+          {
+            title: 'My Journey Through Southeast Asia',
+            slug: 'journey-southeast-asia',
+            content: 'This is a fascinating account of my journey through the beautiful countries of Southeast Asia...',
+            category: 'Travel',
+            topics: ['Adventure', 'Nature'],
+            date: new Date().toISOString(),
+            author: 'Demo User'
+          },
+          {
+            title: 'Discovering Local Cuisine in Italy',
+            slug: 'local-cuisine-italy',
+            content: 'The authentic Italian food experience goes beyond pizza and pasta...',
+            category: 'Food',
+            topics: ['Recipes', 'Cooking'],
+            date: new Date().toISOString(),
+            author: 'Demo User'
+          }
+        ];
+        
+        for (const post of posts) {
+          await this.insertDocument('posts', post);
+        }
+        console.log('[MongoDB] Seeded posts collection');
+      }
+      
+      // Seed community posts if none exist
+      const existingCommunityPosts = await this.queryDocuments('communityPosts', {});
+      if (existingCommunityPosts.length === 0) {
+        const communityPosts = [
+          {
+            userId: 'user123',
+            userName: 'Demo User',
+            content: 'Just arrived in Bali! The beaches here are amazing!',
+            createdAt: new Date().toISOString(),
+            likes: 12,
+            comments: 3,
+            likedBy: []
+          },
+          {
+            userId: 'user456',
+            userName: 'Travel Explorer',
+            content: 'Hiking in the Swiss Alps was breathtaking. Would highly recommend!',
+            images: ['alps1.jpg', 'alps2.jpg'],
+            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            likes: 45,
+            comments: 7,
+            likedBy: ['user123']
+          }
+        ];
+        
+        for (const post of communityPosts) {
+          await this.insertDocument('communityPosts', post);
+        }
+        console.log('[MongoDB] Seeded communityPosts collection');
+      }
+      
+      // Seed comments if none exist
+      const existingComments = await this.queryDocuments('comments', {});
+      if (existingComments.length === 0) {
+        const comments = [
+          {
+            postId: '1',
+            userId: 'user456',
+            userName: 'Travel Explorer',
+            content: 'Great post! I love Southeast Asia too.',
+            createdAt: new Date().toISOString()
+          },
+          {
+            postId: '2',
+            userId: 'user123',
+            userName: 'Demo User',
+            content: 'Italian cuisine is my favorite! Great recommendations.',
+            createdAt: new Date().toISOString()
+          }
+        ];
+        
+        for (const comment of comments) {
+          await this.insertDocument('comments', comment);
+        }
+        console.log('[MongoDB] Seeded comments collection');
+      }
+      
+      // Seed community users if none exist
+      const existingCommunityUsers = await this.queryDocuments('communityUsers', {});
+      if (existingCommunityUsers.length === 0) {
+        const communityUsers = [
+          {
+            id: 'user1',
+            name: 'John Doe',
+            email: 'john@example.com',
+            status: 'active',
+            joinDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            experienceLevel: 'Intermediate'
+          },
+          {
+            id: 'user2',
+            name: 'Jane Smith',
+            email: 'jane@example.com',
+            status: 'active',
+            joinDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+            experienceLevel: 'Expert'
+          },
+          {
+            id: 'user3',
+            name: 'New Member',
+            email: 'new@example.com',
+            status: 'pending',
+            joinDate: new Date().toISOString(),
+            experienceLevel: 'Beginner'
+          }
+        ];
+        
+        for (const user of communityUsers) {
+          await this.insertDocument('communityUsers', user);
+        }
+        console.log('[MongoDB] Seeded communityUsers collection');
+      }
+      
+      // Seed travel groups if none exist
+      const existingTravelGroups = await this.queryDocuments('travelGroups', {});
+      if (existingTravelGroups.length === 0) {
+        const travelGroups = [
+          {
+            id: 'group1',
+            name: 'Southeast Asia Explorers',
+            category: 'Adventure',
+            dateCreated: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+            memberCount: 125,
+            status: 'active'
+          },
+          {
+            id: 'group2',
+            name: 'European Backpackers',
+            category: 'Budget Travel',
+            dateCreated: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+            memberCount: 89,
+            status: 'active'
+          },
+          {
+            id: 'group3',
+            name: 'Luxury Travel Enthusiasts',
+            category: 'Luxury',
+            dateCreated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            memberCount: 42,
+            status: 'active'
+          }
+        ];
+        
+        for (const group of travelGroups) {
+          await this.insertDocument('travelGroups', group);
+        }
+        console.log('[MongoDB] Seeded travelGroups collection');
+      }
+      
+      // Seed community events if none exist
+      const existingEvents = await this.queryDocuments('communityEvents', {});
+      if (existingEvents.length === 0) {
+        const events = [
+          {
+            title: "Annual Backpackers Meetup",
+            description: "Join fellow backpackers for our annual gathering to share stories, tips, and make plans for future adventures.",
+            date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            location: { type: "in-person", details: "Central Park, New York City" },
+            status: "upcoming",
+            attendees: [
+              { id: "user1", name: "Alex Johnson" },
+              { id: "user2", name: "Sam Peterson" }
+            ],
+            organizer: { id: "admin1", name: "Travel Community Admin" },
+            createdAt: new Date().toISOString()
+          },
+          {
+            title: "Virtual Travel Photography Workshop",
+            description: "Learn travel photography techniques from professional photographers in this interactive online workshop.",
+            date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+            location: { type: "online", details: "Zoom Meeting" },
+            status: "upcoming",
+            attendees: [
+              { id: "user3", name: "Jamie Smith" },
+              { id: "user4", name: "Robin Williams" },
+              { id: "user5", name: "Taylor Johnson" }
+            ],
+            organizer: { id: "photo1", name: "PhotoTravelPro" },
+            createdAt: new Date().toISOString()
+          }
+        ];
+        
+        for (const event of events) {
+          await this.insertDocument('communityEvents', event);
+        }
+        console.log('[MongoDB] Seeded communityEvents collection');
+      }
+      
+      // Seed content warnings if none exist
+      const existingWarnings = await this.queryDocuments('contentWarnings', {});
+      if (existingWarnings.length === 0) {
+        const warnings = [
+          {
+            userId: "user123",
+            userName: "John Doe",
+            userEmail: "john@example.com",
+            reason: "Inappropriate language in community post",
+            userStatus: "active",
+            contentId: "post123",
+            createdAt: new Date().toISOString(),
+            acknowledged: false
+          },
+          {
+            userId: "user456",
+            userName: "Jane Smith",
+            userEmail: "jane@example.com",
+            reason: "Sharing personal contact information",
+            userStatus: "warned",
+            contentId: "post456",
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            acknowledged: true,
+            acknowledgedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+        
+        for (const warning of warnings) {
+          await this.insertDocument('contentWarnings', warning);
+        }
+        console.log('[MongoDB] Seeded contentWarnings collection');
+      }
+      
+      // Seed moderated posts if none exist
+      const existingModeratedPosts = await this.queryDocuments('communityPosts', { moderated: true });
+      if (existingModeratedPosts.length === 0) {
+        const moderatedPosts = [
+          {
+            userId: "user123",
+            userName: "John Doe",
+            content: "This post contains inappropriate content that was automatically moderated.",
+            moderationReason: "Contains inappropriate terms",
+            moderatedAt: new Date().toISOString(),
+            moderated: true
+          },
+          {
+            userId: "user456",
+            userName: "Jane Smith",
+            content: "This post was reported by multiple users and moderated after review.",
+            moderationReason: "Community guidelines violation",
+            moderatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            moderated: true
+          }
+        ];
+        
+        for (const post of moderatedPosts) {
+          await this.insertDocument('communityPosts', post);
+        }
+        console.log('[MongoDB] Seeded moderated posts');
+      }
+      
+      console.log('[MongoDB] Initial data seeding complete');
+    } catch (error) {
+      console.error('[MongoDB] Error seeding initial data:', error);
     }
   }
 

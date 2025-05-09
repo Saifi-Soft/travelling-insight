@@ -26,6 +26,7 @@ class MongoDbService {
 
     try {
       console.log('[MongoDB] Connecting to MongoDB Atlas...');
+      console.log('[MongoDB] Using URI:', uri);
       
       this.connectionPromise = new Promise(async (resolve, reject) => {
         try {
@@ -62,7 +63,7 @@ class MongoDbService {
             
             // Warning for development
             console.warn('[MongoDB] Using mock MongoDB implementation in browser. Real MongoDB connections require server-side code.');
-            toast.warning('Using test database in browser environment', {
+            toast.warning('Using mock database in browser environment', {
               duration: 5000,
             });
           }

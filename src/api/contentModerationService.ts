@@ -123,83 +123,27 @@ export const contentModerationApi = {
     }
   },
 
-  // New method: Get all content warnings
+  // Get all content warnings
   getAllContentWarnings: async () => {
     try {
-      // In a real app, this would fetch from the moderationWarnings collection
-      const warnings = await mongoApiService.queryDocuments('contentWarnings', {});
-      
-      // If no warnings exist yet, return some mock data for demo purposes
-      if (warnings.length === 0) {
-        return [
-          {
-            _id: 'warning1',
-            userId: 'user123',
-            userName: 'John Doe',
-            userEmail: 'john@example.com',
-            reason: 'Inappropriate language in community post',
-            userStatus: 'active',
-            contentId: 'post123',
-            createdAt: new Date().toISOString(),
-            acknowledged: false
-          },
-          {
-            _id: 'warning2',
-            userId: 'user456',
-            userName: 'Jane Smith',
-            userEmail: 'jane@example.com',
-            reason: 'Sharing personal contact information',
-            userStatus: 'warned',
-            contentId: 'post456',
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            acknowledged: true,
-            acknowledgedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ];
-      }
-      
-      return warnings;
+      return await mongoApiService.queryDocuments('contentWarnings', {});
     } catch (error) {
       console.error('Error fetching content warnings:', error);
       return [];
     }
   },
 
-  // New method: Get moderated posts
+  // Get moderated posts
   getModeratedPosts: async () => {
     try {
-      const posts = await mongoApiService.queryDocuments('communityPosts', { moderated: true });
-      
-      // If no moderated posts exist yet, return some mock data for demo purposes
-      if (posts.length === 0) {
-        return [
-          {
-            _id: 'post123',
-            userName: 'John Doe',
-            userId: 'user123',
-            content: 'This post contains inappropriate content that was automatically moderated.',
-            moderationReason: 'Contains inappropriate terms',
-            moderatedAt: new Date().toISOString()
-          },
-          {
-            _id: 'post456',
-            userName: 'Jane Smith',
-            userId: 'user456',
-            content: 'This post was reported by multiple users and moderated after review.',
-            moderationReason: 'Community guidelines violation',
-            moderatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ];
-      }
-      
-      return posts;
+      return await mongoApiService.queryDocuments('communityPosts', { moderated: true });
     } catch (error) {
       console.error('Error fetching moderated posts:', error);
       return [];
     }
   },
 
-  // New method: Add warning to user
+  // Add warning to user
   addWarningToUser: async (userId: string, warningType: string, reason: string) => {
     try {
       // Create warning record
