@@ -2,9 +2,6 @@ import { MongoOperators, Post, Category, Topic, Comment } from '@/types/common';
 import { toast } from 'sonner';
 import { mongoDbService } from './mongoDbService';
 
-// Type definitions for our API functions
-// We'll use interfaces that match our common types but with optional IDs
-
 // MongoDB API service that uses the mongoDbService
 class MongoApiService {
   private initialized = false;
@@ -60,14 +57,7 @@ class MongoApiService {
   // Get a document by ID
   async getDocumentById(collectionName: string, id: string): Promise<any | null> {
     try {
-      let filter: any = {};
-      
-      // Try to find by _id or id
-      try {
-        filter = { _id: mongoDbService.toObjectId(id) };
-      } catch (e) {
-        filter = { $or: [{ id: id }, { _id: id }] };
-      }
+      const filter = { _id: id };
       
       const document = await mongoDbService.findOne(collectionName, filter);
       console.log(`[MongoDB] Retrieved document from ${collectionName}:`, document);
@@ -81,14 +71,7 @@ class MongoApiService {
   // Update a document
   async updateDocument(collectionName: string, id: string, update: any): Promise<any | null> {
     try {
-      let filter: any = {};
-      
-      // Try to find by _id or id
-      try {
-        filter = { _id: mongoDbService.toObjectId(id) };
-      } catch (e) {
-        filter = { $or: [{ id: id }, { _id: id }] };
-      }
+      const filter = { _id: id };
       
       const updatedDocument = {
         ...update,
@@ -110,14 +93,7 @@ class MongoApiService {
   // Delete a document
   async deleteDocument(collectionName: string, id: string): Promise<boolean> {
     try {
-      let filter: any = {};
-      
-      // Try to find by _id or id
-      try {
-        filter = { _id: mongoDbService.toObjectId(id) };
-      } catch (e) {
-        filter = { $or: [{ id: id }, { _id: id }] };
-      }
+      const filter = { _id: id };
       
       const result = await mongoDbService.deleteOne(collectionName, filter);
       const success = result && result.deletedCount && result.deletedCount > 0;
