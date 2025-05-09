@@ -1,6 +1,6 @@
 
 import { createRoot } from 'react-dom/client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import App from './App.tsx';
 import './index.css';
 
@@ -25,42 +25,24 @@ const queryClient = new QueryClient({
 
 // Initialize MongoDB API service
 console.log('Initializing MongoDB API service...');
+mongoApiService.initialize()
+  .then(() => {
+    console.log('MongoDB API service initialized successfully');
+    renderApp();
+  })
+  .catch(error => {
+    console.error('Failed to initialize MongoDB API service:', error);
+    renderApp();
+  });
 
-// Create a wrapper component that initializes the MongoDB service
-const AppWithMongoDB = () => {
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const initMongoDB = async () => {
-      try {
-        await mongoApiService.initialize();
-        setIsInitialized(true);
-      } catch (err) {
-        console.error('Failed to initialize MongoDB API service:', err);
-        setError(err as Error);
-        setIsInitialized(true); // Still set to initialized so the app renders
-      }
-    };
-
-    initMongoDB();
-  }, []);
-
-  if (!isInitialized) {
-    // You could show a loading spinner here
-    return <div>Loading application...</div>;
-  }
-
-  return <App />;
-};
-
-// Render the app
-createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AppWithMongoDB />
-      <ReactQueryDevtools initialIsOpen={false} />
-      <Toaster position="top-right" />
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+function renderApp() {
+  createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <App />
+        <ReactQueryDevtools initialIsOpen={false} />
+        <Toaster position="top-right" />
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+}

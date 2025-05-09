@@ -1,13 +1,10 @@
-import { MongoOperators, Post, Category, Topic, Comment } from '@/types/common';
+
 import { toast } from 'sonner';
-import { mongoDbService } from './mongoDbService';
 
-// Type definitions for our API functions
-// We'll use interfaces that match our common types but with optional IDs
-
-// MongoDB API service that uses the mongoDbService
+// Mock API service for MongoDB operations that works in browser environments
 class MongoApiService {
   private initialized = false;
+  private mockDb: Record<string, any[]> = {};
 
   // Initialize MongoDB connection
   async initialize(): Promise<boolean> {
@@ -17,16 +14,18 @@ class MongoApiService {
         return true;
       }
 
-      console.log('[MongoDB] Initializing...');
+      console.log('[MongoDB] Initializing mock API service for browser environment...');
       
-      // Connect to MongoDB
-      await mongoDbService.connect();
+      // Initialize mock database
+      this.mockDb = {};
       
       this.initialized = true;
-      console.log('[MongoDB] Initialization complete');
+      console.log('[MongoDB] Mock service initialization complete');
+      toast.success('Connected to mock database for development');
       return true;
     } catch (error) {
       console.error('[MongoDB] Initialization failed:', error);
+      toast.error('Failed to connect to database. Some features may not work correctly.');
       return false;
     }
   }
@@ -34,44 +33,67 @@ class MongoApiService {
   // Get a document by ID
   async getDocumentById(collectionName: string, id: string): Promise<any | null> {
     try {
-      let filter: any = {};
+      this.ensureCollection(collectionName);
       
-      // Try to find by _id or id
-      try {
-        filter = { _id: mongoDbService.toObjectId(id) };
-      } catch (e) {
-        filter = { $or: [{ id: id }, { _id: id }] };
-      }
+      const document = this.mockDb[collectionName].find(doc => 
+        doc._id === id || doc.id === id
+      );
       
-      const document = await mongoDbService.findOne(collectionName, filter);
       console.log(`[MongoDB] Retrieved document from ${collectionName}:`, document);
-      return document || null;
+      return document ? { ...document } : null;
     } catch (error) {
       console.error(`[MongoDB] Error getting document from ${collectionName}:`, error);
       return null;
     }
   }
   
+  // Query documents with filter
+  async queryDocuments(collectionName: string, filter: Record<string, any> = {}): Promise<any[]> {
+    try {
+      this.ensureCollection(collectionName);
+      
+      let results = [...this.mockDb[collectionName]];
+      
+      // Apply filters if any
+      if (Object.keys(filter).length > 0) {
+        results = results.filter(doc => {
+          return Object.entries(filter).every(([key, value]) => {
+            if (key === '_id' || key === 'id') {
+              return doc._id === value || doc.id === value;
+            }
+            return doc[key] === value;
+          });
+        });
+      }
+      
+      console.log(`[MongoDB] Queried documents from ${collectionName}:`, results.length);
+      return results.map(doc => ({ ...doc }));
+    } catch (error) {
+      console.error(`[MongoDB] Error querying documents from ${collectionName}:`, error);
+      return [];
+    }
+  }
+  
   // Insert a document into a collection
   async insertDocument(collectionName: string, document: any): Promise<any> {
     try {
-      // Generate an ID if one doesn't exist
-      const id = document.id || document._id;
+      this.ensureCollection(collectionName);
+      
+      const newId = document._id || document.id || this.generateId();
+      const now = new Date().toISOString();
       
       const newDocument = {
         ...document,
-        createdAt: document.createdAt || new Date().toISOString(),
-        updatedAt: document.updatedAt || new Date().toISOString()
+        _id: newId,
+        id: newId,
+        createdAt: document.createdAt || now,
+        updatedAt: document.updatedAt || now
       };
       
-      const result = await mongoDbService.insertOne(collectionName, newDocument);
-      console.log(`[MongoDB] Inserted document in ${collectionName}:`, result);
+      this.mockDb[collectionName].push(newDocument);
+      console.log(`[MongoDB] Inserted document in ${collectionName}:`, newDocument);
       
-      // Return the document with the inserted ID
-      return {
-        ...newDocument,
-        _id: result._id || id
-      };
+      return { ...newDocument };
     } catch (error) {
       console.error(`[MongoDB] Error inserting document into ${collectionName}:`, error);
       throw error;
@@ -81,26 +103,27 @@ class MongoApiService {
   // Update a document
   async updateDocument(collectionName: string, id: string, update: any): Promise<any | null> {
     try {
-      let filter: any = {};
+      this.ensureCollection(collectionName);
       
-      // Try to find by _id or id
-      try {
-        filter = { _id: mongoDbService.toObjectId(id) };
-      } catch (e) {
-        filter = { $or: [{ id: id }, { _id: id }] };
+      const index = this.mockDb[collectionName].findIndex(doc => 
+        doc._id === id || doc.id === id
+      );
+      
+      if (index === -1) {
+        return null;
       }
       
-      const updatedDocument = {
+      const currentDoc = this.mockDb[collectionName][index];
+      const updatedDoc = {
+        ...currentDoc,
         ...update,
         updatedAt: new Date().toISOString()
       };
       
-      await mongoDbService.updateOne(collectionName, filter, updatedDocument);
+      this.mockDb[collectionName][index] = updatedDoc;
+      console.log(`[MongoDB] Updated document in ${collectionName}:`, updatedDoc);
       
-      // Return the updated document
-      const result = await this.getDocumentById(collectionName, id);
-      console.log(`[MongoDB] Updated document in ${collectionName}:`, result);
-      return result;
+      return { ...updatedDoc };
     } catch (error) {
       console.error(`[MongoDB] Error updating document in ${collectionName}:`, error);
       return null;
@@ -110,17 +133,14 @@ class MongoApiService {
   // Delete a document
   async deleteDocument(collectionName: string, id: string): Promise<boolean> {
     try {
-      let filter: any = {};
+      this.ensureCollection(collectionName);
       
-      // Try to find by _id or id
-      try {
-        filter = { _id: mongoDbService.toObjectId(id) };
-      } catch (e) {
-        filter = { $or: [{ id: id }, { _id: id }] };
-      }
+      const initialLength = this.mockDb[collectionName].length;
+      this.mockDb[collectionName] = this.mockDb[collectionName].filter(doc => 
+        doc._id !== id && doc.id !== id
+      );
       
-      const result = await mongoDbService.deleteOne(collectionName, filter);
-      const success = result && result.deletedCount && result.deletedCount > 0;
+      const success = this.mockDb[collectionName].length < initialLength;
       console.log(`[MongoDB] Deleted document from ${collectionName}:`, success);
       return success;
     } catch (error) {
@@ -128,263 +148,24 @@ class MongoApiService {
       return false;
     }
   }
-  
-  // Query documents with filter
-  async queryDocuments(collectionName: string, filter: Record<string, any>): Promise<any[]> {
-    try {
-      const results = await mongoDbService.find(collectionName, filter);
-      console.log(`[MongoDB] Queried documents from ${collectionName}:`, results.length);
-      return results;
-    } catch (error) {
-      console.error(`[MongoDB] Error querying documents from ${collectionName}:`, error);
-      return [];
+
+  // Helper method to ensure collection exists
+  private ensureCollection(collectionName: string): void {
+    if (!this.mockDb[collectionName]) {
+      this.mockDb[collectionName] = [];
     }
   }
+  
+  // Helper method to generate a unique ID
+  private generateId(): string {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15);
+  }
 
-  // Added method for subscription queries
-  async getSubscriptionByUserId(userId: string): Promise<any | null> {
-    try {
-      const subscriptions = await this.queryDocuments('subscriptions', { userId, status: 'active' });
-      return subscriptions.length > 0 ? subscriptions[0] : null;
-    } catch (error) {
-      console.error(`[MongoDB] Error getting subscription by user ID:`, error);
-      return null;
-    }
+  // Add helper to check if we're using mock service
+  isMockService(): boolean {
+    return true;
   }
 }
 
 export const mongoApiService = new MongoApiService();
-
-// Posts API
-export const postsApi = {
-  getAll: async (): Promise<Post[]> => {
-    try {
-      return await mongoApiService.queryDocuments('posts', {});
-    } catch (error) {
-      console.error('Error fetching all posts:', error);
-      return [];
-    }
-  },
-  
-  getById: async (id: string): Promise<Post | null> => {
-    try {
-      return await mongoApiService.getDocumentById('posts', id);
-    } catch (error) {
-      console.error(`Error fetching post with ID ${id}:`, error);
-      return null;
-    }
-  },
-  
-  getTrending: async (): Promise<Post[]> => {
-    try {
-      // In a real app, this would use a more sophisticated algorithm
-      const posts = await mongoApiService.queryDocuments('posts', {});
-      return posts.sort((a, b) => b.likes - a.likes).slice(0, 10);
-    } catch (error) {
-      console.error('Error fetching trending posts:', error);
-      return [];
-    }
-  },
-  
-  create: async (post: Omit<Post, 'id'>): Promise<Post> => {
-    try {
-      return await mongoApiService.insertDocument('posts', post);
-    } catch (error) {
-      console.error('Error creating post:', error);
-      throw error;
-    }
-  },
-  
-  update: async (id: string, post: Partial<Post>): Promise<Post | null> => {
-    try {
-      return await mongoApiService.updateDocument('posts', id, post);
-    } catch (error) {
-      console.error(`Error updating post with ID ${id}:`, error);
-      throw error;
-    }
-  },
-  
-  delete: async (id: string): Promise<boolean> => {
-    try {
-      return await mongoApiService.deleteDocument('posts', id);
-    } catch (error) {
-      console.error(`Error deleting post with ID ${id}:`, error);
-      throw error;
-    }
-  },
-  
-  trackClick: async (id: string): Promise<void> => {
-    try {
-      const post = await mongoApiService.getDocumentById('posts', id);
-      if (post) {
-        await mongoApiService.updateDocument('posts', id, { clicks: (post.clicks || 0) + 1 });
-      }
-    } catch (error) {
-      console.error(`Error tracking click for post with ID ${id}:`, error);
-    }
-  }
-};
-
-// Categories API
-export const categoriesApi = {
-  getAll: async (): Promise<Category[]> => {
-    try {
-      return await mongoApiService.queryDocuments('categories', {});
-    } catch (error) {
-      console.error('Error fetching all categories:', error);
-      return [];
-    }
-  },
-  
-  getById: async (id: string): Promise<Category | null> => {
-    try {
-      return await mongoApiService.getDocumentById('categories', id);
-    } catch (error) {
-      console.error(`Error fetching category with ID ${id}:`, error);
-      return null;
-    }
-  },
-  
-  create: async (category: Omit<Category, 'id'>): Promise<Category> => {
-    try {
-      return await mongoApiService.insertDocument('categories', category);
-    } catch (error) {
-      console.error('Error creating category:', error);
-      throw error;
-    }
-  },
-  
-  update: async (id: string, category: Partial<Category>): Promise<Category | null> => {
-    try {
-      return await mongoApiService.updateDocument('categories', id, category);
-    } catch (error) {
-      console.error(`Error updating category with ID ${id}:`, error);
-      throw error;
-    }
-  },
-  
-  delete: async (id: string): Promise<boolean> => {
-    try {
-      return await mongoApiService.deleteDocument('categories', id);
-    } catch (error) {
-      console.error(`Error deleting category with ID ${id}:`, error);
-      throw error;
-    }
-  }
-};
-
-// Topics API
-export const topicsApi = {
-  getAll: async (): Promise<Topic[]> => {
-    try {
-      return await mongoApiService.queryDocuments('topics', {});
-    } catch (error) {
-      console.error('Error fetching all topics:', error);
-      return [];
-    }
-  },
-  
-  getById: async (id: string): Promise<Topic | null> => {
-    try {
-      return await mongoApiService.getDocumentById('topics', id);
-    } catch (error) {
-      console.error(`Error fetching topic with ID ${id}:`, error);
-      return null;
-    }
-  },
-  
-  getTrending: async (): Promise<Topic[]> => {
-    try {
-      // In a real app, this would use a more sophisticated algorithm
-      const topics = await mongoApiService.queryDocuments('topics', {});
-      return topics.sort((a, b) => (b.count || 0) - (a.count || 0)).slice(0, 10);
-    } catch (error) {
-      console.error('Error fetching trending topics:', error);
-      return [];
-    }
-  },
-  
-  create: async (topic: Omit<Topic, 'id'>): Promise<Topic> => {
-    try {
-      return await mongoApiService.insertDocument('topics', topic);
-    } catch (error) {
-      console.error('Error creating topic:', error);
-      throw error;
-    }
-  },
-  
-  update: async (id: string, topic: Partial<Topic>): Promise<Topic | null> => {
-    try {
-      return await mongoApiService.updateDocument('topics', id, topic);
-    } catch (error) {
-      console.error(`Error updating topic with ID ${id}:`, error);
-      throw error;
-    }
-  },
-  
-  delete: async (id: string): Promise<boolean> => {
-    try {
-      return await mongoApiService.deleteDocument('topics', id);
-    } catch (error) {
-      console.error(`Error deleting topic with ID ${id}:`, error);
-      throw error;
-    }
-  }
-};
-
-// Comments API
-export const commentsApi = {
-  getAll: async (): Promise<Comment[]> => {
-    try {
-      return await mongoApiService.queryDocuments('comments', {});
-    } catch (error) {
-      console.error('Error fetching all comments:', error);
-      return [];
-    }
-  },
-  
-  getById: async (id: string): Promise<Comment | null> => {
-    try {
-      return await mongoApiService.getDocumentById('comments', id);
-    } catch (error) {
-      console.error(`Error fetching comment with ID ${id}:`, error);
-      return null;
-    }
-  },
-  
-  getByPostId: async (postId: string): Promise<Comment[]> => {
-    try {
-      return await mongoApiService.queryDocuments('comments', { postId });
-    } catch (error) {
-      console.error(`Error fetching comments for post with ID ${postId}:`, error);
-      return [];
-    }
-  },
-  
-  create: async (comment: Omit<Comment, 'id'>): Promise<Comment> => {
-    try {
-      return await mongoApiService.insertDocument('comments', comment);
-    } catch (error) {
-      console.error('Error creating comment:', error);
-      throw error;
-    }
-  },
-  
-  update: async (id: string, comment: Partial<Comment>): Promise<Comment | null> => {
-    try {
-      return await mongoApiService.updateDocument('comments', id, comment);
-    } catch (error) {
-      console.error(`Error updating comment with ID ${id}:`, error);
-      throw error;
-    }
-  },
-  
-  delete: async (id: string): Promise<boolean> => {
-    try {
-      return await mongoApiService.deleteDocument('comments', id);
-    } catch (error) {
-      console.error(`Error deleting comment with ID ${id}:`, error);
-      throw error;
-    }
-  }
-};
