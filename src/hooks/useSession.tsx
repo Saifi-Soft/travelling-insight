@@ -117,7 +117,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         } else {
           toast("Login Failed", {
             description: "Invalid password. Please try again.",
-            variant: "destructive",
+            style: { backgroundColor: 'red', color: 'white' }
           });
           return false;
         }
@@ -183,7 +183,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       console.error('Login error:', error);
       toast("Login Failed", {
         description: "There was a problem logging in. Please try again.",
-        variant: "destructive",
+        style: { backgroundColor: 'red', color: 'white' }
       });
       return false;
     } finally {
@@ -224,3 +224,4 @@ export function useSession() {
   }
   return context;
 }
+
