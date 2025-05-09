@@ -120,6 +120,63 @@ const users = {
       console.error('Error creating user:', error);
       throw error;
     }
+  },
+
+  // Added method: getAll
+  getAll: async () => {
+    try {
+      const users = await mongoApiService.queryDocuments('communityUsers', {});
+      
+      // If no users found, return mock data for demo
+      if (!users || users.length === 0) {
+        return [
+          {
+            id: 'user1',
+            name: 'John Doe',
+            email: 'john@example.com',
+            status: 'active',
+            joinDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            experienceLevel: 'Intermediate'
+          },
+          {
+            id: 'user2',
+            name: 'Jane Smith',
+            email: 'jane@example.com',
+            status: 'active',
+            joinDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+            experienceLevel: 'Expert'
+          },
+          {
+            id: 'user3',
+            name: 'New Member',
+            email: 'new@example.com',
+            status: 'pending',
+            joinDate: new Date().toISOString(),
+            experienceLevel: 'Beginner'
+          }
+        ];
+      }
+      
+      return users;
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+      return [];
+    }
+  },
+
+  // Added method: updateStatus
+  updateStatus: async (userId: string, status: 'active' | 'blocked' | 'pending') => {
+    try {
+      await mongoApiService.updateDocument('communityUsers', userId, {
+        status,
+        updatedAt: new Date().toISOString(),
+        statusChangedAt: new Date().toISOString()
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      throw error;
+    }
   }
 };
 
@@ -149,6 +206,55 @@ const matches = {
       ];
     } catch (error) {
       console.error('Error finding matches:', error);
+      return [];
+    }
+  },
+  
+  // Added method: findPotentialMatches
+  findPotentialMatches: async (userId: string, preferences: any) => {
+    try {
+      // In a real app, this would use more sophisticated matching algorithms
+      // For demo, return mock potential matches with compatibility scores
+      return [
+        {
+          userId: "match1",
+          name: "Alex Johnson",
+          avatar: "",
+          compatibilityScore: 92,
+          destinations: ["Japan", "Italy", "France"],
+          travelStyles: ["adventure", "luxury", "cultural"],
+          interests: ["photography", "hiking", "food"]
+        },
+        {
+          userId: "match2",
+          name: "Jamie Smith",
+          avatar: "",
+          compatibilityScore: 85,
+          destinations: ["Thailand", "Spain", "Portugal"],
+          travelStyles: ["budget", "backpacking", "cultural"],
+          interests: ["history", "local cuisine", "beaches"]
+        },
+        {
+          userId: "match3",
+          name: "Taylor Reyes",
+          avatar: "",
+          compatibilityScore: 78,
+          destinations: ["Greece", "Croatia", "Morocco"],
+          travelStyles: ["luxury", "relaxation", "cultural"],
+          interests: ["architecture", "swimming", "nightlife"]
+        },
+        {
+          userId: "match4",
+          name: "Jordan Lee",
+          avatar: "",
+          compatibilityScore: 65,
+          destinations: ["Japan", "South Korea", "Vietnam"],
+          travelStyles: ["solo", "budget", "adventure"],
+          interests: ["street food", "museums", "cycling"]
+        }
+      ];
+    } catch (error) {
+      console.error('Error finding potential matches:', error);
       return [];
     }
   }
@@ -245,6 +351,11 @@ export const communityApi = {
         console.error('Error attending event:', error);
         throw error;
       }
+    },
+
+    // Added: create method alias
+    create: async (eventData: any) => {
+      return communityApi.events.createEvent(eventData);
     }
   },
 
@@ -276,6 +387,48 @@ export const travelGroupsApi = {
     } catch (error) {
       console.error('Error creating travel group:', error);
       throw error;
+    }
+  },
+
+  // Added: getAll method
+  getAll: async () => {
+    try {
+      const groups = await mongoApiService.queryDocuments('travelGroups', {});
+      
+      // If no groups found, return mock data for demo
+      if (!groups || groups.length === 0) {
+        return [
+          {
+            id: 'group1',
+            name: 'Southeast Asia Explorers',
+            category: 'Adventure',
+            dateCreated: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+            memberCount: 125,
+            status: 'active'
+          },
+          {
+            id: 'group2',
+            name: 'European Backpackers',
+            category: 'Budget Travel',
+            dateCreated: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+            memberCount: 89,
+            status: 'active'
+          },
+          {
+            id: 'group3',
+            name: 'Luxury Travel Enthusiasts',
+            category: 'Luxury',
+            dateCreated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            memberCount: 42,
+            status: 'active'
+          }
+        ];
+      }
+      
+      return groups;
+    } catch (error) {
+      console.error('Error fetching all travel groups:', error);
+      return [];
     }
   }
 };

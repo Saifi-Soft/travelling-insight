@@ -121,5 +121,117 @@ export const contentModerationApi = {
       console.error('Error moderating content:', error);
       return false;
     }
+  },
+
+  // New method: Get all content warnings
+  getAllContentWarnings: async () => {
+    try {
+      // In a real app, this would fetch from the moderationWarnings collection
+      const warnings = await mongoApiService.queryDocuments('contentWarnings', {});
+      
+      // If no warnings exist yet, return some mock data for demo purposes
+      if (warnings.length === 0) {
+        return [
+          {
+            _id: 'warning1',
+            userId: 'user123',
+            userName: 'John Doe',
+            userEmail: 'john@example.com',
+            reason: 'Inappropriate language in community post',
+            userStatus: 'active',
+            contentId: 'post123',
+            createdAt: new Date().toISOString(),
+            acknowledged: false
+          },
+          {
+            _id: 'warning2',
+            userId: 'user456',
+            userName: 'Jane Smith',
+            userEmail: 'jane@example.com',
+            reason: 'Sharing personal contact information',
+            userStatus: 'warned',
+            contentId: 'post456',
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            acknowledged: true,
+            acknowledgedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+      }
+      
+      return warnings;
+    } catch (error) {
+      console.error('Error fetching content warnings:', error);
+      return [];
+    }
+  },
+
+  // New method: Get moderated posts
+  getModeratedPosts: async () => {
+    try {
+      const posts = await mongoApiService.queryDocuments('communityPosts', { moderated: true });
+      
+      // If no moderated posts exist yet, return some mock data for demo purposes
+      if (posts.length === 0) {
+        return [
+          {
+            _id: 'post123',
+            userName: 'John Doe',
+            userId: 'user123',
+            content: 'This post contains inappropriate content that was automatically moderated.',
+            moderationReason: 'Contains inappropriate terms',
+            moderatedAt: new Date().toISOString()
+          },
+          {
+            _id: 'post456',
+            userName: 'Jane Smith',
+            userId: 'user456',
+            content: 'This post was reported by multiple users and moderated after review.',
+            moderationReason: 'Community guidelines violation',
+            moderatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+      }
+      
+      return posts;
+    } catch (error) {
+      console.error('Error fetching moderated posts:', error);
+      return [];
+    }
+  },
+
+  // New method: Add warning to user
+  addWarningToUser: async (userId: string, warningType: string, reason: string) => {
+    try {
+      // Create warning record
+      const warning = {
+        userId,
+        warningType,
+        reason,
+        createdAt: new Date().toISOString()
+      };
+      
+      await mongoApiService.insertDocument('contentWarnings', warning);
+      
+      // Update user status to blocked
+      await mongoApiService.updateDocument('communityUsers', userId, {
+        status: 'blocked',
+        blockedAt: new Date().toISOString(),
+        blockReason: reason
+      });
+      
+      // Create notification for user
+      await notificationsApi.create({
+        userId,
+        type: 'account_warning',
+        title: 'Account Warning',
+        message: `Your account has been flagged: ${reason}`,
+        data: { warningType }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error adding warning to user:', error);
+      return false;
+    }
   }
 };
