@@ -63,8 +63,8 @@ class MongoApiService {
   async insertDocument(collectionName: string, data: any) {
     try {
       const result = await mongoDbService.insertOne(collectionName, data);
-      // Ensure there's an id property for backward compatibility
-      return { ...result, id: result._id || result.insertedId };
+      // Result object should already have _id and id properties from our mockDb implementation
+      return result;
     } catch (error) {
       console.error(`[MongoDB API] Error inserting document into ${collectionName}:`, error);
       throw error;
@@ -187,7 +187,7 @@ class MongoApiService {
     }
   };
 
-  // Comments API (adding this new API)
+  // Comments API
   commentsApi = {
     getAll: async () => {
       try {
@@ -350,4 +350,3 @@ export const mongoApiService = new MongoApiService();
 
 // Export specific APIs for convenience
 export const { postsApi, categoriesApi, topicsApi, commentsApi } = mongoApiService;
-

@@ -77,7 +77,8 @@ const CommentsAdmin = () => {
   // Filter comments based on search query
   const filteredComments = comments.filter((comment: any) => 
     comment.content?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    comment.author?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    comment.author?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    comment.userName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -107,7 +108,7 @@ const CommentsAdmin = () => {
             >
               <option value="all">All Posts</option>
               {posts.map((post: any) => (
-                <option key={post.id || post._id} value={post.id || post._id}>
+                <option key={post._id || post.id} value={post._id || post.id}>
                   {post.title}
                 </option>
               ))}
@@ -136,7 +137,7 @@ const CommentsAdmin = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredComments.map((comment: any) => (
-                    <TableRow key={comment.id || comment._id}>
+                    <TableRow key={comment._id || comment.id}>
                       <TableCell className="font-medium">
                         {comment.author && comment.author.avatar ? (
                           <div className="flex items-center">
@@ -172,7 +173,7 @@ const CommentsAdmin = () => {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction 
-                                onClick={() => handleDelete(comment.id || comment._id)}
+                                onClick={() => handleDelete(comment._id || comment.id)}
                                 className="bg-destructive text-destructive-foreground"
                               >
                                 Delete

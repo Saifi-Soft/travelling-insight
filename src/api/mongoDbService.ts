@@ -1,19 +1,15 @@
-
-import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 import { toast } from 'sonner';
 
-// MongoDB connection class that uses Node.js MongoDB driver
+// MongoDB connection class with mock implementation for browser
 class MongoDbService {
-  private client: MongoClient | null = null;
-  private db: any = null;
   private isConnected = false;
   private connectionPromise: Promise<any> | null = null;
 
-  // Connect to MongoDB
+  // Connect to MongoDB or initialize mock DB
   async connect() {
     // If already connected or in process of connecting, return existing promise
     if (this.isConnected) {
-      return { client: this.client, db: this.db };
+      return true;
     }
 
     if (this.connectionPromise) {
@@ -21,60 +17,34 @@ class MongoDbService {
     }
 
     // Get MongoDB URI from environment variables
-    const uri = 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@travellinginsight.3fl6dwk.mongodb.net/';
-    const dbName = 'travel_blog';
+    const uri = import.meta.env.VITE_MONGODB_URI || 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@travellinginsight.3fl6dwk.mongodb.net/';
 
     try {
-      console.log('[MongoDB] Connecting to MongoDB Atlas...');
+      console.log('[MongoDB] Initializing service...');
       
       this.connectionPromise = new Promise(async (resolve, reject) => {
         try {
-          // For server-side usage in Node.js
-          if (typeof window === 'undefined') {
-            const client = new MongoClient(uri, {
-              serverApi: {
-                version: ServerApiVersion.v1,
-                strict: true,
-                deprecationErrors: true,
-              }
-            });
-
-            await client.connect();
-            console.log('[MongoDB] Connected to MongoDB Atlas');
-
-            const db = client.db(dbName);
-            this.client = client;
-            this.db = db;
-            this.isConnected = true;
-
-            // Seed data after connection
-            await this.seedData();
-
-            resolve({ client, db });
-          } else {
-            // For browser environment, use a mock implementation
-            console.log('[MongoDB] Browser environment detected, using mock implementation');
-            
-            // Initialize mock DB if needed
-            if (!(window as any).mockDb) {
-              (window as any).mockDb = {};
-            }
-            
-            this.isConnected = true;
-            
-            // Seed data after connection
-            await this.seedData();
-            
-            resolve({ mockDb: (window as any).mockDb });
-            
-            // Warning for development
-            console.warn('[MongoDB] Using mock MongoDB implementation in browser. Real MongoDB connections require server-side code.');
-            toast.warning('Using mock database in browser environment', {
-              duration: 5000,
-            });
+          // For browser environment, use a mock implementation
+          console.log('[MongoDB] Browser environment detected, using mock implementation');
+          
+          // Initialize mock DB if needed
+          if (!(window as any).mockDb) {
+            (window as any).mockDb = {};
           }
+          
+          this.isConnected = true;
+          
+          // Seed data after connection
+          await this.seedData();
+          
+          toast.success('Connected to database', {
+            description: 'Using mock database in browser environment',
+            duration: 3000,
+          });
+
+          resolve(true);
         } catch (error) {
-          console.error('[MongoDB] Error connecting to MongoDB:', error);
+          console.error('[MongoDB] Error connecting:', error);
           this.isConnected = false;
           toast.error('Failed to connect to database. Some features may not work correctly.');
           reject(error);
@@ -783,11 +753,11 @@ class MongoDbService {
   
   private async mockInsertOne(collectionName: string, document: any) {
     try {
-      const _id = document._id || new ObjectId().toString();
-      const newDoc = { ...document, _id };
+      const _id = this.generateId();
+      const newDoc = { ...document, _id, id: _id };
       (window as any).mockDb[collectionName].push(newDoc);
       
-      return { insertedId: _id };
+      return newDoc;
     } catch (error) {
       console.error(`[MockDB] insertOne error for ${collectionName}:`, error);
       throw error;
@@ -841,80 +811,16 @@ class MongoDbService {
     }
   }
 
-  // Normal operations that work in both environments
-  async findOne(collectionName: string, filter: object) {
-    try {
-      const collection = await this.getCollection(collectionName);
-      return await collection.findOne(filter);
-    } catch (error) {
-      console.error(`[MongoDB] Error in findOne operation for ${collectionName}:`, error);
-      return null;
-    }
+  // Helper to generate a simple unique ID
+  private generateId(): string {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
   }
 
-  async find(collectionName: string, filter: object = {}) {
-    try {
-      const collection = await this.getCollection(collectionName);
-      return await collection.find(filter).toArray();
-    } catch (error) {
-      console.error(`[MongoDB] Error in find operation for ${collectionName}:`, error);
-      return [];
-    }
-  }
-
-  async insertOne(collectionName: string, document: object) {
-    try {
-      const collection = await this.getCollection(collectionName);
-      const result = await collection.insertOne(document);
-      return { ...document, _id: result.insertedId };
-    } catch (error) {
-      console.error(`[MongoDB] Error in insertOne operation for ${collectionName}:`, error);
-      throw error;
-    }
-  }
-
-  async updateOne(collectionName: string, filter: object, update: object) {
-    try {
-      const collection = await this.getCollection(collectionName);
-      return await collection.updateOne(filter, { $set: update });
-    } catch (error) {
-      console.error(`[MongoDB] Error in updateOne operation for ${collectionName}:`, error);
-      throw error;
-    }
-  }
-
-  async deleteOne(collectionName: string, filter: object) {
-    try {
-      const collection = await this.getCollection(collectionName);
-      return await collection.deleteOne(filter);
-    } catch (error) {
-      console.error(`[MongoDB] Error in deleteOne operation for ${collectionName}:`, error);
-      throw error;
-    }
-  }
-
-  // Count documents in a collection
-  async countDocuments(collectionName: string, filter: object = {}) {
-    try {
-      const collection = await this.getCollection(collectionName);
-      return await collection.countDocuments(filter);
-    } catch (error) {
-      console.error(`[MongoDB] Error in countDocuments operation for ${collectionName}:`, error);
-      return 0;
-    }
-  }
-
-  // Utility to convert string IDs to MongoDB ObjectId
+  // Utility to create an ObjectId-like object
   toObjectId(id: string) {
-    try {
-      return new ObjectId(id);
-    } catch (error) {
-      console.error(`Invalid ObjectId: ${id}`);
-      throw new Error(`Invalid ObjectId: ${id}`);
-    }
+    return id; // In our mock environment, we'll just use the string ID directly
   }
 }
 
 // Create a singleton instance
 export const mongoDbService = new MongoDbService();
-

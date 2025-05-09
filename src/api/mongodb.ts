@@ -1,3 +1,4 @@
+
 // Define collections enum
 export enum COLLECTIONS {
   POSTS = 'posts',
@@ -40,21 +41,14 @@ export class ObjectId {
 }
 
 // Mock in-memory database for browser compatibility
-const mockDb: Record<string, any[]> = {
-  [COLLECTIONS.POSTS]: [],
-  [COLLECTIONS.CATEGORIES]: [],
-  [COLLECTIONS.TOPICS]: [],
-  [COLLECTIONS.COMMENTS]: [],
-  [COLLECTIONS.NEWSLETTER]: [],
-  [COLLECTIONS.COMMUNITY_USERS]: [],
-  [COLLECTIONS.TRAVEL_GROUPS]: [],
-  [COLLECTIONS.COMMUNITY_EVENTS]: [],
-  [COLLECTIONS.TRAVEL_MATCHES]: [],
-  [COLLECTIONS.USER_SUBSCRIPTIONS]: [],
-  [COLLECTIONS.USER_SETTINGS]: [],
-  [COLLECTIONS.ADS]: [],
-  [COLLECTIONS.AD_STATS]: []
-};
+const mockDb: Record<string, any[]> = {};
+
+// Initialize collections
+Object.values(COLLECTIONS).forEach(collection => {
+  if (!mockDb[collection]) {
+    mockDb[collection] = [];
+  }
+});
 
 // Define collections type
 export type Collections = {
@@ -122,12 +116,12 @@ class MockCollection {
   }
 
   async insertMany(documents: any[]) {
-    const result = { insertedIds: [] as ObjectId[] };
+    const insertedIds = [];
     for (const document of documents) {
       const { insertedId } = await this.insertOne(document);
-      result.insertedIds.push(insertedId);
+      insertedIds.push(insertedId);
     }
-    return result;
+    return { insertedIds };
   }
 
   async updateOne(filter: any, update: any) {
