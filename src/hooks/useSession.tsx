@@ -109,15 +109,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             isAuthenticated: true
           });
           
-          toast({
-            title: "Login Successful",
+          toast("Login Successful", {
             description: `Welcome back, ${user.name || 'User'}!`,
           });
           
           return true;
         } else {
-          toast({
-            title: "Login Failed",
+          toast("Login Failed", {
             description: "Invalid password. Please try again.",
             variant: "destructive",
           });
@@ -175,8 +173,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           console.error('Error creating subscription:', subError);
         }
         
-        toast({
-          title: "Account Created",
+        toast("Account Created", {
           description: "Welcome! Your demo account has been created.",
         });
         
@@ -184,8 +181,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast({
-        title: "Login Failed",
+      toast("Login Failed", {
         description: "There was a problem logging in. Please try again.",
         variant: "destructive",
       });
@@ -209,8 +205,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       isAuthenticated: false
     });
     
-    toast({
-      title: "Logged Out",
+    toast("Logged Out", {
       description: "You have been successfully logged out.",
     });
   };
