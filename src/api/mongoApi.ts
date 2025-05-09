@@ -1,5 +1,6 @@
 
 // This file provides MongoDB API access for browser environments
+import { mongoDbService } from './mongoDbService';
 
 // Initialize MongoDB connection in the browser
 export const initMongoApi = () => {
@@ -20,9 +21,12 @@ export const initMongoApi = () => {
     dbName: dbName
   };
   
-  // Initialize database storage layer
-  if (!(window as any).dbStorage) {
-    (window as any).dbStorage = {};
-    console.log('Browser database storage initialized');
-  }
+  // Initialize database by connecting to our service
+  mongoDbService.connect().then(connected => {
+    if (connected) {
+      console.log('Browser database successfully connected');
+    } else {
+      console.error('Failed to connect to browser database');
+    }
+  });
 };

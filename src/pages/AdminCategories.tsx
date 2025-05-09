@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { DbDocument } from '@/api/mongoDbService';
 
 interface Category {
   _id?: string;
@@ -37,7 +38,10 @@ const AdminCategories = () => {
   // Fetch categories from MongoDB
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: categoriesApi.getAll,
+    queryFn: async () => {
+      const result = await categoriesApi.getAll();
+      return result as Category[];
+    },
   });
   
   // Create category mutation

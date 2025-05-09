@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CommunityEvent } from '@/types/common';
 import { mongoApiService } from '@/api/mongoApiService';
 import { toast } from 'sonner';
+import { DbDocument } from '@/api/mongoDbService';
 
 const CommunityEvents = () => {
   const { data: events, isLoading, error, refetch } = useQuery({
@@ -20,7 +21,7 @@ const CommunityEvents = () => {
         
         if (mongoEvents && mongoEvents.length > 0) {
           console.log("Found events in MongoDB:", mongoEvents);
-          return mongoEvents;
+          return mongoEvents as CommunityEvent[];
         }
         
         console.log("No events in MongoDB, using API service");
@@ -171,7 +172,7 @@ const CommunityEvents = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {upcomingEvents.map((event, index) => (
-            <EventCard key={event._id || event.id || index} event={event} />
+            <EventCard key={event._id || event.id || index} event={event as CommunityEvent} />
           ))}
         </div>
       )}

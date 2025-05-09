@@ -52,6 +52,8 @@ export interface SiteSettings {
   };
   createdAt?: Date;
   updatedAt?: Date;
+  _id?: string;
+  id?: string;
 }
 
 // Get all site settings
@@ -60,7 +62,7 @@ export async function getSettings(): Promise<SiteSettings | null> {
     const settings = await mongoApiService.queryDocuments('settings', {});
     
     if (settings.length > 0) {
-      return settings[0];
+      return settings[0] as SiteSettings;
     }
     
     return null;
@@ -78,7 +80,7 @@ export async function saveSettings(settings: SiteSettings): Promise<boolean> {
     if (existingSettings.length > 0) {
       await mongoApiService.updateDocument(
         'settings',
-        existingSettings[0].id,
+        existingSettings[0]._id || existingSettings[0].id || '',
         { 
           ...settings, 
           updatedAt: new Date() 
@@ -113,7 +115,7 @@ export async function getSetting(path: string): Promise<any> {
     
     // Split the path by dots and navigate through the settings object
     const pathParts = path.split('.');
-    let value = settings;
+    let value: any = settings;
     
     for (const part of pathParts) {
       if (!value || typeof value !== 'object') {

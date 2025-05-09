@@ -25,13 +25,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
   // Fetch user data
   const { data: userData, isLoading, isError } = useQuery({
     queryKey: ['communityUser', userId],
-    queryFn: () => communityApi.users.getById(userId),
+    queryFn: async () => {
+      const user = await communityApi.users.getById(userId);
+      // Ensure the returned user data conforms to CommunityUser interface
+      return user as CommunityUser;
+    },
     enabled: !!userId,
-    meta: {
-      onSuccess: (data) => {
-        setFormData(data || {});
-      }
-    }
   });
 
   useEffect(() => {
@@ -85,6 +84,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
     );
   }
 
+  // Default values for possibly undefined properties to prevent errors
+  const username = userData.username || userData.name?.toLowerCase().replace(/\s+/g, '') || 'user';
+  const experienceLevel = userData.experienceLevel || 'Beginner';
+  const interests = userData.interests || [];
+  const wishlistDestinations = userData.wishlistDestinations || [];
+  const badges = userData.badges || [];
+
   return (
     <div>
       <div className="relative">
@@ -109,7 +115,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="font-bold text-2xl">{userData.name}</h1>
-                <p className="text-muted-foreground">@{userData.username}</p>
+                <p className="text-muted-foreground">@{username}</p>
                 {userData.location && (
                   <div className="flex items-center mt-1 text-sm text-muted-foreground">
                     <MapPin className="h-3 w-3 mr-1" />
@@ -121,7 +127,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               <div className="flex flex-col items-end">
                 <div className="flex items-center mb-2">
                   <Badge variant="outline" className="mr-2">
-                    {userData.experienceLevel}
+                    {experienceLevel}
                   </Badge>
                   <Badge variant="secondary">
                     {userData.connections?.length || 0} connections
@@ -236,8 +242,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {userData.interests && userData.interests.length > 0 ? (
-                    userData.interests.map((interest, index) => (
+                  {interests && interests.length > 0 ? (
+                    interests.map((interest, index) => (
                       <Badge key={index} variant="outline">
                         {interest}
                       </Badge>
@@ -260,9 +266,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                       <div key={index} className="flex items-center justify-between">
                         <div className="flex items-center">
                           <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{country.name}</span>
+                          <span>{typeof country === 'string' ? country : country.name}</span>
                         </div>
-                        <Badge variant="outline">{country.year}</Badge>
+                        <Badge variant="outline">
+                          {typeof country === 'string' ? '2023' : country.year}
+                        </Badge>
                       </div>
                     ))
                   ) : (
@@ -278,8 +286,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {userData.wishlistDestinations && userData.wishlistDestinations.length > 0 ? (
-                    userData.wishlistDestinations.map((destination, index) => (
+                  {wishlistDestinations && wishlistDestinations.length > 0 ? (
+                    wishlistDestinations.map((destination, index) => (
                       <Badge key={index} variant="outline" className="bg-secondary/50">
                         <Heart className="h-3 w-3 mr-1 text-destructive" />
                         {destination}
@@ -335,9 +343,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
         <TabsContent value="badges">
           <Card>
             <CardContent className="pt-6">
-              {userData.badges && userData.badges.length > 0 ? (
+              {badges && badges.length > 0 ? (
                 <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {userData.badges.map((badge, index) => (
+                  {badges.map((badge, index) => (
                     <div key={index} className="flex flex-col items-center text-center p-4 bg-secondary/30 rounded-lg">
                       <div className="w-16 h-16 bg-primary/10 rounded-full mb-3 flex items-center justify-center">
                         <Award className="h-8 w-8 text-primary" />

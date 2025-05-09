@@ -1,246 +1,188 @@
-// Define MongoDB-like operators for querying
-export interface MongoOperators {
-  $gt?: any;
-  $gte?: any;
-  $lt?: any;
-  $lte?: any;
-  $eq?: any;
-  $ne?: any;
-  $in?: any[];
-  $nin?: any[];
-}
 
-// Define Author interface used in Post
-export interface Author {
-  id?: string;
+// Common types for the application
+import { DbDocument } from '@/api/mongoDbService';
+
+// Topic type
+export interface Topic extends DbDocument {
   name: string;
-  avatar: string;
-  bio?: string;
-  social?: {
-    twitter?: string;
-    instagram?: string;
-    facebook?: string;
-  }
-}
-
-// Define Post interface
-export interface Post {
-  id: string;
-  title: string;
-  slug?: string;
-  excerpt: string;
-  content?: string;
-  author: Author;
-  date: string; // Making this required to match the mongoApiService expectations
-  publishedAt?: Date;
-  updatedAt?: Date;
-  coverImage: string;
-  category: string;
-  tags?: string[];
-  topics?: string[]; // Adding this property since it's being used
-  likes: number;
-  comments: number;
-  readTime: string;
-  isFeatured?: boolean;
-  clicks?: number;
-  seo?: {  // Adding SEO property
-    metaTitle?: string;
-    metaDescription?: string;
-    keywords?: string;
-    ogImage?: string;
-  }
-}
-
-// Define Category interface
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  icon: string;
-  count: number;
-  image: string; // Making this required to match API expectations
-}
-
-// Define Topic/Hashtag interface
-export interface Topic {
-  id: string;
-  name: string;
-  slug: string;
   count?: number;
+  slug: string;
 }
 
-// Define Comment interface
-export interface Comment {
-  id: string;
+// Category type
+export interface Category extends DbDocument {
+  name: string;
+  slug: string;
+  icon?: string;
+  count: number;
+  image?: string;
+  description?: string;
+}
+
+// Post author type
+export interface Author {
+  name: string;
+  avatar?: string;
+  bio?: string;
+  role?: string;
+}
+
+// Post type
+export interface Post extends DbDocument {
+  title: string;
+  excerpt?: string;
+  content?: string;
+  author: Author | string;
+  category?: string;
+  coverImage?: string;
+  likes: number;
+  date: string;
+  readTime?: string;
+  comments: number;
+  topics?: string[];
+  tags?: string[];
+}
+
+// Comment type
+export interface Comment extends DbDocument {
   postId: string;
-  author: {
-    id?: string;
-    name: string;
-    avatar: string;
-  };
+  userId: string;
+  userName: string;
   content: string;
   date: string;
   likes: number;
   replies?: Comment[];
+  parentId?: string;
 }
 
-// Community interfaces
-export interface CommunityUser {
-  id: string;
-  username: string;
-  email: string;
-  name: string;
-  avatar?: string;
-  bio?: string;
-  location?: string;
-  website?: string;
-  experienceLevel: string;
-  travelStyles: string[];
-  interests: string[];
-  status: 'active' | 'blocked' | 'pending';
-  joinDate: Date;
-  reputation: number;
-  connections?: Array<string>;
-  trips?: Array<any>;
-  visitedCountries?: Array<{ 
-    name: string;
-    year: number;
-  }>;
-  wishlistDestinations?: string[];
-  badges?: Array<{
-    name: string;
-    description: string;
-    dateEarned?: Date;
-    icon: string;
-  }>;
-  socialProfiles?: {
-    instagram?: string;
-    twitter?: string;
-    facebook?: string;
-  };
+// Community Event Location
+export interface EventLocation {
+  type: 'online' | 'in-person';
+  details: string;
 }
 
-export interface TravelGroup {
+// Community Event Attendee
+export interface EventAttendee {
   id: string;
   name: string;
-  description?: string;
-  category: string;
-  members: string[];
-  memberCount: number;
-  owner: string;
-  dateCreated: Date;
-  status: 'active' | 'archived';
 }
 
-export interface CommunityEvent {
-  id?: string;
-  _id?: string;
+// Community Event
+export interface CommunityEvent extends DbDocument {
   title: string;
   description: string;
-  type?: string;
-  host?: string;
-  date: string | Date;
-  location: {
-    type: 'online' | 'physical' | string;
-    details: string;
-  };
-  attendees: Array<string | {id: string, name: string}>;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'canceled';
-  createdAt: string | Date;
-  organizer?: {id: string, name: string};
+  date: string;
+  location: EventLocation;
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  attendees: EventAttendee[] | string[];
+  organizer: EventAttendee;
+  createdAt: string;
+  image?: string;
 }
 
-// Travel match interface for the intelligent matching feature
-export interface TravelMatch {
-  id?: string;
-  userId: string;
-  name: string;
-  avatar?: string;
-  compatibilityScore: number;
-  destination?: string;
-  dates?: {
-    start: string;
-    end: string;
-  };
-  destinations: string[];
-  travelStyles: string[];
-  interests: string[];
-  languages?: string[];
-}
-
-// BuddyMatch interface to match the one used in TravelBuddyFinder.tsx
-export interface BuddyMatch {
-  _id?: string;
-  userId: string;
-  name: string;
-  avatar?: string;
-  destination: string;
-  dates: {
-    start: string;
-    end: string;
-  };
-  compatibilityScore: number;
-  travelStyles: string[];
-  interests: string[];
-  languages: string[];
-}
-
-// Community post interface
-export interface CommunityPost {
-  _id?: string;
+// Community Post
+export interface PostProps extends DbDocument {
   userId: string;
   userName: string;
   userAvatar?: string;
   content: string;
   images?: string[];
   location?: string;
-  tags?: string[];
   createdAt: string;
   likes: number;
   comments: number;
-  visibility?: 'public' | 'connections' | 'private';
+  likedBy?: string[];
 }
 
-// Message interface for community messaging
-export interface Message {
-  id: string;
-  senderId: string;
-  receiverId?: string;
-  text: string;
-  time: string;
-  read?: boolean;
-  attachments?: {
-    type: 'image' | 'file' | 'location';
-    url: string;
-    name?: string;
-  }[];
-}
-
-// Conversation interface for community messaging
-export interface Conversation {
-  id: string;
-  participants: string[];
-  isGroup: boolean;
-  name?: string;
-  avatar?: string;
-  lastMessage?: string;
-  lastMessageTime?: string;
-  unread?: number;
-  online?: boolean;
-  members?: number;
-}
-
-// Travel buddy request interface
-export interface TravelBuddyRequest {
-  _id?: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  travelStyle: string[];
+// Community User Badge
+export interface UserBadge {
+  name: string;
   description: string;
-  createdAt: string;
-  status: 'active' | 'completed' | 'cancelled';
+  dateEarned?: string;
+}
+
+// Community User Visited Country
+export interface VisitedCountry {
+  name: string;
+  year: number;
+}
+
+// Community User
+export interface CommunityUser extends DbDocument {
+  name: string;
+  username: string;
+  email: string;
+  avatar?: string;
+  bio?: string;
+  location?: string;
+  experienceLevel?: string;
+  website?: string;
+  travelStyles?: string[];
+  interests?: string[];
+  visitedCountries?: VisitedCountry[];
+  wishlistDestinations?: string[];
+  connections?: string[];
+  trips?: string[];
+  badges?: UserBadge[];
+  createdAt?: string;
+}
+
+// Hashtag type
+export interface Hashtag extends DbDocument {
+  name: string;
+  slug: string;
+  count?: number;
+}
+
+// Site Settings
+export interface SiteSettings extends DbDocument {
+  general?: {
+    siteTitle: string;
+    siteDescription: string;
+    contactEmail: string;
+    footerText: string;
+    maintenanceMode: boolean;
+  };
+  seo?: {
+    metaTitle: string;
+    metaDescription: string;
+    keywords: string;
+    ogImageUrl: string;
+  };
+  social?: {
+    facebookUrl: string;
+    twitterUrl: string;
+    instagramUrl: string;
+    pinterestUrl: string;
+  };
+  notifications?: {
+    enableEmailNotifications: boolean;
+    adminEmailNotifications: boolean;
+    commentNotifications: boolean;
+    subscriptionNotifications: boolean;
+  };
+  analytics?: {
+    googleAnalyticsId: string;
+    facebookPixelId: string;
+    enableAnalytics: boolean;
+  };
+  cookieConsent?: {
+    requireCookieConsent: boolean;
+    message: string;
+  };
+  api?: {
+    apiKeysEnabled: boolean;
+    rateLimit: string;
+  };
+  security?: {
+    twoFactorAuth: boolean;
+    passwordPolicy: string;
+    sessionTimeout: string;
+  };
+  backup?: {
+    autoBackup: boolean;
+    backupFrequency: string;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
 }

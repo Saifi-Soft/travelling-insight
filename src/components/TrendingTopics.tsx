@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { mongoApiService } from '@/api/mongoApiService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { DbDocument } from '@/api/mongoDbService';
 
 const topicsApi = {
   getTrending: async (): Promise<Topic[]> => {
@@ -23,7 +24,7 @@ const topicsApi = {
       });
       
       console.log('Fetched topics with posts:', topicsWithPosts);
-      return topicsWithPosts;
+      return topicsWithPosts as Topic[];
     } catch (error) {
       console.error('Error fetching trending topics:', error);
       return [];
@@ -44,7 +45,7 @@ const categoriesApi = {
       });
       
       console.log('Fetched categories with posts:', categoriesWithPosts);
-      return categoriesWithPosts;
+      return categoriesWithPosts as Category[];
     } catch (error) {
       console.error('Error fetching categories:', error);
       return [];
@@ -58,7 +59,7 @@ const postsApi = {
       console.log('Fetching trending posts...');
       const posts = await mongoApiService.queryDocuments('posts', {});
       console.log('Fetched posts:', posts);
-      return posts;
+      return posts as Post[];
     } catch (error) {
       console.error('Error fetching trending posts:', error);
       return [];
