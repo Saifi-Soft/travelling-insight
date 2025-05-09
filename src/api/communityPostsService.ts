@@ -156,14 +156,12 @@ export const communityPostsApi = {
       const newComment = {
         ...comment,
         commentId: Date.now().toString(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        postId
       };
       
       // Add to comments collection with reference to post
-      await mongoApiService.insertDocument('comments', {
-        ...newComment,
-        postId
-      });
+      await mongoApiService.insertDocument('comments', newComment);
       
       // Update comment count on post
       await mongoApiService.updateDocument('communityPosts', postId, {

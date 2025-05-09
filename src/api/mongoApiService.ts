@@ -1,39 +1,15 @@
 import { MongoOperators, Post, Category, Topic, Comment } from '@/types/common';
 import { toast } from 'sonner';
-import { MOCK_POSTS, MOCK_CATEGORIES, MOCK_TOPICS } from './sampleData';
+import { mongoDbService } from './mongoDbService';
 
 // Type definitions for our API functions
 // We'll use interfaces that match our common types but with optional IDs
-// since MongoDB will assign IDs
 
-// Simulated MongoDB collections
-const collections: Record<string, any[]> = {
-  posts: [],
-  comments: [],
-  users: [],
-  topics: [],
-  categories: [],
-  communityUsers: [],
-  subscriptions: [],
-  travelGroups: [],
-  travelMatches: [],
-  communityEvents: [],
-  adminUsers: []
-};
-
-// Generate a mock ObjectId
-const generateObjectId = () => {
-  const timestamp = (new Date().getTime() / 1000 | 0).toString(16);
-  return timestamp + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, () => {
-    return (Math.random() * 16 | 0).toString(16);
-  }).toLowerCase();
-};
-
-// Simple in-memory MongoDB-like API service
+// MongoDB API service that uses the mongoDbService
 class MongoApiService {
   private initialized = false;
 
-  // Initialize MongoDB with sample data
+  // Initialize MongoDB connection
   async initialize(): Promise<boolean> {
     try {
       if (this.initialized) {
@@ -43,15 +19,8 @@ class MongoApiService {
 
       console.log('[MongoDB] Initializing...');
       
-      // Initialize collections with sample data
-      await this.initializeCollectionsWithSampleData(
-        MOCK_POSTS,
-        MOCK_CATEGORIES,
-        MOCK_TOPICS
-      );
-      
-      // Initialize ad placements
-      await this.initAdPlacements();
+      // Connect to MongoDB
+      await mongoDbService.connect();
       
       this.initialized = true;
       console.log('[MongoDB] Initialization complete');
@@ -62,153 +31,26 @@ class MongoApiService {
     }
   }
 
-  // Initialize collections with sample data
-  async initializeCollectionsWithSampleData(
-    posts: Post[],
-    categories: Category[],
-    topics: Topic[]
-  ): Promise<void> {
-    try {
-      // Check if posts collection is empty and initialize with sample data if it is
-      const existingPosts = await this.queryDocuments('posts', {});
-      if (existingPosts.length === 0 && posts.length > 0) {
-        for (const post of posts) {
-          await this.insertDocument('posts', post);
-        }
-        console.log('[MongoDB] Initialized posts collection with sample data');
-      }
-
-      // Check if categories collection is empty and initialize with sample data if it is
-      const existingCategories = await this.queryDocuments('categories', {});
-      if (existingCategories.length === 0 && categories.length > 0) {
-        for (const category of categories) {
-          await this.insertDocument('categories', category);
-        }
-        console.log('[MongoDB] Initialized categories collection with sample data');
-      }
-
-      // Check if topics collection is empty and initialize with sample data if it is
-      const existingTopics = await this.queryDocuments('topics', {});
-      if (existingTopics.length === 0 && topics.length > 0) {
-        for (const topic of topics) {
-          await this.insertDocument('topics', topic);
-        }
-        console.log('[MongoDB] Initialized topics collection with sample data');
-      }
-    } catch (error) {
-      console.error('[MongoDB] Error initializing collections with sample data:', error);
-      throw error;
-    }
-  }
-
-  // Initialize MongoDB with sample ad placements
-  async initAdPlacements(): Promise<void> {
-    try {
-      const MOCK_ADS = [
-        {
-          name: 'Header Banner',
-          slot: '1234567890',
-          type: 'header',
-          format: 'horizontal',
-          location: 'all-pages',
-          isEnabled: true,
-          responsive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          name: 'Sidebar Ad',
-          slot: '0987654321',
-          type: 'sidebar',
-          format: 'vertical',
-          location: 'blog',
-          isEnabled: true,
-          responsive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          name: 'Between Posts',
-          slot: '1122334455',
-          type: 'between-posts',
-          format: 'auto',
-          location: 'blog',
-          isEnabled: true,
-          responsive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          name: 'Footer Ad',
-          slot: '5566778899',
-          type: 'footer',
-          format: 'horizontal',
-          location: 'all-pages',
-          isEnabled: true,
-          responsive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        // Add new ad types for vertical and popup ads
-        {
-          name: 'Vertical Side Ad',
-          slot: '1231231231',
-          type: 'vertical',
-          format: 'vertical',
-          location: 'travel',
-          isEnabled: true,
-          responsive: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          name: 'Popup Ad',
-          slot: '3213213211',
-          type: 'popup',
-          format: 'rectangle',
-          location: 'all-pages',
-          isEnabled: true,
-          responsive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-      ];
-
-      // Check if ads collection has data
-      const existingAds = await this.queryDocuments('ads', {});
-      
-      if (existingAds.length === 0) {
-        for (const ad of MOCK_ADS) {
-          await this.insertDocument('ads', ad);
-        }
-        console.log('[MongoDB] Ad placements initialized with sample data');
-      }
-    } catch (error) {
-      console.error('[MongoDB] Error initializing ad placements:', error);
-    }
-  }
-
   // Insert a document into a collection
   async insertDocument(collectionName: string, document: any): Promise<any> {
     try {
-      if (!collections[collectionName]) {
-        collections[collectionName] = [];
-      }
-      
       // Generate an ID if one doesn't exist
-      const id = document.id || generateObjectId();
+      const id = document.id || document._id;
       
       const newDocument = {
         ...document,
-        id: id,
-        _id: id, // Keep both id and _id for compatibility
-        createdAt: document.createdAt || new Date(),
-        updatedAt: document.updatedAt || new Date()
+        createdAt: document.createdAt || new Date().toISOString(),
+        updatedAt: document.updatedAt || new Date().toISOString()
       };
       
-      collections[collectionName].push(newDocument);
-      console.log(`[MongoDB] Inserted document in ${collectionName}:`, newDocument);
-      return newDocument;
+      const result = await mongoDbService.insertOne(collectionName, newDocument);
+      console.log(`[MongoDB] Inserted document in ${collectionName}:`, result);
+      
+      // Return the document with the inserted ID
+      return {
+        ...newDocument,
+        _id: result.insertedId || id
+      };
     } catch (error) {
       console.error(`[MongoDB] Error inserting document into ${collectionName}:`, error);
       throw error;
@@ -218,11 +60,16 @@ class MongoApiService {
   // Get a document by ID
   async getDocumentById(collectionName: string, id: string): Promise<any | null> {
     try {
-      if (!collections[collectionName]) {
-        return null;
+      let filter: any = {};
+      
+      // Try to find by _id or id
+      try {
+        filter = { _id: mongoDbService.toObjectId(id) };
+      } catch (e) {
+        filter = { $or: [{ id: id }, { _id: id }] };
       }
       
-      const document = collections[collectionName].find(doc => doc.id === id || doc._id === id);
+      const document = await mongoDbService.findOne(collectionName, filter);
       console.log(`[MongoDB] Retrieved document from ${collectionName}:`, document);
       return document || null;
     } catch (error) {
@@ -234,24 +81,26 @@ class MongoApiService {
   // Update a document
   async updateDocument(collectionName: string, id: string, update: any): Promise<any | null> {
     try {
-      if (!collections[collectionName]) {
-        return null;
-      }
+      let filter: any = {};
       
-      const index = collections[collectionName].findIndex(doc => doc.id === id || doc._id === id);
-      if (index === -1) {
-        return null;
+      // Try to find by _id or id
+      try {
+        filter = { _id: mongoDbService.toObjectId(id) };
+      } catch (e) {
+        filter = { $or: [{ id: id }, { _id: id }] };
       }
       
       const updatedDocument = {
-        ...collections[collectionName][index],
         ...update,
-        updatedAt: new Date()
+        updatedAt: new Date().toISOString()
       };
       
-      collections[collectionName][index] = updatedDocument;
-      console.log(`[MongoDB] Updated document in ${collectionName}:`, updatedDocument);
-      return updatedDocument;
+      await mongoDbService.updateOne(collectionName, filter, updatedDocument);
+      
+      // Return the updated document
+      const result = await this.getDocumentById(collectionName, id);
+      console.log(`[MongoDB] Updated document in ${collectionName}:`, result);
+      return result;
     } catch (error) {
       console.error(`[MongoDB] Error updating document in ${collectionName}:`, error);
       return null;
@@ -261,14 +110,17 @@ class MongoApiService {
   // Delete a document
   async deleteDocument(collectionName: string, id: string): Promise<boolean> {
     try {
-      if (!collections[collectionName]) {
-        return false;
+      let filter: any = {};
+      
+      // Try to find by _id or id
+      try {
+        filter = { _id: mongoDbService.toObjectId(id) };
+      } catch (e) {
+        filter = { $or: [{ id: id }, { _id: id }] };
       }
       
-      const initialLength = collections[collectionName].length;
-      collections[collectionName] = collections[collectionName].filter(doc => doc.id !== id && doc._id !== id);
-      
-      const success = collections[collectionName].length < initialLength;
+      const result = await mongoDbService.deleteOne(collectionName, filter);
+      const success = result && result.deletedCount && result.deletedCount > 0;
       console.log(`[MongoDB] Deleted document from ${collectionName}:`, success);
       return success;
     } catch (error) {
@@ -280,23 +132,9 @@ class MongoApiService {
   // Query documents with filter
   async queryDocuments(collectionName: string, filter: Record<string, any>): Promise<any[]> {
     try {
-      if (!collections[collectionName]) {
-        collections[collectionName] = []; // Initialize collection if it doesn't exist
-      }
-      
-      // Simple filtering (not supporting complex MongoDB queries)
-      const results = collections[collectionName].filter(doc => {
-        return Object.entries(filter).every(([key, value]) => {
-          if (typeof value === 'object' && value !== null && Object.keys(value).some(k => k.startsWith('$'))) {
-            // Handle MongoDB operators like $gt, $lt, etc.
-            return this.handleOperators(doc[key], value);
-          }
-          return doc[key] === value;
-        });
-      });
-      
+      const results = await mongoDbService.find(collectionName, filter);
       console.log(`[MongoDB] Queried documents from ${collectionName}:`, results.length);
-      return [...results]; // Return a copy to prevent mutation
+      return results;
     } catch (error) {
       console.error(`[MongoDB] Error querying documents from ${collectionName}:`, error);
       return [];
@@ -311,72 +149,6 @@ class MongoApiService {
     } catch (error) {
       console.error(`[MongoDB] Error getting subscription by user ID:`, error);
       return null;
-    }
-  }
-  
-  // Handle MongoDB operators
-  private handleOperators(fieldValue: any, operators: any): boolean {
-    try {
-      // Handle $gt operator
-      if ('$gt' in operators && !(fieldValue > operators.$gt)) {
-        return false;
-      }
-      
-      // Handle $gte operator
-      if ('$gte' in operators && !(fieldValue >= operators.$gte)) {
-        return false;
-      }
-      
-      // Handle $lt operator
-      if ('$lt' in operators && !(fieldValue < operators.$lt)) {
-        return false;
-      }
-      
-      // Handle $lte operator
-      if ('$lte' in operators && !(fieldValue <= operators.$lte)) {
-        return false;
-      }
-      
-      // Handle $eq operator
-      if ('$eq' in operators && fieldValue !== operators.$eq) {
-        return false;
-      }
-      
-      // Handle $ne operator
-      if ('$ne' in operators && fieldValue === operators.$ne) {
-        return false;
-      }
-      
-      // Handle $in operator for arrays
-      if ('$in' in operators) {
-        const inArray = operators.$in as any[];
-        if (!inArray.includes(fieldValue)) {
-          return false;
-        }
-      }
-      
-      // Handle $nin operator for arrays
-      if ('$nin' in operators) {
-        const ninArray = operators.$nin as any[];
-        if (ninArray.includes(fieldValue)) {
-          return false;
-        }
-      }
-      
-      // Handle $exists operator
-      if ('$exists' in operators) {
-        const shouldExist = operators.$exists;
-        const doesExist = fieldValue !== undefined && fieldValue !== null;
-        
-        if (shouldExist !== doesExist) {
-          return false;
-        }
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('[MongoDB] Error handling operators:', error);
-      return false;
     }
   }
 }

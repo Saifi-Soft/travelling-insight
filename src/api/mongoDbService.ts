@@ -19,18 +19,13 @@ class MongoDbService {
       return this.connectionPromise;
     }
 
-    // For browser environments, use a proxy API endpoint
-    if (typeof window !== 'undefined') {
-      console.log('Browser environment detected, using proxy for MongoDB operations');
-      this.isConnected = true;
-      return { client: null, db: null };
-    }
-
-    // For server environments (Node.js), directly connect to MongoDB
-    const uri = process.env.VITE_MONGODB_URI || 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@your-cluster.mongodb.net';
-    const dbName = process.env.VITE_DB_NAME || 'travel_blog';
+    // Get MongoDB URI from environment variables
+    const uri = import.meta.env.VITE_MONGODB_URI || 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@your-cluster.mongodb.net';
+    const dbName = import.meta.env.VITE_DB_NAME || 'travel_blog';
 
     try {
+      console.log('[MongoDB] Connecting to MongoDB Atlas...');
+      
       this.connectionPromise = new Promise(async (resolve, reject) => {
         try {
           const client = new MongoClient(uri, {
@@ -42,7 +37,7 @@ class MongoDbService {
           });
 
           await client.connect();
-          console.log('Connected to MongoDB Atlas');
+          console.log('[MongoDB] Connected to MongoDB Atlas');
 
           const db = client.db(dbName);
           this.client = client;
@@ -51,7 +46,7 @@ class MongoDbService {
 
           resolve({ client, db });
         } catch (error) {
-          console.error('Error connecting to MongoDB:', error);
+          console.error('[MongoDB] Error connecting to MongoDB:', error);
           this.isConnected = false;
           reject(error);
         }
@@ -59,7 +54,7 @@ class MongoDbService {
 
       return this.connectionPromise;
     } catch (error) {
-      console.error('MongoDB connection error:', error);
+      console.error('[MongoDB] Connection error:', error);
       this.isConnected = false;
       throw error;
     }
@@ -72,7 +67,7 @@ class MongoDbService {
       this.db = null;
       this.isConnected = false;
       this.connectionPromise = null;
-      console.log('Disconnected from MongoDB');
+      console.log('[MongoDB] Disconnected from MongoDB');
     }
   }
 
@@ -81,145 +76,55 @@ class MongoDbService {
       await this.connect();
     }
 
-    if (typeof window !== 'undefined') {
-      // In browser, return mock collection that will forward requests to API
-      return {
-        findOne: (filter: any) => this.findOne(collectionName, filter),
-        find: (filter: any = {}) => ({
-          toArray: () => this.find(collectionName, filter)
-        }),
-        insertOne: (doc: any) => this.insertOne(collectionName, doc),
-        updateOne: (filter: any, update: any) => this.updateOne(collectionName, filter, update),
-        deleteOne: (filter: any) => this.deleteOne(collectionName, filter),
-        countDocuments: (filter: any = {}) => this.countDocuments(collectionName, filter)
-      };
-    }
-
-    // Direct MongoDB access on server
     return this.db.collection(collectionName);
   }
 
   async findOne(collectionName: string, filter: object) {
     try {
-      if (typeof window !== 'undefined') {
-        const response = await fetch(`/api/db/${collectionName}/findOne`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filter })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      }
-
-      // Direct DB access
       const collection = await this.getCollection(collectionName);
       return await collection.findOne(filter);
     } catch (error) {
-      console.error(`Error in findOne operation for ${collectionName}:`, error);
+      console.error(`[MongoDB] Error in findOne operation for ${collectionName}:`, error);
       return null;
     }
   }
 
   async find(collectionName: string, filter: object = {}) {
     try {
-      if (typeof window !== 'undefined') {
-        const response = await fetch(`/api/db/${collectionName}/find`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filter })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      }
-
-      // Direct DB access
       const collection = await this.getCollection(collectionName);
       return await collection.find(filter).toArray();
     } catch (error) {
-      console.error(`Error in find operation for ${collectionName}:`, error);
+      console.error(`[MongoDB] Error in find operation for ${collectionName}:`, error);
       return [];
     }
   }
 
   async insertOne(collectionName: string, document: object) {
     try {
-      if (typeof window !== 'undefined') {
-        const response = await fetch(`/api/db/${collectionName}/insertOne`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ document })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      }
-
-      // Direct DB access
       const collection = await this.getCollection(collectionName);
       return await collection.insertOne(document);
     } catch (error) {
-      console.error(`Error in insertOne operation for ${collectionName}:`, error);
+      console.error(`[MongoDB] Error in insertOne operation for ${collectionName}:`, error);
       throw error;
     }
   }
 
   async updateOne(collectionName: string, filter: object, update: object) {
     try {
-      if (typeof window !== 'undefined') {
-        const response = await fetch(`/api/db/${collectionName}/updateOne`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filter, update })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      }
-
-      // Direct DB access
       const collection = await this.getCollection(collectionName);
-      return await collection.updateOne(filter, update);
+      return await collection.updateOne(filter, { $set: update });
     } catch (error) {
-      console.error(`Error in updateOne operation for ${collectionName}:`, error);
+      console.error(`[MongoDB] Error in updateOne operation for ${collectionName}:`, error);
       throw error;
     }
   }
 
   async deleteOne(collectionName: string, filter: object) {
     try {
-      if (typeof window !== 'undefined') {
-        const response = await fetch(`/api/db/${collectionName}/deleteOne`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filter })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      }
-
-      // Direct DB access
       const collection = await this.getCollection(collectionName);
       return await collection.deleteOne(filter);
     } catch (error) {
-      console.error(`Error in deleteOne operation for ${collectionName}:`, error);
+      console.error(`[MongoDB] Error in deleteOne operation for ${collectionName}:`, error);
       throw error;
     }
   }
@@ -227,26 +132,10 @@ class MongoDbService {
   // Count documents in a collection
   async countDocuments(collectionName: string, filter: object = {}) {
     try {
-      if (typeof window !== 'undefined') {
-        const response = await fetch(`/api/db/${collectionName}/count`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filter })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        return result.count;
-      }
-
-      // Direct DB access
       const collection = await this.getCollection(collectionName);
       return await collection.countDocuments(filter);
     } catch (error) {
-      console.error(`Error in countDocuments operation for ${collectionName}:`, error);
+      console.error(`[MongoDB] Error in countDocuments operation for ${collectionName}:`, error);
       return 0;
     }
   }
