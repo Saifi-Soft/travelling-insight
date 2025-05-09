@@ -6,6 +6,13 @@ import { toast } from 'sonner';
 class MongoApiService {
   private initialized = false;
   private mockDb: Record<string, any[]> = {};
+  private mongoUrl: string;
+
+  constructor() {
+    // Store the MongoDB connection URL
+    this.mongoUrl = import.meta.env.VITE_MONGODB_URI || 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@travellinginsight.3fl6dwk.mongodb.net/';
+    console.log('[MongoDB] Using connection URL:', this.mongoUrl);
+  }
 
   // Initialize MongoDB connection
   async initialize(): Promise<boolean> {
@@ -15,14 +22,22 @@ class MongoApiService {
         return true;
       }
 
-      console.log('[MongoDB] Initializing mock API service for browser environment...');
+      console.log('[MongoDB] Initializing API service...');
+      console.log('[MongoDB] Using connection URL:', this.mongoUrl);
       
-      // Initialize mock database
-      this.mockDb = {};
+      if (typeof window !== 'undefined') {
+        // Browser environment - initialize mock database
+        console.log('[MongoDB] Browser environment detected, using mock implementation');
+        this.mockDb = {};
+        toast.success('Connected to mock database for development');
+      } else {
+        // Server environment - would connect to real MongoDB
+        // This is just a placeholder as the real connection would be server-side
+        console.log('[MongoDB] Server environment detected, would connect to real MongoDB');
+      }
       
       this.initialized = true;
-      console.log('[MongoDB] Mock service initialization complete');
-      toast.success('Connected to mock database for development');
+      console.log('[MongoDB] Service initialization complete');
       return true;
     } catch (error) {
       console.error('[MongoDB] Initialization failed:', error);

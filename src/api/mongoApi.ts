@@ -17,6 +17,9 @@ const startMockApiServer = () => {
   // For now, we'll simulate API functionality with local logic
   console.log('Starting mock MongoDB API server for development...');
   
+  // Set the MongoDB connection URL in the mock server
+  (window as any).MONGODB_URI = import.meta.env.VITE_MONGODB_URI || 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@travellinginsight.3fl6dwk.mongodb.net/';
+  
   // Create global API handlers for MongoDB operations
   (window as any).mongoApi = {
     findOne: async (collectionName: string, filter: any) => {
