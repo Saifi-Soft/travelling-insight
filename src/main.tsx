@@ -8,8 +8,8 @@ import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
-// Initialize MongoDB for browser context
-import { mongoApiService } from './api/mongoApiService';
+// Import MongoDB service
+import { mongoDbService } from './api/mongoDbService';
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient({
@@ -23,26 +23,29 @@ const queryClient = new QueryClient({
 });
 
 // Initialize MongoDB connection
-mongoApiService.initialize().then(() => {
-  console.log('MongoDB initialized in main.tsx');
-  // Create root and render app
-  createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <App />
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </React.StrictMode>
-  );
-}).catch(error => {
-  console.error('Failed to initialize MongoDB:', error);
-  // Still render the app, it will use fallback data
-  createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <App />
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </React.StrictMode>
-  );
-});
+console.log('Initializing MongoDB connection...');
+mongoDbService.connect()
+  .then(() => {
+    console.log('MongoDB initialized in main.tsx');
+    // Create root and render app
+    createRoot(document.getElementById("root")!).render(
+      <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <App />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </React.StrictMode>
+    );
+  })
+  .catch(error => {
+    console.error('Failed to initialize MongoDB:', error);
+    // Still render the app, it will use fallback data
+    createRoot(document.getElementById("root")!).render(
+      <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <App />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </React.StrictMode>
+    );
+  });

@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { mongoApiService } from '@/api/mongoApiService';
-import { useToast } from '@/hooks/use-toast';
+import { mongoDbService } from '@/api/mongoDbService';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -26,7 +26,6 @@ interface SessionContextType {
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
   const [session, setSession] = useState<Session>({
     isAuthenticated: false
   });
@@ -42,19 +41,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         
         if (userId && userEmail) {
           // Validate user exists in MongoDB
-          const users = await mongoApiService.queryDocuments('users', { 
-            _id: userId,
+          const user = await mongoDbService.findOne('users', { 
             email: userEmail 
           });
           
-          if (users && users.length > 0) {
+          if (user) {
             // User exists, set session
             setSession({
               user: {
-                id: userId,
-                name: localStorage.getItem('userName') || users[0].name || undefined,
+                id: user._id.toString(),
+                name: localStorage.getItem('userName') || user.name || undefined,
                 email: userEmail,
-                role: localStorage.getItem('userRole') || users[0].role || undefined
+                role: localStorage.getItem('userRole') || user.role || undefined
               },
               isAuthenticated: true
             });
@@ -85,47 +83,61 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       // Check if user exists in MongoDB
-      const users = await mongoApiService.queryDocuments('users', { email: email });
+      const user = await mongoDbService.findOne('users', { email: email });
       
-      // For demo purposes with MongoDB, we'll just check email (no password hashing for demo)
-      if (users.length > 0) {
-        // Store user ID in localStorage
-        localStorage.setItem('userId', users[0]._id);
-        localStorage.setItem('userName', users[0].name || 'Demo User');
-        localStorage.setItem('userEmail', email);
-        localStorage.setItem('userRole', users[0].role || 'user');
-        localStorage.setItem('community_user_id', users[0]._id);
-        
-        // Update state
-        setSession({
-          user: {
-            id: users[0]._id,
-            name: users[0].name || 'Demo User',
-            email: email,
-            role: users[0].role || 'user'
-          },
-          isAuthenticated: true
-        });
-        
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${users[0].name || 'Demo User'}!`,
-        });
-        
-        return true;
+      if (user) {
+        // In a production app, you would verify the password hash here
+        // For now, we'll just check if the password matches directly (NOT SECURE FOR PRODUCTION)
+        if (user.password === password) {
+          const userId = user._id.toString();
+          
+          // Store user ID in localStorage
+          localStorage.setItem('userId', userId);
+          localStorage.setItem('userName', user.name || 'User');
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userRole', user.role || 'user');
+          localStorage.setItem('community_user_id', userId);
+          
+          // Update state
+          setSession({
+            user: {
+              id: userId,
+              name: user.name || 'User',
+              email: email,
+              role: user.role || 'user'
+            },
+            isAuthenticated: true
+          });
+          
+          toast({
+            title: "Login Successful",
+            description: `Welcome back, ${user.name || 'User'}!`,
+          });
+          
+          return true;
+        } else {
+          toast({
+            title: "Login Failed",
+            description: "Invalid password. Please try again.",
+            variant: "destructive",
+          });
+          return false;
+        }
       } else {
         // If no user found, create a new one for demo purposes
-        const newUser = await mongoApiService.insertDocument('users', {
+        const newUser = await mongoDbService.insertOne('users', {
           name: 'Demo User',
           email,
-          password: 'hashed_would_go_here',
+          password: password, // In production, this should be hashed
           role: 'user',
           isSubscribed: true, // Make demo user subscribed by default
           createdAt: new Date(),
         });
         
-        localStorage.setItem('community_user_id', newUser.insertedId);
-        localStorage.setItem('userId', newUser.insertedId);
+        const userId = newUser.insertedId.toString();
+        
+        localStorage.setItem('community_user_id', userId);
+        localStorage.setItem('userId', userId);
         localStorage.setItem('userName', 'Demo User');
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userRole', 'user');
@@ -133,7 +145,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         // Update state
         setSession({
           user: {
-            id: newUser.insertedId,
+            id: userId,
             name: 'Demo User',
             email: email,
             role: 'user'
@@ -143,8 +155,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         
         // Create a subscription for the demo user
         try {
-          await mongoApiService.insertDocument('subscriptions', {
-            userId: newUser.insertedId,
+          await mongoDbService.insertOne('subscriptions', {
+            userId: userId,
             planType: 'monthly',
             status: 'active',
             paymentMethod: {

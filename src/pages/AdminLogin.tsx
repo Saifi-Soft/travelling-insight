@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { mongoApiService } from '@/api/mongoApiService';
 import { Loader2, ShieldAlert } from 'lucide-react';
+import { mongoDbService } from '@/api/mongoDbService';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -41,17 +41,17 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      // Check if admin collection exists in MongoDB
-      const adminUsers = await mongoApiService.queryDocuments('adminUsers', {
+      // Check if admin user exists in MongoDB
+      const adminUser = await mongoDbService.findOne('adminUsers', {
         username: username
       });
 
       // If there's no admin user yet, accept hardcoded credentials
-      if (adminUsers.length === 0) {
+      if (!adminUser) {
         // Hardcoded credentials for first login
         if (username === 'admin' && password === 'password') {
           // Store the first admin in the database
-          await mongoApiService.insertDocument('adminUsers', {
+          await mongoDbService.insertOne('adminUsers', {
             username: 'admin',
             passwordHash: 'password', // In a real app, you'd hash this
             role: 'superadmin',
@@ -78,11 +78,10 @@ const AdminLogin = () => {
         }
       } else {
         // Verify against stored admin user
-        const adminUser = adminUsers[0];
         if (adminUser && adminUser.passwordHash === password) { // In real app, compare hashed passwords
           // Update last login time
-          await mongoApiService.updateDocument('adminUsers', adminUser._id || adminUser.id, {
-            lastLogin: new Date()
+          await mongoDbService.updateOne('adminUsers', { _id: adminUser._id }, {
+            $set: { lastLogin: new Date() }
           });
           
           localStorage.setItem('adminAuth', 'true');
