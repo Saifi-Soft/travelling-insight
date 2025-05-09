@@ -1,3 +1,4 @@
+
 // Mock API service for MongoDB operations in the browser
 import { toast } from 'sonner';
 import { mongoDbService, DbDocument, DbOperationResult } from './mongoDbService';

@@ -1,16 +1,19 @@
 
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { categoriesApi } from '@/api/mongoApiService';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 interface Category {
-  id: string;
+  _id?: string;
+  id?: string;
   name: string;
   slug: string;
   description: string;
@@ -20,66 +23,43 @@ interface Category {
 
 const AdminCategories = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Mock categories data
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: '1',
-      name: 'Adventure',
-      slug: 'adventure',
-      description: 'Explore thrilling and adrenaline-pumping travel experiences.',
-      image: 'https://example.com/adventure.jpg',
-      count: 10
-    },
-    {
-      id: '2',
-      name: 'Cultural',
-      slug: 'cultural',
-      description: 'Immerse yourself in the rich cultures and traditions of different destinations.',
-      image: 'https://example.com/cultural.jpg',
-      count: 8
-    },
-    {
-      id: '3',
-      name: 'Food & Cuisine',
-      slug: 'food-cuisine',
-      description: 'Savor the flavors of the world with unique culinary experiences.',
-      image: 'https://example.com/food.jpg',
-      count: 12
-    },
-    {
-      id: '4',
-      name: 'Nature',
-      slug: 'nature',
-      description: 'Connect with the natural world through breathtaking landscapes and wildlife.',
-      image: 'https://example.com/nature.jpg',
-      count: 15
-    },
-    {
-      id: '5',
-      name: 'Relaxation',
-      slug: 'relaxation',
-      description: 'Unwind and rejuvenate at peaceful and serene destinations.',
-      image: 'https://example.com/relaxation.jpg',
-      count: 7
-    },
-    {
-      id: '6',
-      name: 'Urban',
-      slug: 'urban',
-      description: 'Explore fascinating cities and urban landscapes around the world.',
-      image: 'https://example.com/urban.jpg',
-      count: 9
-    }
-  ]);
-
-  // Add new category form state
+  // New category form state
   const [newCategory, setNewCategory] = useState({
     name: '',
     slug: '',
     description: '',
     image: ''
+  });
+  
+  // Fetch categories from MongoDB
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoriesApi.getAll,
+  });
+  
+  // Create category mutation
+  const createMutation = useMutation({
+    mutationFn: (categoryData: Partial<Category>) => categoriesApi.create(categoryData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast({
+        title: "Success",
+        description: "Category created successfully",
+      });
+      setIsDialogOpen(false);
+      // Reset the form
+      setNewCategory({ name: '', slug: '', description: '', image: '' });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to create category: ${(error as Error).message}`,
+        variant: "destructive",
+      });
+    }
   });
 
   const handleAddCategory = () => {
@@ -87,20 +67,14 @@ const AdminCategories = () => {
   };
 
   const handleSubmit = () => {
-    // Generate an ID (in a real app this would be done by the backend)
-    const id = Math.random().toString(36).substr(2, 9);
+    // Generate a slug if not provided
+    const slug = newCategory.slug || newCategory.name.toLowerCase().replace(/\s+/g, '-');
     
-    // Add the new category to the list
-    setCategories([...categories, { ...newCategory, id, count: 0 }]);
-    
-    // Reset the form and close the dialog
-    setNewCategory({ name: '', slug: '', description: '', image: '' });
-    setIsDialogOpen(false);
-    
-    // Show success toast
-    toast({
-      title: "Success",
-      description: "Category created successfully",
+    // Create the new category
+    createMutation.mutate({ 
+      ...newCategory, 
+      slug, 
+      count: 0 
     });
   };
 
@@ -117,42 +91,48 @@ const AdminCategories = () => {
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category) => (
-            <Card key={category.id} className="overflow-hidden">
-              <div className="relative h-40 bg-gray-200">
-                {category.image && (
-                  <img 
-                    src={category.image} 
-                    alt={category.name} 
-                    className="w-full h-full object-cover"
-                    onError={({ currentTarget }) => {
-                      currentTarget.onerror = null;
-                      currentTarget.src = "https://via.placeholder.com/400x200?text=No+Image";
-                    }}
-                  />
-                )}
-              </div>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-bold">{category.name}</h3>
-                    <p className="text-sm text-gray-500">{category.count} posts</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map((category: Category) => (
+              <Card key={category._id || category.id} className="overflow-hidden">
+                <div className="relative h-40 bg-gray-200">
+                  {category.image && (
+                    <img 
+                      src={category.image} 
+                      alt={category.name} 
+                      className="w-full h-full object-cover"
+                      onError={({ currentTarget }) => {
+                        currentTarget.onerror = null;
+                        currentTarget.src = "https://via.placeholder.com/400x200?text=No+Image";
+                      }}
+                    />
+                  )}
                 </div>
-                <p className="text-sm mt-2 text-gray-600 line-clamp-2">{category.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-bold">{category.name}</h3>
+                      <p className="text-sm text-gray-500">{category.count} posts</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-sm mt-2 text-gray-600 line-clamp-2">{category.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Add Category Dialog */}
@@ -208,7 +188,11 @@ const AdminCategories = () => {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
+            <Button 
+              onClick={handleSubmit} 
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={!newCategory.name}
+            >
               Create
             </Button>
           </DialogFooter>

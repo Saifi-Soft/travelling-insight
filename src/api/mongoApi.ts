@@ -20,7 +20,7 @@ export const initMongoApi = () => {
     dbName: dbName
   };
   
-  // Initialize database access layer
+  // Initialize database storage layer
   if (!(window as any).dbStorage) {
     (window as any).dbStorage = {};
     console.log('Browser database storage initialized');

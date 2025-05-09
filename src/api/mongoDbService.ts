@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 
 // Define interfaces for our database operations
@@ -198,14 +199,14 @@ class MongoDbService {
       const collection = this.getCollection(collectionName);
       const initialLength = collection.length;
       
-      const filteredCollection = collection.filter(doc => {
+      const filteredCollection = collection.filter(item => {
         // Check if document matches filter
         return !Object.entries(filter).every(([key, value]) => {
           if (key === '_id' || key === 'id') {
-            const docId = doc._id?.toString() || doc.id?.toString();
+            const docId = item._id?.toString() || item.id?.toString();
             return docId === value?.toString();
           }
-          return doc[key] === value;
+          return item[key] === value;
         });
       });
       
@@ -577,4 +578,27 @@ class MongoDbService {
           name: 'Alex Johnson',
           avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80',
           bio: 'Travel enthusiast always looking for the next adventure.',
-          joinDate: new Date(Date.now() - 100 * 24 * 60 * 60 *
+          joinDate: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+      
+      for (const user of usersData) {
+        await this.insertOne('communityUsers', user);
+      }
+      console.log('[MongoDB] Community users seeded successfully');
+    }
+  }
+
+  // Seed community events
+  async seedCommunityEvents(): Promise<void> {
+    // Add implementation here as needed
+  }
+
+  // Seed travel groups
+  async seedTravelGroups(): Promise<void> {
+    // Add implementation here as needed
+  }
+}
+
+// Export the service instance
+export const mongoDbService = new MongoDbService();
