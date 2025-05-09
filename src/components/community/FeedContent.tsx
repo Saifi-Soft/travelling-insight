@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -30,9 +29,12 @@ interface PostProps {
   content: string;
   images?: string[];
   location?: string;
+  tags?: string[];
+  visibility?: string;
   createdAt: string;
   likes: number;
   comments: number;
+  likedBy?: string[];
   isLiked?: boolean;
   isSaved?: boolean;
 }
@@ -65,8 +67,13 @@ const FeedContent = () => {
   const savePostMutation = useMutation({
     mutationFn: ({ postId }: { postId: string }) => 
       communityPostsApi.savePost(postId, userId),
-    onSuccess: () => {
-      toast.success('Post saved to your collection');
+    onSuccess: (data) => {
+      if (data.saved) {
+        toast.success('Post saved to your collection');
+      } else {
+        toast.success('Post removed from your collection');
+      }
+      queryClient.invalidateQueries({ queryKey: ['communityPosts'] });
     },
     onError: () => {
       toast.error('Failed to save post');

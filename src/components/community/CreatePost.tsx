@@ -58,11 +58,11 @@ const CreatePost = () => {
       tags?: string[];
       visibility: string;
     }) => communityPostsApi.createPost(postData),
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['communityPosts'] });
       
       // Check if the post was moderated
-      if (data.wasModerated) {
+      if (data && data.wasModerated) {
         toast.error('Your post was removed for containing inappropriate content. You have received a warning.', {
           icon: <AlertTriangle className="h-5 w-5 text-destructive" />,
           duration: 6000,

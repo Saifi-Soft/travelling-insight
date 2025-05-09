@@ -41,6 +41,8 @@ export const communityPostsApi = {
     content: string;
     images?: string[];
     location?: string;
+    tags?: string[];
+    visibility?: string;
   }) => {
     try {
       // Validate required fields
@@ -56,8 +58,37 @@ export const communityPostsApi = {
         likedBy: []
       };
       
+      // Check for inappropriate content (mock implementation)
+      const containsInappropriateContent = 
+        postData.content.toLowerCase().includes("xxx") || 
+        postData.content.toLowerCase().includes("explicit") ||
+        postData.content.toLowerCase().includes("adult content");
+      
+      if (containsInappropriateContent) {
+        // Store record but mark as moderated
+        const moderatedPost = {
+          ...newPost,
+          moderated: true,
+          moderationReason: 'Inappropriate content detected',
+          moderatedAt: new Date().toISOString()
+        };
+        
+        await mongoApiService.insertDocument('communityPosts', moderatedPost);
+        
+        // Return with wasModerated flag for UI handling
+        return { 
+          ...newPost, 
+          _id: Math.random().toString(36).substring(2, 15),
+          wasModerated: true 
+        };
+      }
+      
       const result = await mongoApiService.insertDocument('communityPosts', newPost);
-      return { ...newPost, _id: result.insertedId };
+      return { 
+        ...newPost, 
+        _id: result.insertedId || result._id,
+        wasModerated: false
+      };
     } catch (error) {
       console.error('Error creating community post:', error);
       toast.error('Failed to create post');
@@ -159,6 +190,74 @@ export const communityPostsApi = {
     } catch (error) {
       console.error(`Error getting comments for post ${postId}:`, error);
       toast.error('Failed to load comments');
+      return [];
+    }
+  },
+  
+  // Save post (bookmark functionality)
+  savePost: async (postId: string, userId: string) => {
+    try {
+      if (!postId || !userId) {
+        throw new Error('Post ID and User ID are required');
+      }
+      
+      // First check if the post is already saved by the user
+      const savedPosts = await mongoApiService.queryDocuments('savedPosts', { 
+        userId, 
+        postId 
+      });
+      
+      if (savedPosts.length > 0) {
+        // Post already saved, remove it (toggle functionality)
+        await mongoApiService.deleteDocument('savedPosts', savedPosts[0]._id);
+        return { saved: false };
+      } else {
+        // Post not saved, save it
+        await mongoApiService.insertDocument('savedPosts', {
+          userId,
+          postId,
+          savedAt: new Date().toISOString()
+        });
+        return { saved: true };
+      }
+    } catch (error) {
+      console.error('Error saving/unsaving post:', error);
+      toast.error('Failed to save post');
+      throw error;
+    }
+  },
+  
+  // Get saved posts for a user
+  getSavedPosts: async (userId: string) => {
+    try {
+      if (!userId) {
+        return [];
+      }
+      
+      // Get all saved post IDs for the user
+      const savedPostEntries = await mongoApiService.queryDocuments('savedPosts', { userId });
+      const postIds = savedPostEntries.map((entry: any) => entry.postId);
+      
+      if (postIds.length === 0) {
+        return [];
+      }
+      
+      // Fetch the actual posts
+      const posts = [];
+      for (const postId of postIds) {
+        const post = await mongoApiService.getDocumentById('communityPosts', postId);
+        if (post) {
+          posts.push({
+            ...post,
+            isSaved: true
+          });
+        }
+      }
+      
+      return posts.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } catch (error) {
+      console.error(`Error fetching saved posts for ${userId}:`, error);
+      toast.error('Failed to load saved posts');
       return [];
     }
   }
