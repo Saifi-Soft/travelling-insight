@@ -10,6 +10,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 // Import MongoDB API service
 import { mongoApiService } from './api/mongoApiService';
+import { initMongoApi } from './api/mongoApi';
 
 // Create a new QueryClient instance with retry configuration
 const queryClient = new QueryClient({
@@ -21,6 +22,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Initialize mock MongoDB API for browser environment
+initMongoApi();
 
 // Initialize MongoDB API service
 console.log('Initializing MongoDB API service...');

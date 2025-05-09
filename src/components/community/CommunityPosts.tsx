@@ -6,9 +6,11 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
-import { ThumbsUp, MessageCircle, Share2, MapPin } from 'lucide-react';
+import { ThumbsUp, MessageCircle, Share2, MapPin, Loader2 } from 'lucide-react';
 import { communityPostsApi } from '@/api/communityPostsService';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import CreatePostForm from './CreatePostForm';
+import { useSession } from '@/hooks/useSession';
 
 interface PostProps {
   _id?: string;
@@ -21,19 +23,22 @@ interface PostProps {
   createdAt: string;
   likes: number;
   comments: number;
+  likedBy?: string[];
 }
 
 const CommunityPosts = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const { session } = useSession();
 
-  const userId = localStorage.getItem('community_user_id') || '';
-  const userName = localStorage.getItem('userName') || 'Anonymous User';
+  const userId = session.user?.id || localStorage.getItem('community_user_id') || '';
+  const userName = session.user?.name || localStorage.getItem('userName') || 'Anonymous User';
 
   // Fetch all posts
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ['communityPosts'],
     queryFn: communityPostsApi.getAllPosts,
+    staleTime: 1000 * 60 // 1 minute
   });
 
   // Like a post
@@ -63,8 +68,15 @@ const CommunityPosts = () => {
     likePostMutation.mutate({ postId, userId });
   };
 
+  const isPostLikedByUser = (post: PostProps) => {
+    return post.likedBy?.includes(userId);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Create post form */}
+      {session.isAuthenticated && <CreatePostForm />}
+      
       {/* Posts feed */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Community Posts</h2>
@@ -146,8 +158,17 @@ const CommunityPosts = () => {
                   </div>
                   <Separator className="my-3" />
                   <div className="flex justify-between">
-                    <Button variant="ghost" onClick={() => handleLikePost(post._id || '')}>
-                      <ThumbsUp className="h-4 w-4 mr-2" />
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => handleLikePost(post._id || '')}
+                      className={isPostLikedByUser(post) ? "text-blue-500" : ""}
+                      disabled={likePostMutation.isPending}
+                    >
+                      {likePostMutation.isPending && post._id === likePostMutation.variables?.postId ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <ThumbsUp className="h-4 w-4 mr-2" />
+                      )}
                       Like
                     </Button>
                     <Button variant="ghost">
@@ -166,7 +187,14 @@ const CommunityPosts = () => {
         ) : (
           <Card>
             <CardContent className="py-8 text-center">
-              <p className="text-gray-500">No posts yet. Be the first to share something!</p>
+              {session.isAuthenticated ? (
+                <p className="text-gray-500">No posts yet. Be the first to share something!</p>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-gray-500">Sign in to see and create community posts!</p>
+                  <Button onClick={() => window.location.href = '/login'}>Sign In</Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
