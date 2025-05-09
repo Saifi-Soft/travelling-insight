@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
-import { ThumbsUp, MessageCircle, Share2, MapPin, Loader2 } from 'lucide-react';
+import { ThumbsUp, MessageCircle, Share2, MapPin, Loader2, AlertTriangle } from 'lucide-react';
 import { communityPostsApi } from '@/api/communityPostsService';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import CreatePostForm from './CreatePostForm';
@@ -27,7 +27,6 @@ interface PostProps {
 }
 
 const CommunityPosts = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const { session } = useSession();
 
@@ -35,10 +34,11 @@ const CommunityPosts = () => {
   const userName = session.user?.name || localStorage.getItem('userName') || 'Anonymous User';
 
   // Fetch all posts
-  const { data: posts = [], isLoading } = useQuery({
+  const { data: posts = [], isLoading, error } = useQuery({
     queryKey: ['communityPosts'],
     queryFn: communityPostsApi.getAllPosts,
-    staleTime: 1000 * 60 // 1 minute
+    staleTime: 1000 * 60, // 1 minute
+    retry: 2
   });
 
   // Like a post
@@ -71,6 +71,22 @@ const CommunityPosts = () => {
   const isPostLikedByUser = (post: PostProps) => {
     return post.likedBy?.includes(userId);
   };
+
+  // If there's an error fetching posts
+  if (error) {
+    return (
+      <Card className="p-6 text-center">
+        <div className="flex flex-col items-center gap-4">
+          <AlertTriangle className="h-10 w-10 text-yellow-500" />
+          <h3 className="text-xl font-bold">Error Loading Posts</h3>
+          <p className="text-gray-600">There was a problem loading community posts. Please try again later.</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['communityPosts'] })}>
+            Retry
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -162,7 +178,7 @@ const CommunityPosts = () => {
                       variant="ghost" 
                       onClick={() => handleLikePost(post._id || '')}
                       className={isPostLikedByUser(post) ? "text-blue-500" : ""}
-                      disabled={likePostMutation.isPending}
+                      disabled={likePostMutation.isPending && likePostMutation.variables?.postId === post._id}
                     >
                       {likePostMutation.isPending && post._id === likePostMutation.variables?.postId ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />

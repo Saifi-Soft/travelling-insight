@@ -1,7 +1,8 @@
 
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
+import { toast } from 'sonner';
 
-// MongoDB connection class that works in both server and browser environments
+// MongoDB connection class that uses Node.js MongoDB driver
 class MongoDbService {
   private client: MongoClient | null = null;
   private db: any = null;
@@ -20,7 +21,7 @@ class MongoDbService {
     }
 
     // Get MongoDB URI from environment variables
-    const uri = import.meta.env.VITE_MONGODB_URI || 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@your-cluster.mongodb.net';
+    const uri = import.meta.env.VITE_MONGODB_URI || 'mongodb+srv://saifibadshah10:2Fjs34snjd56p9@travellinginsight.3fl6dwk.mongodb.net/';
     const dbName = import.meta.env.VITE_DB_NAME || 'travel_blog';
 
     try {
@@ -28,26 +29,47 @@ class MongoDbService {
       
       this.connectionPromise = new Promise(async (resolve, reject) => {
         try {
-          const client = new MongoClient(uri, {
-            serverApi: {
-              version: ServerApiVersion.v1,
-              strict: true,
-              deprecationErrors: true,
+          // For server-side usage in Node.js
+          if (typeof window === 'undefined') {
+            const client = new MongoClient(uri, {
+              serverApi: {
+                version: ServerApiVersion.v1,
+                strict: true,
+                deprecationErrors: true,
+              }
+            });
+
+            await client.connect();
+            console.log('[MongoDB] Connected to MongoDB Atlas');
+
+            const db = client.db(dbName);
+            this.client = client;
+            this.db = db;
+            this.isConnected = true;
+
+            resolve({ client, db });
+          } else {
+            // For browser environment, use a mock implementation
+            console.log('[MongoDB] Browser environment detected, using mock implementation');
+            
+            // Initialize mock DB if needed
+            if (!(window as any).mockDb) {
+              (window as any).mockDb = {};
             }
-          });
-
-          await client.connect();
-          console.log('[MongoDB] Connected to MongoDB Atlas');
-
-          const db = client.db(dbName);
-          this.client = client;
-          this.db = db;
-          this.isConnected = true;
-
-          resolve({ client, db });
+            
+            this.isConnected = true;
+            resolve({ mockDb: (window as any).mockDb });
+            
+            // Warning for development
+            console.warn('[MongoDB] Using mock MongoDB implementation in browser. Real MongoDB connections require server-side code.');
+            toast.warning('Using test database in browser environment', {
+              duration: 5000,
+            });
+          }
         } catch (error) {
           console.error('[MongoDB] Error connecting to MongoDB:', error);
           this.isConnected = false;
+          toast.error('Failed to connect to database. Some features may not work correctly.');
           reject(error);
         }
       });
@@ -76,9 +98,125 @@ class MongoDbService {
       await this.connect();
     }
 
-    return this.db.collection(collectionName);
+    // Handle both real MongoDB and mock implementation
+    if (typeof window === 'undefined' && this.db) {
+      return this.db.collection(collectionName);
+    } else {
+      // Mock collection for browser
+      if (!(window as any).mockDb[collectionName]) {
+        (window as any).mockDb[collectionName] = [];
+      }
+      return {
+        findOne: async (filter: any) => this.mockFindOne(collectionName, filter),
+        find: () => ({ toArray: async () => this.mockFind(collectionName, {}) }),
+        insertOne: async (doc: any) => this.mockInsertOne(collectionName, doc),
+        updateOne: async (filter: any, update: any) => this.mockUpdateOne(collectionName, filter, update),
+        deleteOne: async (filter: any) => this.mockDeleteOne(collectionName, filter),
+        countDocuments: async () => (window as any).mockDb[collectionName].length,
+      };
+    }
+  }
+  
+  // Mock implementations for browser environment
+  private async mockFindOne(collectionName: string, filter: any) {
+    try {
+      const docs = (window as any).mockDb[collectionName] || [];
+      return docs.find((doc: any) => {
+        return Object.keys(filter).every(key => {
+          if (key === '_id') {
+            return doc._id?.toString() === filter[key]?.toString();
+          }
+          return doc[key] === filter[key];
+        });
+      });
+    } catch (error) {
+      console.error(`[MockDB] findOne error for ${collectionName}:`, error);
+      return null;
+    }
+  }
+  
+  private async mockFind(collectionName: string, filter: any = {}) {
+    try {
+      const docs = (window as any).mockDb[collectionName] || [];
+      if (Object.keys(filter).length === 0) {
+        return [...docs]; // Return a copy to prevent mutations
+      }
+      
+      return docs.filter((doc: any) => {
+        return Object.keys(filter).every(key => {
+          if (key === '_id') {
+            return doc._id?.toString() === filter[key]?.toString();
+          }
+          return doc[key] === filter[key];
+        });
+      });
+    } catch (error) {
+      console.error(`[MockDB] find error for ${collectionName}:`, error);
+      return [];
+    }
+  }
+  
+  private async mockInsertOne(collectionName: string, document: any) {
+    try {
+      const _id = document._id || new ObjectId().toString();
+      const newDoc = { ...document, _id };
+      (window as any).mockDb[collectionName].push(newDoc);
+      
+      return { insertedId: _id };
+    } catch (error) {
+      console.error(`[MockDB] insertOne error for ${collectionName}:`, error);
+      throw error;
+    }
+  }
+  
+  private async mockUpdateOne(collectionName: string, filter: any, update: any) {
+    try {
+      let modifiedCount = 0;
+      (window as any).mockDb[collectionName] = (window as any).mockDb[collectionName].map((doc: any) => {
+        const isMatch = Object.keys(filter).every(key => {
+          if (key === '_id') {
+            return doc._id?.toString() === filter[key]?.toString();
+          }
+          return doc[key] === filter[key];
+        });
+        
+        if (isMatch) {
+          modifiedCount++;
+          const updateData = update.$set || update;
+          return { ...doc, ...updateData };
+        }
+        
+        return doc;
+      });
+      
+      return { modifiedCount };
+    } catch (error) {
+      console.error(`[MockDB] updateOne error for ${collectionName}:`, error);
+      throw error;
+    }
+  }
+  
+  private async mockDeleteOne(collectionName: string, filter: any) {
+    try {
+      const initialLength = (window as any).mockDb[collectionName].length;
+      (window as any).mockDb[collectionName] = (window as any).mockDb[collectionName].filter((doc: any) => {
+        return !Object.keys(filter).every(key => {
+          if (key === '_id') {
+            return doc._id?.toString() === filter[key]?.toString();
+          }
+          return doc[key] === filter[key];
+        });
+      });
+      
+      const deletedCount = initialLength - (window as any).mockDb[collectionName].length;
+      return { deletedCount };
+    } catch (error) {
+      console.error(`[MockDB] deleteOne error for ${collectionName}:`, error);
+      throw error;
+    }
   }
 
+  // Normal operations that work in both environments
   async findOne(collectionName: string, filter: object) {
     try {
       const collection = await this.getCollection(collectionName);
@@ -102,7 +240,8 @@ class MongoDbService {
   async insertOne(collectionName: string, document: object) {
     try {
       const collection = await this.getCollection(collectionName);
-      return await collection.insertOne(document);
+      const result = await collection.insertOne(document);
+      return { ...document, _id: result.insertedId };
     } catch (error) {
       console.error(`[MongoDB] Error in insertOne operation for ${collectionName}:`, error);
       throw error;

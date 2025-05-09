@@ -31,32 +31,6 @@ class MongoApiService {
     }
   }
 
-  // Insert a document into a collection
-  async insertDocument(collectionName: string, document: any): Promise<any> {
-    try {
-      // Generate an ID if one doesn't exist
-      const id = document.id || document._id;
-      
-      const newDocument = {
-        ...document,
-        createdAt: document.createdAt || new Date().toISOString(),
-        updatedAt: document.updatedAt || new Date().toISOString()
-      };
-      
-      const result = await mongoDbService.insertOne(collectionName, newDocument);
-      console.log(`[MongoDB] Inserted document in ${collectionName}:`, result);
-      
-      // Return the document with the inserted ID
-      return {
-        ...newDocument,
-        _id: result.insertedId || id
-      };
-    } catch (error) {
-      console.error(`[MongoDB] Error inserting document into ${collectionName}:`, error);
-      throw error;
-    }
-  }
-  
   // Get a document by ID
   async getDocumentById(collectionName: string, id: string): Promise<any | null> {
     try {
@@ -75,6 +49,32 @@ class MongoApiService {
     } catch (error) {
       console.error(`[MongoDB] Error getting document from ${collectionName}:`, error);
       return null;
+    }
+  }
+  
+  // Insert a document into a collection
+  async insertDocument(collectionName: string, document: any): Promise<any> {
+    try {
+      // Generate an ID if one doesn't exist
+      const id = document.id || document._id;
+      
+      const newDocument = {
+        ...document,
+        createdAt: document.createdAt || new Date().toISOString(),
+        updatedAt: document.updatedAt || new Date().toISOString()
+      };
+      
+      const result = await mongoDbService.insertOne(collectionName, newDocument);
+      console.log(`[MongoDB] Inserted document in ${collectionName}:`, result);
+      
+      // Return the document with the inserted ID
+      return {
+        ...newDocument,
+        _id: result._id || id
+      };
+    } catch (error) {
+      console.error(`[MongoDB] Error inserting document into ${collectionName}:`, error);
+      throw error;
     }
   }
   
