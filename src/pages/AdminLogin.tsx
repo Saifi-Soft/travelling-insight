@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { mongoApiService } from '@/api/mongoApiService';
+import { toast } from 'sonner';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -14,7 +14,7 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [initialChecking, setInitialChecking] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   // Check if user is already logged in
   useEffect(() => {
@@ -62,8 +62,8 @@ const AdminLogin = () => {
           });
           
           localStorage.setItem('adminAuth', 'true');
-          toast({
-            title: "Login successful",
+          
+          toast("Login successful", {
             description: "Welcome to the admin dashboard",
           });
           
@@ -72,10 +72,9 @@ const AdminLogin = () => {
           sessionStorage.removeItem('adminRedirectUrl'); // Clear after use
           navigate(redirectUrl);
         } else {
-          toast({
-            title: "Login failed",
+          toast("Login failed", {
             description: "Invalid username or password",
-            variant: "destructive",
+            style: { backgroundColor: 'red', color: 'white' }
           });
         }
       } else {
@@ -87,8 +86,8 @@ const AdminLogin = () => {
           });
           
           localStorage.setItem('adminAuth', 'true');
-          toast({
-            title: "Login successful",
+          
+          toast("Login successful", {
             description: "Welcome back to the admin dashboard",
           });
           
@@ -97,19 +96,18 @@ const AdminLogin = () => {
           sessionStorage.removeItem('adminRedirectUrl'); // Clear after use
           navigate(redirectUrl);
         } else {
-          toast({
-            title: "Login failed",
+          toast("Login failed", {
             description: "Invalid username or password",
-            variant: "destructive",
+            style: { backgroundColor: 'red', color: 'white' }
           });
         }
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: "Login error",
+      
+      toast("Login error", {
         description: "An error occurred during login. Please try again.",
-        variant: "destructive",
+        style: { backgroundColor: 'red', color: 'white' }
       });
     } finally {
       setLoading(false);

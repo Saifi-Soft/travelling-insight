@@ -28,15 +28,16 @@ class AuthService {
       }
       
       // Check if user exists in the database
-      const user = await mongoApiService.queryDocuments('users', { email: userEmail });
+      const users = await mongoApiService.queryDocuments('users', { email: userEmail });
       
-      if (user && user.length > 0) {
+      if (users && users.length > 0) {
+        const user = users[0];
         return {
           user: {
-            id: user[0].id || user[0]._id,
-            name: localStorage.getItem('userName') || user[0].name,
+            id: user.id || user._id,
+            name: localStorage.getItem('userName') || user.name,
             email: userEmail,
-            role: localStorage.getItem('userRole') || user[0].role
+            role: localStorage.getItem('userRole') || user.role
           },
           isAuthenticated: true
         };
@@ -47,6 +48,7 @@ class AuthService {
       return { isAuthenticated: false };
     } catch (error) {
       console.error('Error validating session:', error);
+      this.clearSession();
       return { isAuthenticated: false };
     }
   }
@@ -62,6 +64,11 @@ class AuthService {
       if (users.length === 0) {
         // Create a new demo user if not found
         const newUserId = await this.createDemoUser(email, password);
+        
+        toast("Account Created", {
+          description: "Welcome! We've created an account for you.",
+        });
+        
         return {
           success: true,
           user: {
@@ -91,9 +98,20 @@ class AuthService {
         };
       }
       
+      toast("Login Failed", {
+        description: "Invalid password. Please try again.",
+        style: { backgroundColor: 'red', color: 'white' }
+      });
+      
       return { success: false };
     } catch (error) {
       console.error('Login error:', error);
+      
+      toast("Login Error", {
+        description: "There was a problem logging in. Please try again.",
+        style: { backgroundColor: 'red', color: 'white' }
+      });
+      
       return { success: false };
     }
   }
@@ -112,7 +130,7 @@ class AuthService {
         createdAt: new Date(),
       });
       
-      const userId = newUser.id || newUser._id;
+      const userId = newUser.id || newUser._id || newUser.insertedId;
       
       // Set session data
       this.setSessionData(userId, 'Demo User', email, 'user');
@@ -169,6 +187,9 @@ class AuthService {
    */
   logout() {
     this.clearSession();
+    toast("Logged Out", {
+      description: "You have been successfully logged out.",
+    });
   }
 }
 

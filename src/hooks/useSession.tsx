@@ -69,18 +69,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         
         return true;
       } else {
-        toast("Login Failed", {
-          description: "Invalid password. Please try again.",
-          style: { backgroundColor: 'red', color: 'white' }
-        });
+        // Toast is handled in authService
         return false;
       }
     } catch (error) {
       console.error('Login error:', error);
+      
       toast("Login Failed", {
         description: "There was a problem logging in. Please try again.",
         style: { backgroundColor: 'red', color: 'white' }
       });
+      
       return false;
     } finally {
       setIsLoading(false);
@@ -95,10 +94,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // Update state
     setSession({
       isAuthenticated: false
-    });
-    
-    toast("Logged Out", {
-      description: "You have been successfully logged out.",
     });
   };
   
