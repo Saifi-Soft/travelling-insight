@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { commentsApi } from '@/api/mongoApiService';
-import { Comment } from '@/types/common';
+import { commentsApi, postsApi } from '@/api/mongoApiService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -40,16 +39,21 @@ const CommentsAdmin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch comments for the selected post
+  // Fetch all posts for selection
+  const { data: posts = [], isLoading: isLoadingPosts } = useQuery({
+    queryKey: ['posts'],
+    queryFn: postsApi.getAll,
+  });
+  
+  // Fetch comments for the selected post or all comments if no post is selected
   const { data: comments = [], isLoading: isLoadingComments } = useQuery({
     queryKey: ['comments', selectedPostId],
-    queryFn: () => selectedPostId ? commentsApi.getByPostId(selectedPostId) : Promise.resolve([]),
-    enabled: !!selectedPostId,
+    queryFn: () => selectedPostId ? commentsApi.getByPostId(selectedPostId) : commentsApi.getAll(),
   });
 
   // Delete comment mutation
   const deleteMutation = useMutation({
-    mutationFn: commentsApi.delete,
+    mutationFn: (id: string) => commentsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments'] });
       toast({
@@ -67,15 +71,13 @@ const CommentsAdmin = () => {
   });
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this comment?')) {
-      deleteMutation.mutate(id);
-    }
+    deleteMutation.mutate(id);
   };
 
   // Filter comments based on search query
-  const filteredComments = comments.filter(comment => 
-    comment.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    comment.author.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredComments = comments.filter((comment: any) => 
+    comment.content?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    comment.author?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -88,8 +90,8 @@ const CommentsAdmin = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6">
-            <div className="relative">
+          <div className="mb-6 flex items-center gap-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search comments..."
@@ -98,16 +100,28 @@ const CommentsAdmin = () => {
                 className="pl-10"
               />
             </div>
+            <select 
+              className="border rounded p-2 w-64"
+              onChange={(e) => setSelectedPostId(e.target.value === "all" ? null : e.target.value)}
+              value={selectedPostId || "all"}
+            >
+              <option value="all">All Posts</option>
+              {posts.map((post: any) => (
+                <option key={post.id || post._id} value={post.id || post._id}>
+                  {post.title}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {isLoadingComments ? (
+          {isLoadingComments || isLoadingPosts ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : comments.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <MessageSquare className="mx-auto h-12 w-12 mb-4 opacity-20" />
-              <p>Select a post to view its comments</p>
+              <p>No comments found</p>
             </div>
           ) : (
             <div className="rounded-md border">
@@ -121,22 +135,26 @@ const CommentsAdmin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredComments.map((comment) => (
-                    <TableRow key={comment.id}>
+                  {filteredComments.map((comment: any) => (
+                    <TableRow key={comment.id || comment._id}>
                       <TableCell className="font-medium">
-                        <div className="flex items-center">
-                          <img
-                            src={comment.author.avatar}
-                            alt={comment.author.name}
-                            className="h-8 w-8 rounded-full mr-2"
-                          />
-                          <span>{comment.author.name}</span>
-                        </div>
+                        {comment.author && comment.author.avatar ? (
+                          <div className="flex items-center">
+                            <img
+                              src={comment.author.avatar}
+                              alt={comment.author.name}
+                              className="h-8 w-8 rounded-full mr-2"
+                            />
+                            <span>{comment.author.name}</span>
+                          </div>
+                        ) : (
+                          <span>{comment.author?.name || comment.userName || 'Anonymous'}</span>
+                        )}
                       </TableCell>
                       <TableCell className="max-w-md">
                         <div className="line-clamp-2">{comment.content}</div>
                       </TableCell>
-                      <TableCell>{new Date(comment.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(comment.date || comment.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -154,7 +172,7 @@ const CommentsAdmin = () => {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction 
-                                onClick={() => handleDelete(comment.id)}
+                                onClick={() => handleDelete(comment.id || comment._id)}
                                 className="bg-destructive text-destructive-foreground"
                               >
                                 Delete

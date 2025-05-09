@@ -63,7 +63,8 @@ class MongoApiService {
   async insertDocument(collectionName: string, data: any) {
     try {
       const result = await mongoDbService.insertOne(collectionName, data);
-      return result;
+      // Ensure there's an id property for backward compatibility
+      return { ...result, id: result._id || result.insertedId };
     } catch (error) {
       console.error(`[MongoDB API] Error inserting document into ${collectionName}:`, error);
       throw error;
@@ -185,6 +186,67 @@ class MongoApiService {
       }
     }
   };
+
+  // Comments API (adding this new API)
+  commentsApi = {
+    getAll: async () => {
+      try {
+        return await this.queryDocuments('comments');
+      } catch (error) {
+        console.error('[MongoDB API] Error getting all comments:', error);
+        return [];
+      }
+    },
+    
+    getByPostId: async (postId: string) => {
+      try {
+        return await this.queryDocuments('comments', { postId });
+      } catch (error) {
+        console.error(`[MongoDB API] Error getting comments for post ${postId}:`, error);
+        return [];
+      }
+    },
+    
+    getById: async (id: string) => {
+      try {
+        return await this.getDocumentById('comments', id);
+      } catch (error) {
+        console.error(`[MongoDB API] Error getting comment with ID ${id}:`, error);
+        return null;
+      }
+    },
+    
+    create: async (commentData: any) => {
+      try {
+        return await this.insertDocument('comments', {
+          ...commentData,
+          date: commentData.date || new Date().toISOString(),
+          likes: commentData.likes || 0
+        });
+      } catch (error) {
+        console.error('[MongoDB API] Error creating comment:', error);
+        throw error;
+      }
+    },
+    
+    update: async (id: string, commentData: any) => {
+      try {
+        return await this.updateDocument('comments', id, commentData);
+      } catch (error) {
+        console.error(`[MongoDB API] Error updating comment with ID ${id}:`, error);
+        throw error;
+      }
+    },
+    
+    delete: async (id: string) => {
+      try {
+        return await this.deleteDocument('comments', id);
+      } catch (error) {
+        console.error(`[MongoDB API] Error deleting comment with ID ${id}:`, error);
+        throw error;
+      }
+    }
+  };
   
   // Categories API
   categoriesApi = {
@@ -287,5 +349,5 @@ class MongoApiService {
 export const mongoApiService = new MongoApiService();
 
 // Export specific APIs for convenience
-export const { postsApi, categoriesApi, topicsApi } = mongoApiService;
+export const { postsApi, categoriesApi, topicsApi, commentsApi } = mongoApiService;
 
