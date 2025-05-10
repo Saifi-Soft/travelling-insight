@@ -80,6 +80,7 @@ export interface Post extends DbDocument {
     title?: string;
     description?: string;
     keywords?: string[];
+    ogImage?: string;
   };
   publishedAt?: string;
   createdAt?: string;
@@ -244,7 +245,7 @@ export interface SiteSettings extends DbDocument {
 }
 
 // Travel Group type
-export interface TravelGroup {
+export interface TravelGroup extends DbDocument {
   id: string;
   name: string;
   description: string;
@@ -261,18 +262,27 @@ export interface TravelGroup {
   updatedAt?: string;
 }
 
-// Travel Match type
-export interface TravelMatch {
+// Travel Match type for buddy matching
+export interface TravelMatch extends DbDocument {
   id: string;
   userId: string;
   matchUserId: string;
+  name?: string; // Added for compatibility
+  avatar?: string; // Added for compatibility
   compatibilityScore: number;
   status: 'pending' | 'accepted' | 'rejected';
+  destinations?: string[]; // Added for compatibility
+  travelStyles?: string[]; // Added for compatibility
+  interests?: string[]; // Added for compatibility
+  dates?: {
+    start: string;
+    end: string;
+  }; // Added for compatibility
   createdAt: string;
 }
 
 // Buddy Match type
-export interface BuddyMatch {
+export interface BuddyMatch extends DbDocument {
   id: string;
   userId: string;
   matchUserId: string;

@@ -1,44 +1,139 @@
 
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MessageSquare } from 'lucide-react';
-import { Post } from '@/types/common';
+import { CalendarIcon, Clock, MessageSquare, Heart, Tag } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface PostHeaderProps {
-  post: Post & { content?: string; tags?: string[] };
-  commentCount: number;
+  title: string;
+  excerpt?: string;
+  author: {
+    name: string;
+    avatar?: string;
+  } | string;
+  category?: string | {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  date: string;
+  readTime?: string;
+  likes: number;
+  comments: number;
+  topics?: string[];
+  className?: string;
 }
 
-const PostHeader = ({ post, commentCount }: PostHeaderProps) => {
+const PostHeader = ({
+  title,
+  excerpt,
+  author,
+  category,
+  date,
+  readTime,
+  likes,
+  comments,
+  topics,
+  className
+}: PostHeaderProps) => {
+  // Helper function to get author display
+  const getAuthorName = () => {
+    if (typeof author === 'string') {
+      return author;
+    }
+    return author.name;
+  };
+
+  const getAuthorAvatar = () => {
+    if (typeof author === 'object' && author.avatar) {
+      return author.avatar;
+    }
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(getAuthorName())}`;
+  };
+
+  // Helper function to get category display
+  const getCategoryDisplay = () => {
+    if (!category) return 'Uncategorized';
+    if (typeof category === 'string') return category;
+    return category.name;
+  };
+
   return (
-    <div className="relative h-[40vh] md:h-[60vh]">
-      <div className="absolute inset-0 bg-black/40 z-10"></div>
-      <img 
-        src={post.coverImage} 
-        alt={post.title}
-        className="w-full h-full object-cover"
-      />
-      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-20 text-white">
-        <div className="container-custom">
-          <Badge className="mb-4">{post.category}</Badge>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 max-w-4xl">
-            {post.title}
-          </h1>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-white/90 text-sm">
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4" />
-              <span>{post.date}</span>
+    <div className={cn('space-y-4', className)}>
+      {category && (
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="capitalize bg-primary/10 hover:bg-primary/20">
+            {getCategoryDisplay()}
+          </Badge>
+        </div>
+      )}
+
+      <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight">
+        {title}
+      </h1>
+
+      {excerpt && (
+        <p className="text-xl text-muted-foreground">
+          {excerpt}
+        </p>
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 text-muted-foreground pt-2">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={getAuthorAvatar()} alt={getAuthorName()} />
+            <AvatarFallback>{getAuthorName().charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-medium text-foreground">{getAuthorName()}</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center">
+            <CalendarIcon className="mr-1 h-4 w-4" />
+            <span>{date}</span>
+          </div>
+
+          {readTime && (
+            <>
+              <div className="hidden sm:block text-muted-foreground">•</div>
+              <div className="flex items-center">
+                <Clock className="mr-1 h-4 w-4" />
+                <span>{readTime}</span>
+              </div>
+            </>
+          )}
+
+          <div className="hidden sm:block text-muted-foreground">•</div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center">
+              <Heart className="mr-1 h-4 w-4 text-red-500" />
+              <span>{likes}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4" />
-              <span>{post.readTime}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MessageSquare className="h-4 w-4" />
-              <span>{commentCount} comments</span>
+            <div className="flex items-center">
+              <MessageSquare className="mr-1 h-4 w-4 text-primary" />
+              <span>{comments}</span>
             </div>
           </div>
         </div>
       </div>
+
+      {topics && topics.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-2">
+          {topics.map((topic, i) => (
+            <Link to={`/blog/topic/${topic}`} key={i}>
+              <Badge variant="secondary" className="flex items-center hover:bg-secondary/80 cursor-pointer">
+                <Tag className="h-3 w-3 mr-1" />
+                {topic}
+              </Badge>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,14 @@ interface PostEditorProps {
   onCancel: () => void;
 }
 
+// Define SEO type to avoid inconsistencies
+interface PostSeo {
+  title?: string;
+  description?: string;
+  keywords?: string[];
+  ogImage?: string;
+}
+
 // Mock categories and topics
 const mockCategories: Category[] = [
   { id: '1', name: 'Adventure', slug: 'adventure', icon: '🧗', count: 12, image: '' },
@@ -38,15 +47,15 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
   const [title, setTitle] = useState(post?.title || '');
   const [excerpt, setExcerpt] = useState(post?.excerpt || '');
   const [coverImage, setCoverImage] = useState(post?.coverImage || '');
-  const [category, setCategory] = useState(post?.category || '');
+  const [category, setCategory] = useState(post?.category ? (typeof post.category === 'object' ? post.category.id : post.category) : '');
   const [date, setDate] = useState<Date>(post?.date ? new Date(post?.date) : new Date());
   const [content, setContent] = useState(post?.content || '');
   const [slug, setSlug] = useState(post?.slug || '');
   const [selectedTopics, setSelectedTopics] = useState<string[]>(post?.topics || []);
-  const [seo, setSeo] = useState(post?.seo || {
-    metaTitle: '',
-    metaDescription: '',
-    keywords: '',
+  const [seo, setSeo] = useState<PostSeo>(post?.seo || {
+    title: '',
+    description: '',
+    keywords: [],
     ogImage: ''
   });
 
@@ -119,6 +128,13 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
     setMediaItems(prev => [...prev, media]);
   };
 
+  // Helper to get category display name
+  const getCategoryDisplayName = () => {
+    if (!category) return '';
+    const foundCategory = mockCategories.find(cat => cat.id === category);
+    return foundCategory ? foundCategory.name : '';
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -166,7 +182,10 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
               
               <div>
                 <label htmlFor="category" className="block text-sm font-medium mb-1">Category *</label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select 
+                  value={category} 
+                  onValueChange={setCategory}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -269,8 +288,8 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
                 <label htmlFor="metaTitle" className="block text-sm font-medium mb-1">Meta Title</label>
                 <Input
                   id="metaTitle"
-                  value={seo.metaTitle}
-                  onChange={(e) => setSeo({ ...seo, metaTitle: e.target.value })}
+                  value={seo.title || ''}
+                  onChange={(e) => setSeo({ ...seo, title: e.target.value })}
                   placeholder="SEO optimized title"
                 />
               </div>
@@ -279,8 +298,8 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
                 <label htmlFor="metaDescription" className="block text-sm font-medium mb-1">Meta Description</label>
                 <Textarea
                   id="metaDescription"
-                  value={seo.metaDescription}
-                  onChange={(e) => setSeo({ ...seo, metaDescription: e.target.value })}
+                  value={seo.description || ''}
+                  onChange={(e) => setSeo({ ...seo, description: e.target.value })}
                   placeholder="Brief SEO description"
                 />
               </div>
@@ -289,8 +308,8 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
                 <label htmlFor="keywords" className="block text-sm font-medium mb-1">Keywords</label>
                 <Input
                   id="keywords"
-                  value={seo.keywords}
-                  onChange={(e) => setSeo({ ...seo, keywords: e.target.value })}
+                  value={Array.isArray(seo.keywords) ? seo.keywords.join(', ') : ''}
+                  onChange={(e) => setSeo({ ...seo, keywords: e.target.value.split(',').map(k => k.trim()) })}
                   placeholder="keyword1, keyword2, keyword3"
                 />
               </div>
@@ -299,7 +318,7 @@ const PostEditor = ({ post, onSave, onCancel }: PostEditorProps) => {
                 <label htmlFor="ogImage" className="block text-sm font-medium mb-1">OG Image URL</label>
                 <Input
                   id="ogImage"
-                  value={seo.ogImage}
+                  value={seo.ogImage || ''}
                   onChange={(e) => setSeo({ ...seo, ogImage: e.target.value })}
                   placeholder="https://example.com/og-image.jpg"
                 />

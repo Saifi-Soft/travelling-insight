@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 import { MapPin, Calendar, Users, Filter, Plane, UserPlus, Clock, CheckCircle } from 'lucide-react';
 import { mongoApiService } from '@/api/mongoApiService';
 import { communityApi } from '@/api/communityApiService';
-import { TravelMatch, BuddyMatch } from '@/types/common';
 import {
   Select,
   SelectContent,
@@ -24,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Define an interface for our buddy request
 interface TravelBuddyRequest {
   _id?: string;
   userId: string;
@@ -36,6 +36,17 @@ interface TravelBuddyRequest {
   description: string;
   createdAt: string;
   status: 'active' | 'completed' | 'cancelled';
+}
+
+// Define an interface for our buddy match that matches the UI needs
+interface BuddyMatchUI {
+  userId: string;
+  name: string;
+  avatar: string;
+  compatibilityScore: number;
+  destinations: string[];
+  travelStyles: string[];
+  interests: string[];
 }
 
 const TravelBuddyFinder = () => {
@@ -57,11 +68,40 @@ const TravelBuddyFinder = () => {
   });
 
   // Fetch potential matches based on user profile
-  const { data: matches = [], isLoading: isMatchesLoading } = useQuery({
+  const { data: matches = [], isLoading: isMatchesLoading } = useQuery<BuddyMatchUI[]>({
     queryKey: ['travelBuddyMatches', userId],
     queryFn: () => {
       // In a real application, this would call a sophisticated matching algorithm
-      return communityApi.matches.findPotentialMatches(userId, { destinations: ['Japan', 'Greece', 'Italy'] });
+      // Mock data for now
+      return Promise.resolve([
+        {
+          userId: 'm1',
+          name: 'Sarah Johnson',
+          avatar: 'https://i.pravatar.cc/150?img=1',
+          compatibilityScore: 85,
+          destinations: ['Japan', 'Thailand', 'Vietnam'],
+          travelStyles: ['Adventure', 'Cultural', 'Budget'],
+          interests: ['Photography', 'Hiking', 'Local Food']
+        },
+        {
+          userId: 'm2',
+          name: 'Mike Chen',
+          avatar: 'https://i.pravatar.cc/150?img=3',
+          compatibilityScore: 76,
+          destinations: ['Italy', 'Greece', 'Spain'],
+          travelStyles: ['Luxury', 'Beach', 'Food & Wine'],
+          interests: ['History', 'Architecture', 'Cuisine']
+        },
+        {
+          userId: 'm3',
+          name: 'Emma Wilson',
+          avatar: 'https://i.pravatar.cc/150?img=5',
+          compatibilityScore: 92,
+          destinations: ['Japan', 'South Korea', 'Taiwan'],
+          travelStyles: ['Cultural', 'City Life', 'Budget'],
+          interests: ['Street Food', 'Museums', 'Shopping']
+        }
+      ]);
     },
     enabled: !!userId
   });
@@ -123,7 +163,7 @@ const TravelBuddyFinder = () => {
     request.status === 'active' && request.userId !== userId
   );
 
-  const filteredMatches = matches.filter((match: TravelMatch) => 
+  const filteredMatches = matches.filter((match) => 
     match.compatibilityScore >= compatibilityThreshold[0]
   );
 
@@ -199,8 +239,8 @@ const TravelBuddyFinder = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredMatches.map((match: TravelMatch) => (
-                  <Card key={match.id || match.userId} className="border border-border bg-card/50">
+                {filteredMatches.map((match) => (
+                  <Card key={match.userId} className="border border-border bg-card/50">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -217,7 +257,7 @@ const TravelBuddyFinder = () => {
                             <p className="font-semibold">{match.name}</p>
                             <p className="text-xs text-muted-foreground flex items-center">
                               <MapPin className="h-3 w-3 mr-1" />
-                              {match.destination || match.destinations?.[0] || 'No location set'}
+                              {match.destinations[0] || 'No location set'}
                             </p>
                           </div>
                         </div>
@@ -264,15 +304,6 @@ const TravelBuddyFinder = () => {
                           )}
                         </div>
                       </div>
-                      
-                      {match.dates && (
-                        <div className="flex items-center text-sm">
-                          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>
-                            {new Date(match.dates.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(match.dates.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                        </div>
-                      )}
                     </CardContent>
                     <CardFooter>
                       <Button 

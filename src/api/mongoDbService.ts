@@ -356,6 +356,11 @@ export class MongoDbService {
       };
     }
   }
+
+  // Utility for query operations
+  async queryDocuments(collectionName: string, query: any): Promise<DbDocument[]> {
+    return this.find(collectionName, query);
+  }
 }
 
 // Create a singleton instance
